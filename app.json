@@ -1,0 +1,30 @@
+{
+  "expo": {
+    "name": "ReLoved Gold Collections",
+    "slug": "reloved-gold-collections",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/images/rings.png",
+    "scheme": "aurumgold",
+    "userInterfaceStyle": "dark",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.reloved.gold"
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "single",
+      "favicon": "./assets/images/favicon.png"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-font",
+      "expo-web-browser",
+      "expo-image",
+      "expo-status-bar"
+    ],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}
