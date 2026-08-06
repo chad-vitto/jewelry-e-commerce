@@ -1,16 +1,18 @@
 // Database entity types
 
+import { Key } from "react";
+
 export type UserRole = 'customer' | 'staff' | 'admin';
 
 export type ProductCategory = 'rings' | 'earrings' | 'necklaces' | 'pendants' | 'bracelets' | 'wedding_sets';
 
-export type PaymentMethodType = 'gcash' | 'paymaya' | 'bank_transfer';
+export type PaymentMethodType = 'gcash' | 'maya' | 'bank_transfer';
 
 export type PaymentStatus = 'pending' | 'paid' | 'failed';
 
-export type OrderStatus = 'pending' | 'confirmed' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
+export type OrderStatus = 'pending' | 'confirmed' | 'processing' | 'shipped' | 'delivered' | 'cancelled' | 'refunded';
 
-export type InquiryStatus = 'new' | 'read' | 'replied'; 
+export type InquiryStatus = 'new' | 'read' | 'replied';
 
 
 export type ProductImage = {
@@ -22,6 +24,7 @@ export type ProductImage = {
 };
 
 export interface Product {
+  image_url: string | undefined;
   id: string;
   sku: string;
   slug: string;
@@ -53,7 +56,7 @@ export interface Product {
   updated_at: string;
 
   product_images: ProductImage[];
-   
+
 };
 
 export interface Profile {
@@ -64,6 +67,7 @@ export interface Profile {
   role: UserRole;
   created_at: string;
   updated_at: string;
+  avatar_url?: string | null;
 }
 
 export interface OrderItem {
@@ -76,38 +80,55 @@ export interface OrderItem {
   size?: string;
 }
 
-export interface ShippingAddressData {
-  full_name: string;
-  phone_number: string;
-  address_line1: string;
-  address_line2: string | null;
-  city: string;
-  province: string;
-  postal_code: string;
-}
-
 export interface ContactInfo {
   email: string;
   phone_number: string;
   notes?: string;
 }
+export interface CustomerOrder extends Order {
+  order_items: CustomerOrderItem[];
+}
+
+export interface AdminOrder extends Order {
+  order_items: OrderItem[];
+  shipping_address?: ShippingAddress | null;
+}
 
 export interface Order {
   id: string;
   customer_id: string | null;
-  items: OrderItem[];
+
   subtotal_php: number;
   shipping_fee_php: number;
   total_amount_php: number;
+
   payment_method: PaymentMethodType;
   payment_status: PaymentStatus;
+  payment_reference: string | null,
   order_status: OrderStatus;
-  shipping_address: ShippingAddressData;
-  contact_info: ContactInfo;
+
+  shipping_address_id: string | null;
+  shipping_address?: ShippingAddress | null;
+
   tracking_number: string | null;
   notes: string | null;
+
   created_at: string;
   updated_at: string;
+}
+
+export interface CustomerOrderImage {
+  image_url: string;
+  sort_order: number;
+}
+
+interface CustomerOrderProduct extends Omit<Product, 'product_images'> {
+  product_images: CustomerOrderImage[];
+}
+
+export interface CustomerOrderItem extends OrderItem {
+  id: Key | null | undefined;
+  products: CustomerOrderProduct | null;
 }
 
 export interface Inquiry {
@@ -141,15 +162,26 @@ export interface ShippingAddress {
   updated_at: string;
 }
 
+export interface ShippingAddressForm {
+  full_name: string;
+  phone_number: string;
+  address_line1: string;
+  address_line2: string | null;
+  city: string;
+  province: string;
+  postal_code: string;
+}
+
+export interface ShippingAddressData extends ShippingAddressForm {
+  id: string;
+}
 export interface WishlistItem {
   id: string;
   customer_id: string;
   product_id: string;
   created_at: string;
 }
-
 // UI/App types
-
 export interface Category {
   id: string;
   name: string;
@@ -188,6 +220,53 @@ export interface AuthState {
   isAuthenticated: boolean;
   isAdmin: boolean;
   isLoading: boolean;
+}
+
+export enum PaymentProofStatus {
+  Pending = 'pending',       // No proof uploaded yet
+  Submitted = 'submitted',   // Proof uploaded, waiting for review
+  Verified = 'verified',     // Admin approved
+  Rejected = 'rejected',     // Admin rejected
+}
+
+export interface PaymentProof {
+  id: string;
+  order_id: string;
+  storage_path: string;
+  reference_number: string | null;
+  notes: string | null;
+  status: PaymentProofStatus;
+  uploaded_by: string;
+  uploaded_at: string;
+  verified_by: string | null;
+  verified_at: string | null;
+  rejection_reason: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface PaymentProofInsert {
+  order_id: string;
+  storage_path: string;
+  reference_number?: string | null;
+  notes?: string | null;
+  status?: PaymentProofStatus;
+  uploaded_by: string;
+  uploaded_at?: string;
+  verified_by?: string | null;
+  verified_at?: string | null;
+  rejection_reason?: string | null;
+}
+
+export interface PaymentProofUpdate {
+  storage_path?: string;
+  reference_number?: string | null;
+  notes?: string | null;
+  status?: PaymentProofStatus;
+  verified_by?: string | null;
+  verified_at?: string | null;
+  rejection_reason?: string | null;
+  updated_at?: string;
 }
 
 // Form types

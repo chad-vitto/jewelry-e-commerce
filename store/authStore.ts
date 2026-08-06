@@ -37,8 +37,19 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
         .maybeSingle();
 
       if (error) {
-        console.error('Error fetching profile:', error);
-        set({ user: null, isAuthenticated: false, isAdmin: false, canAccessDashboard: false, isLoading: false });
+        //console.error('Error fetching profile:', error);
+
+        if (error.code === 'PGRST303') {
+          await supabase.auth.signOut();
+        }
+
+        set({
+          user: null,
+          isAuthenticated: false,
+          isAdmin: false,
+          canAccessDashboard: false,
+          isLoading: false
+        });
         return;
       }
 

@@ -1,14 +1,19 @@
-import { useState } from 'react';
+import {
+  ContactInfo,
+  Order,
+  OrderItem,
+  ShippingAddressForm
+  } from '@/types';
 import { supabase } from '@/lib/supabase';
-import { Order, OrderItem, ShippingAddressData, ContactInfo } from '@/types';
 import { useAuthStore } from '@/store';
+import { useState } from 'react';
 
 interface CreateOrderInput {
   items: OrderItem[];
   subtotal_php: number;
   shipping_fee_php: number;
   payment_method: 'gcash' | 'paymaya' | 'bank_transfer';
-  shipping_address: ShippingAddressData;
+  shipping_address: ShippingAddressForm;
   contact_info: ContactInfo;
   notes?: string;
 }

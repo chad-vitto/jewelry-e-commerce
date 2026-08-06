@@ -7,6 +7,7 @@ import {
   ActivityIndicator,
   StyleProp,
   ViewStyle,
+  View,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Colors } from '@/constants';
@@ -55,9 +56,23 @@ export function GoldButton({
   ...props
 }: GoldButtonProps) {
   const sizeStyles = {
-    sm: { paddingVertical: 0, paddingHorizontal: 1 },
-    md: { paddingVertical: 14, paddingHorizontal: 24 },
-    lg: { paddingVertical: 18, paddingHorizontal: 32 },
+    sm: {
+      minHeight: 36,
+      paddingHorizontal: 16,
+      paddingVertical: 8,
+    },
+
+    md: {
+      minHeight: 48,
+      paddingHorizontal: 24,
+      paddingVertical: 12,
+    },
+
+    lg: {
+      minHeight: 56,
+      paddingHorizontal: 32,
+      paddingVertical: 16,
+    },
   };
 
   if (variant === 'gradient') {
@@ -65,15 +80,10 @@ export function GoldButton({
       <Pressable
         onPress={onPress}
         disabled={disabled || loading}
-        style={[
-          styles.buttonBase,
-          sizeStyles[size],
-          disabled && styles.disabled,
-          style,
-        ]}
+        style={[styles.buttonBase, disabled && styles.disabled, style]}
         {...props}
       >
-        <GoldGradient style={styles.gradientButton}>
+        <GoldGradient style={[styles.gradientButton, sizeStyles[size]]}>
           {loading ? (
             <LoadingSpinner color={Colors.primary} />
           ) : (
@@ -91,22 +101,18 @@ export function GoldButton({
       <Pressable
         onPress={onPress}
         disabled={disabled || loading}
-        style={[
-          styles.buttonBase,
-          sizeStyles[size],
-          { backgroundColor: Colors.gold.DEFAULT },
-          disabled && styles.disabled,
-          style,
-        ]}
+        style={[styles.buttonBase, disabled && styles.disabled, style]}
         {...props}
       >
-        {loading ? (
-          <LoadingSpinner color={Colors.primary} />
-        ) : (
-          <Text style={[styles.buttonText, { color: Colors.primary }]}>
-            {title}
-          </Text>
-        )}
+        <View style={[styles.solidButton, sizeStyles[size]]}>
+          {loading ? (
+            <LoadingSpinner color={Colors.primary} />
+          ) : (
+            <Text style={[styles.buttonText, { color: Colors.primary }]}>
+              {title}
+            </Text>
+          )}
+        </View>
       </Pressable>
     );
   }
@@ -116,22 +122,18 @@ export function GoldButton({
     <Pressable
       onPress={onPress}
       disabled={disabled || loading}
-      style={[
-        styles.buttonBase,
-        sizeStyles[size],
-        styles.outlineButton,
-        disabled && styles.disabled,
-        style,
-      ]}
+      style={[styles.buttonBase, disabled && styles.disabled, style]}
       {...props}
     >
-      {loading ? (
-        <LoadingSpinner color={Colors.gold.DEFAULT} />
-      ) : (
-        <Text style={[styles.buttonText, { color: Colors.gold.DEFAULT }]}>
-          {title}
-        </Text>
-      )}
+      <View style={[styles.outlineButton, sizeStyles[size]]}>
+        {loading ? (
+          <LoadingSpinner color={Colors.gold.DEFAULT} />
+        ) : (
+          <Text style={[styles.buttonText, { color: Colors.gold.DEFAULT }]}>
+            {title}
+          </Text>
+        )}
+      </View>
     </Pressable>
   );
 }
@@ -149,10 +151,9 @@ const styles = StyleSheet.create({
   },
   gradientButton: {
     width: '100%',
+    borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 14,
-    borderRadius: 12,
   },
   buttonText: {
     fontFamily: 'Inter_600SemiBold',
@@ -160,11 +161,22 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
   },
   outlineButton: {
+    width: '100%',
+    alignItems: 'center',
+    justifyContent: 'center',
     backgroundColor: 'transparent',
     borderWidth: 1.5,
     borderColor: Colors.gold.DEFAULT,
+    borderRadius: 12,
   },
   disabled: {
     opacity: 0.5,
+  },
+  solidButton: {
+    width: '100%',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: Colors.gold.DEFAULT,
+    borderRadius: 12,
   },
 });

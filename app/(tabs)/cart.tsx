@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useState } from 'react';
 import { ArrowLeft, Heart, Trash2 } from 'lucide-react-native';
 import { CartItem } from '@/types';
 import { Colors, formatCurrency, Shadows } from '@/constants';
@@ -6,8 +6,9 @@ import { EmptyCart } from '@/components/EmptyState';
 import { GoldButton } from '@/components/GoldGradient';
 import { Image } from 'expo-image';
 import { QuantitySelector } from '@/components';
+import { scheduleOnUI } from 'react-native-worklets';
 import { Stack, useRouter } from 'expo-router';
-import { useCart } from '@/hooks';
+import { useAuth, useCart } from '@/hooks';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, {
   FadeInUp,
@@ -46,10 +47,16 @@ export default function CartScreen() {
     removeItem,
     clearCart,
   } = useCart();
+  const { isAuthenticated } = useAuth();
+  const [summaryHeight, setSummaryHeight] = useState(0);
 
   const handleCheckout = useCallback(() => {
+    if (!isAuthenticated) {
+      router.push('/auth/sign-in');
+      return;
+    }
     router.push('/checkout');
-  }, [router]);
+  }, [isAuthenticated, router]);
 
   const handleClearCart = useCallback(() => {
     Alert.alert('Clear Cart', 'Remove all items from the cart', [
@@ -175,7 +182,10 @@ export default function CartScreen() {
         keyExtractor={(item) => `${item.product.id}-${item.size || 'no-size'}`}
         renderItem={renderItem}
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.cartListContent}
+        contentContainerStyle={[
+          styles.cartListContent,
+          { paddingBottom: summaryHeight + insets.bottom + 28 },
+        ]}
         removeClippedSubviews={false}
         initialNumToRender={5}
         windowSize={5}
@@ -186,9 +196,12 @@ export default function CartScreen() {
         <Animated.View
           entering={FadeInUp.duration(300)}
           exiting={FadeOutDown.duration(200)}
-          style={[styles.summary, { bottom: insets.bottom + 16 }]}
+          onLayout={(e) => setSummaryHeight(e.nativeEvent.layout.height)}
+          style={[styles.summary, { bottom: insets.bottom + 12 }]}
         >
-          <View style={styles.summaryInfo}>
+          <Text style={styles.summaryTitle}>Order Summary</Text>
+
+          <View style={styles.summaryContent}>
             <View style={styles.summaryRow}>
               <Text style={styles.summaryLabel}>
                 Subtotal ({itemCount} {itemCount === 1 ? 'item' : 'items'})
@@ -207,16 +220,22 @@ export default function CartScreen() {
               </Text>
             </View>
 
-            <View style={[styles.summaryRow, styles.totalRow]}>
+            <View style={styles.divider} />
+
+            <View style={styles.totalRow}>
               <Text style={styles.totalLabel}>Total</Text>
 
               <Text style={styles.totalValue}>{formatCurrency(total)}</Text>
             </View>
           </View>
 
-          <View style={styles.checkoutContainer}>
-            <GoldButton title="Checkout" onPress={handleCheckout} size="sm" />
-          </View>
+          <GoldButton
+            title="Proceed to Checkout"
+            onPress={handleCheckout}
+            size="lg"
+          />
+
+          <Text style={styles.secureText}>🔒 Secure Checkout</Text>
         </Animated.View>
       )}
     </View>
@@ -266,7 +285,10 @@ const CartItemCard = React.memo(function CartItemCard({
   };
 
   const goToSimilarProducts = () => {
-    translateX.value = withSpring(0);
+    scheduleOnUI(() => {
+      'worklet';
+      translateX.value = withSpring(0);
+    });
     router.push({
       pathname: '/(tabs)/shop',
       params: {
@@ -434,13 +456,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     backgroundColor: Colors.surface,
     borderRadius: 16,
-    padding: 12,
+    padding: 10,
     zIndex: 1,
     ...Shadows.md,
   },
   itemImage: {
-    width: 100,
-    height: 100,
+    width: 92,
+    height: 92,
     borderRadius: 12,
   },
   itemContent: {
@@ -459,7 +481,7 @@ const styles = StyleSheet.create({
     fontFamily: 'CormorantGaramond_600SemiBold',
     fontSize: 16,
     color: Colors.text.primary,
-    marginBottom: 4,
+    marginBottom: 2,
   },
   itemPurity: {
     fontFamily: 'Inter_500Medium',
@@ -485,17 +507,17 @@ const styles = StyleSheet.create({
   },
   summary: {
     position: 'absolute',
-    left: 12,
-    right: 12,
+    left: 16,
+    right: 16,
 
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: 'column',
+    alignItems: 'stretch',
 
-    backgroundColor: Colors.surface,
+    backgroundColor: Colors.surfaceLight,
     borderRadius: 16,
 
-    paddingHorizontal: 16,
-    paddingVertical: 16,
+    paddingHorizontal: 18,
+    paddingVertical: 14,
 
     shadowColor: '#000',
     shadowOpacity: 0.12,
@@ -504,18 +526,34 @@ const styles = StyleSheet.create({
 
     ...Shadows.lg,
   },
-  summaryInfo: {
-    flex: 1,
-    marginRight: 16,
+  summaryTitle: {
+    fontFamily: 'CormorantGaramond_700Bold',
+    fontSize: 20,
+    color: Colors.text.primary,
+    marginBottom: 12,
+    alignSelf: 'flex-start',
   },
-
-  checkoutContainer: {
-    width: 150,
+  summaryContent: {
+    width: '100%',
+    marginBottom: 20,
+  },
+  divider: {
+    height: 1,
+    backgroundColor: Colors.border.DEFAULT,
+    marginVertical: 10,
+  },
+  secureText: {
+    marginTop: 8,
+    textAlign: 'center',
+    fontFamily: 'Inter_500Medium',
+    fontSize: 11,
+    color: Colors.text.muted,
   },
   summaryRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 12,
+    alignItems: 'center',
+    paddingVertical: 6,
   },
   summaryLabel: {
     fontFamily: 'Inter_400Regular',
@@ -529,10 +567,11 @@ const styles = StyleSheet.create({
     ...Shadows.lg,
   },
   totalRow: {
-    paddingTop: 12,
-    borderTopWidth: 1,
-    borderTopColor: Colors.border.DEFAULT,
-    marginBottom: 20,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingTop: 4,
+    marginBottom: 14,
   },
   totalLabel: {
     fontFamily: 'Inter_700Bold',
@@ -549,10 +588,9 @@ const styles = StyleSheet.create({
     fontFamily: 'Inter_600SemiBold',
     fontSize: 14,
   },
-
   cartListContent: {
-    padding: 16,
-    paddingBottom: 230,
+    paddingHorizontal: 16,
+    paddingTop: 8,
   },
   unitPrice: {
     fontFamily: 'Inter_400Regular',
@@ -609,7 +647,7 @@ const styles = StyleSheet.create({
   },
 
   swipeContainer: {
-    marginBottom: 12,
+    marginBottom: 6,
     borderRadius: 16,
   },
 

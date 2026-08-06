@@ -146,7 +146,7 @@ CREATE TABLE orders (
   payment_status text DEFAULT 'pending'
     CHECK (payment_status IN ('pending','paid','failed','refunded')),
   order_status text DEFAULT 'pending'
-    CHECK (order_status IN ('pending','confirmed','processing','shipped','delivered','cancelled')),
+    CHECK (order_status IN ('pending','confirmed','processing','shipped','delivered','cancelled','refunded')),
   tracking_number text,
   notes text,
   created_at timestamptz DEFAULT now(),

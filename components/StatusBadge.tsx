@@ -1,7 +1,6 @@
-import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
 import { Colors } from '@/constants';
-import { OrderStatus, PaymentStatus, InquiryStatus } from '@/types';
+import { InquiryStatus, OrderStatus, PaymentStatus } from '@/types';
+import { StyleSheet, Text, View } from 'react-native';
 
 interface BadgeProps {
   label: string;
@@ -37,22 +36,24 @@ export function Badge({ label, variant = 'default', size = 'md' }: BadgeProps) {
 }
 
 // Order Status Badge
-const orderStatusLabels: Record<OrderStatus, string> = {
+export const orderStatusLabels: Record<OrderStatus, string> = {
   pending: 'Pending',
   confirmed: 'Confirmed',
   processing: 'Processing',
   shipped: 'Shipped',
   delivered: 'Delivered',
   cancelled: 'Cancelled',
+  refunded: 'Refunded'
 };
 
-const orderStatusVariants: Record<OrderStatus, BadgeProps['variant']> = {
+export const orderStatusVariants: Record<OrderStatus, BadgeProps['variant']> = {
   pending: 'warning',
   confirmed: 'info',
   processing: 'info',
   shipped: 'info',
   delivered: 'success',
   cancelled: 'error',
+  refunded: 'success'
 };
 
 export function OrderStatusBadge({ status }: { status: OrderStatus }) {
@@ -129,7 +130,7 @@ export function StockBadge({ quantity }: { quantity: number }) {
 
 const styles = StyleSheet.create({
   badge: {
-    borderRadius: 6,
+    borderRadius: 12,
     alignSelf: 'flex-start',
   },
   text: {

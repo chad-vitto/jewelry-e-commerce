@@ -1,33 +1,57 @@
-import { useState, useEffect, useCallback } from 'react';
+import { CustomerOrder } from '@/types';
+import { mapCustomerOrder } from '@/utils/orderMapper';
 import { supabase } from '@/lib/supabase';
-import { Order } from '@/types';
-import { MOCK_ORDERS } from '@/mock';
 import { useAuthStore } from '@/store';
+import { useCallback, useEffect, useState } from 'react';
+
 
 interface UseOrdersReturn {
-  orders: Order[];
+  orders: CustomerOrderCard[];
   isLoading: boolean;
   error: string | null;
   refetch: () => Promise<void>;
 }
 
+export interface CustomerOrderCard extends CustomerOrder {
+  shortId: string;
+  firstProductName: string;
+  firstProductImage: string | null;
+
+  itemCount: number;
+  totalQuantity: number;
+
+  formattedDate: string;
+  formattedTotal: string;
+}
+
 export function useOrders(customerId?: string): UseOrdersReturn {
-  const [orders, setOrders] = useState<Order[]>([]);
+  const [orders, setOrders] = useState<CustomerOrderCard[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const user = useAuthStore((state) => state.user);
+  const userId = useAuthStore((state) => state.user?.id);
 
   const fetchOrders = useCallback(async () => {
     setIsLoading(true);
     setError(null);
 
+    const queryCustomerId = customerId || userId;
+
     try {
       let query = supabase
         .from('orders')
-        .select('*')
+        .select(`
+  *,
+  shipping_address:shipping_addresses!orders_shipping_address_id_fkey (*),
+  order_items (
+    *,
+    products (
+      *,
+      product_images (*)
+    )
+  )
+`)
         .order('created_at', { ascending: false });
 
-      const queryCustomerId = customerId || user?.id;
       if (queryCustomerId) {
         query = query.eq('customer_id', queryCustomerId);
       }
@@ -35,80 +59,125 @@ export function useOrders(customerId?: string): UseOrdersReturn {
       const { data, error: fetchError } = await query;
 
       if (fetchError) {
-        // Fallback to mock data
-        const filteredOrders = queryCustomerId
-          ? MOCK_ORDERS.filter((o) => o.customer_id === queryCustomerId)
-          : MOCK_ORDERS;
-        setOrders(filteredOrders);
-        return;
+        throw fetchError;
       }
 
-      setOrders((data as Order[]) || []);
+      const mappedOrders = (data as CustomerOrder[] ?? []).map(mapCustomerOrder);
+
+      setOrders(mappedOrders);
+
     } catch (err) {
       console.error('Error fetching orders:', err);
-      const queryCustomerId = customerId || user?.id;
-      const filteredOrders = queryCustomerId
-        ? MOCK_ORDERS.filter((o) => o.customer_id === queryCustomerId)
-        : MOCK_ORDERS;
-      setOrders(filteredOrders);
+
+      setOrders([]);
+
+      setError(err instanceof Error ? err.message : 'Failed to load orders');
     } finally {
       setIsLoading(false);
     }
-  }, [customerId, user?.id]);
+  }, [customerId, userId]);
 
   useEffect(() => {
-    fetchOrders();
+    let isCancelled = false;
+
+    void (async () => {
+      await fetchOrders();
+      if (isCancelled) {
+        return;
+      }
+    })();
+
+    return () => {
+      isCancelled = true;
+    };
   }, [fetchOrders]);
 
   return { orders, isLoading, error, refetch: fetchOrders };
 }
 
 export function useOrder(id: string) {
-  const [order, setOrder] = useState<Order | null>(null);
+  const [order, setOrder] = useState<CustomerOrderCard | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    const fetchOrder = async () => {
-      setIsLoading(true);
-      setError(null);
+  const refetch = useCallback(async () => {
+    if (!id) {
+      setOrder(null);
+      setIsLoading(false);
+      return;
+    }
 
-      try {
-        const { data, error: fetchError } = await supabase
-          .from('orders')
-          .select('*')
-          .eq('id', id)
-          .maybeSingle();
+    setIsLoading(true);
+    setError(null);
 
-        if (fetchError) {
-          // Fallback to mock data
-          const mockOrder = MOCK_ORDERS.find((o) => o.id === id);
-          if (mockOrder) {
-            setOrder(mockOrder);
-          } else {
-            setError('Order not found');
-          }
-          return;
-        }
+    try {
+      const { data, error: fetchError } = await supabase
+        .from('orders')
+        .select(`
+          *,
+          shipping_address:shipping_addresses!orders_shipping_address_id_fkey (*),
+          order_items (
+            *,
+            products (
+              *,
+              product_images (*)
+            )
+          )
+        `)
+        .eq('id', id)
+        .maybeSingle();
 
-        setOrder(data as Order);
-      } catch (err) {
-        console.error('Error fetching order:', err);
-        const mockOrder = MOCK_ORDERS.find((o) => o.id === id);
-        if (mockOrder) {
-          setOrder(mockOrder);
-        } else {
-          setError('Order not found');
-        }
-      } finally {
-        setIsLoading(false);
+      if (fetchError) {
+        throw fetchError;
       }
-    };
 
-    if (id) {
-      fetchOrder();
+      if (!data) {
+        setError('Order not found');
+        setOrder(null);
+        return;
+      }
+
+      setOrder(mapCustomerOrder(data));
+    } catch (err) {
+      console.error('Error fetching order:', err);
+      setOrder(null);
+      setError(err instanceof Error ? err.message : 'Order not found');
+    } finally {
+      setIsLoading(false);
     }
   }, [id]);
 
-  return { order, isLoading, error };
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      void refetch();
+    }, 0);
+
+    return () => clearTimeout(timeoutId)
+  }, [refetch]);
+
+  useEffect(() => {
+    if (!id) return;
+
+    const channel = supabase
+      .channel(`order:${id}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'orders',
+          filter: `id=eq.${id}`,
+        },
+        () => {
+          void refetch();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      void supabase.removeChannel(channel);
+    };
+  }, [id, refetch]);
+
+  return { order, isLoading, error, refetch };
 }

@@ -31,11 +31,7 @@ export default function AdminLayout() {
       >
         <Stack.Screen name="index" />
         <Stack.Screen name="products" options={{ presentation: 'card' }} />
-        <Stack.Screen name="products/[id]" options={{ presentation: 'card' }} />
-        <Stack.Screen
-          name="products/images"
-          options={{ presentation: 'card' }}
-        />
+        <Stack.Screen name="products/images" options={{ presentation: 'card' }} />
         <Stack.Screen name="orders" options={{ presentation: 'card' }} />
         <Stack.Screen name="orders/[id]" options={{ presentation: 'card' }} />
         <Stack.Screen name="inquiries" options={{ presentation: 'card' }} />

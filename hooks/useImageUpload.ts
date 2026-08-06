@@ -1,5 +1,7 @@
 import { useCallback, useState, useRef } from 'react';
+import * as FileSystem from 'expo-file-system/legacy';
 import { supabase } from '@/lib/supabase';
+import { SUPABASE_URL } from '@/constants/config';
 
 interface ImageFile {
   uri: string;
@@ -11,6 +13,51 @@ interface UploadedImage {
   publicUrl: string;
   storagePath: string;
 }
+
+const normalizeStoragePath = (path: string) =>
+  path
+    .split('/')
+    .map((segment) => encodeURIComponent(segment))
+    .join('/');
+
+const buildPublicStorageUrl = (bucket: string, path: string) => {
+  const storageUrl = SUPABASE_URL.replace(/\/$/, '');
+
+  if (!storageUrl || storageUrl.includes('placeholder.supabase.co')) {
+    throw new Error(
+      'Supabase storage is not configured correctly. Add your project URL and anon key.'
+    );
+  }
+
+  return `${storageUrl}/storage/v1/object/public/${bucket}/${normalizeStoragePath(path)}`;
+};
+
+const readFileAsArrayBuffer = async (uri: string): Promise<ArrayBuffer> => {
+  if (uri.startsWith('data:')) {
+    const base64 = uri.split(',')[1];
+    const binaryString = atob(base64);
+    const bytes = new Uint8Array(binaryString.length);
+
+    for (let i = 0; i < binaryString.length; i += 1) {
+      bytes[i] = binaryString.charCodeAt(i);
+    }
+
+    return bytes.buffer;
+  }
+
+  const base64 = await FileSystem.readAsStringAsync(uri, {
+    encoding: FileSystem.EncodingType.Base64,
+  });
+
+  const binaryString = atob(base64);
+  const bytes = new Uint8Array(binaryString.length);
+
+  for (let i = 0; i < binaryString.length; i += 1) {
+    bytes[i] = binaryString.charCodeAt(i);
+  }
+
+  return bytes.buffer;
+};
 
 // Utility function to create a safe and unique file name for storage
 
@@ -30,8 +77,7 @@ const uploadFileToStorage = async (
 ): Promise<UploadedImage> => {
   const fileName = createSafeFileName(file.name);
 
-  const response = await fetch(file.uri);
-  const arrayBuffer = await response.arrayBuffer();
+  const arrayBuffer = await readFileAsArrayBuffer(file.uri);
 
   const { data, error } = await supabase.storage
     .from(bucket)
@@ -42,12 +88,8 @@ const uploadFileToStorage = async (
 
   if (error) throw error;
 
-  const { data: publicData } = supabase.storage
-    .from(bucket)
-    .getPublicUrl(data.path);
-
   return {
-    publicUrl: publicData.publicUrl,
+    publicUrl: buildPublicStorageUrl(bucket, data.path),
     storagePath: data.path,
   };
 };
@@ -67,14 +109,6 @@ export const useImageUpload = () => {
         setError('Another upload is already in progress');
         return null;
       }
-
-      console.log('Uploading image:', {
-        uri: file.uri,
-        name: file.name,
-        type: file.type,
-      });
-
-
       try {
         isUploadingRef.current = true;
         setUploading(true);
@@ -85,7 +119,6 @@ export const useImageUpload = () => {
 
         setUploadProgress(100);
 
-        console.log('Public URL:', result.publicUrl);
 
         return result.publicUrl;
       } catch (err) {
@@ -100,7 +133,7 @@ export const useImageUpload = () => {
     },
     []
   );
-  
+
 
   const deleteImage = useCallback(
     async (imageUrl: string, bucket: string = 'product-images') => {

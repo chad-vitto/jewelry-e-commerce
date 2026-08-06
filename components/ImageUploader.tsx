@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import {
   View,
   ScrollView,
@@ -34,10 +34,6 @@ export const ImageUploader = ({
   const { uploadImage, deleteImage, uploading, uploadProgress, error } =
     useImageUpload();
 
-  useEffect(() => {
-    setSelectedImages(initialImages);
-  }, [initialImages]);
-
   const pickImages = async () => {
     const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!permission.granted) {
@@ -69,7 +65,6 @@ export const ImageUploader = ({
         });
 
         if (url) {
-          console.log('UPLOADED URL:', url);
 
           updatedImages.push(url);
           added += 1;
@@ -77,7 +72,6 @@ export const ImageUploader = ({
       }
 
       if (added > 0) {
-        console.log('FINAL IMAGES:', updatedImages);
 
         const finalImages = updatedImages.slice(0, maxImages);
         setSelectedImages(finalImages);

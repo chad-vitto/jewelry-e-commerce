@@ -1,4 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import { AdminOrder, OrderStatus } from '@/types';
+import { ArrowLeft, ShoppingBag } from 'lucide-react-native';
+import { Colors, formatCurrency } from '@/constants';
+import { OrderStatusBadge, PaymentStatusBadge } from '@/components';
+import { Stack, useRouter } from 'expo-router';
+import { useAdminOrders } from '@/hooks';
+import { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -6,17 +12,6 @@ import {
   FlatList,
   Pressable,
 } from 'react-native';
-import { useRouter, Stack } from 'expo-router';
-import { useAdminOrders } from '@/hooks';
-import { OrderStatusBadge, PaymentStatusBadge } from '@/components';
-import { Colors, formatCurrency } from '@/constants';
-import {
-  ArrowLeft,
-  Search,
-  Filter,
-  ShoppingBag,
-} from 'lucide-react-native';
-import { Order, OrderStatus } from '@/types';
 
 const ORDER_FILTERS: { value: OrderStatus | 'all'; label: string }[] = [
   { value: 'all', label: 'All' },
@@ -26,6 +21,7 @@ const ORDER_FILTERS: { value: OrderStatus | 'all'; label: string }[] = [
   { value: 'shipped', label: 'Shipped' },
   { value: 'delivered', label: 'Delivered' },
   { value: 'cancelled', label: 'Cancelled' },
+  { value: 'refunded', label: "Refunded" },
 ];
 
 export default function AdminOrdersScreen() {
@@ -41,14 +37,14 @@ export default function AdminOrdersScreen() {
     ? orders
     : orders.filter((o) => o.order_status === selectedStatus);
 
-  const handleOrderPress = (order: Order) => {
+  const handleOrderPress = (order: AdminOrder) => {
     router.push({
       pathname: "/admin/orders/[id]" as any,
       params: { id: order.id },
     });
   };
 
-  const renderOrder = ({ item }: { item: Order }) => (
+  const renderOrder = ({ item }: { item: AdminOrder }) => (
     <Pressable
       style={styles.orderCard}
       onPress={() => handleOrderPress(item)}
@@ -66,10 +62,10 @@ export default function AdminOrdersScreen() {
 
       <View style={styles.orderCustomer}>
         <Text style={styles.customerName}>
-          {item.shipping_address.full_name}
+          {item.shipping_address?.full_name ?? "No shipping address"}
         </Text>
         <Text style={styles.customerEmail}>
-          {item.contact_info.email}
+          {item.shipping_address?.phone_number}
         </Text>
       </View>
 
@@ -80,7 +76,7 @@ export default function AdminOrdersScreen() {
 
       <View style={styles.orderFooter}>
         <Text style={styles.itemCount}>
-          {item.items.length} {item.items.length === 1 ? 'item' : 'items'}
+          {item.order_items.length} {item.order_items.length === 1 ? 'item' : 'items'}
         </Text>
         <Text style={styles.orderTotal}>
           {formatCurrency(item.total_amount_php)}

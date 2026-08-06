@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
 import { ShippingAddress, AddressForm } from '@/types';
 import { useAuthStore } from '@/store';
@@ -20,7 +20,7 @@ export function useShippingAddresses(): UseAddressesReturn {
   const [error, setError] = useState<string | null>(null);
   const user = useAuthStore((state) => state.user);
 
-  const fetchAddresses = async () => {
+  const fetchAddresses = useCallback(async () => {
     if (!user?.id) {
       setAddresses([]);
       setIsLoading(false);
@@ -49,11 +49,15 @@ export function useShippingAddresses(): UseAddressesReturn {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [user]);
 
   useEffect(() => {
-    fetchAddresses();
-  }, [user?.id]);
+    const timeoutId = setTimeout(() => {
+      void fetchAddresses();
+    }, 0);
+
+    return () => clearTimeout(timeoutId);
+  }, [fetchAddresses]);
 
   const addAddress = async (
     address: AddressForm

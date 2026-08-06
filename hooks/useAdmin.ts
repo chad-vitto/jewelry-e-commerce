@@ -1,8 +1,8 @@
 /* eslint-disable @typescript-eslint/no-require-imports */
 import { useState, useCallback, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
-import { Product, Order, Inquiry } from '@/types';
-import { MOCK_PRODUCTS } from '@/mock/products';
+import { Product, Order, AdminOrder, Inquiry } from '@/types';
+import { MOCK_PRODUCTS, MOCK_ADMIN_ORDERS } from '@/mock';
 import { useAuthStore } from '@/store';
 
 // Admin Products Hook
@@ -54,16 +54,18 @@ export function useAdminProducts(): UseAdminProductsReturn {
   }, []);
 
   useEffect(() => {
-    if (isAdmin) {
-      fetchProducts();
+    if (!isAdmin) {
+      return;
     }
+
+    void (async () => {
+      await fetchProducts();
+    })();
   }, [isAdmin, fetchProducts]);
 
   const createProduct = async (productData: Partial<Product>) => {
     try {
 
-      console.log('PRODUCT DATA:', productData);
-      console.log('PRODUCT IMAGES:', productData.product_images);
 
       const { data, error: insertError } = await supabase
         .from('products')
@@ -88,7 +90,7 @@ export function useAdminProducts(): UseAdminProductsReturn {
 
       await fetchProducts();
       return { error: null, data: data as Product };
-    } catch (err) {
+    } catch {
       return { error: 'An unexpected error occurred', data: null };
     }
   };
@@ -107,7 +109,7 @@ export function useAdminProducts(): UseAdminProductsReturn {
 
       await fetchProducts();
       return { error: null };
-    } catch (err) {
+    } catch {
       return { error: 'An unexpected error occurred' };
     }
   };
@@ -125,7 +127,7 @@ export function useAdminProducts(): UseAdminProductsReturn {
 
       await fetchProducts();
       return { error: null };
-    } catch (err) {
+    } catch {
       return { error: 'An unexpected error occurred' };
     }
   };
@@ -148,7 +150,7 @@ export function useAdminProducts(): UseAdminProductsReturn {
 
 // Admin Orders Hook
 interface UseAdminOrdersReturn {
-  orders: Order[];
+  orders: AdminOrder[];
   isLoading: boolean;
   error: string | null;
   fetchOrders: () => Promise<void>;
@@ -157,7 +159,7 @@ interface UseAdminOrdersReturn {
 }
 
 export function useAdminOrders(): UseAdminOrdersReturn {
-  const [orders, setOrders] = useState<Order[]>([]);
+  const [orders, setOrders] = useState<AdminOrder[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const isAdmin = useAuthStore((state) => state.isAdmin);
@@ -169,30 +171,35 @@ export function useAdminOrders(): UseAdminOrdersReturn {
     try {
       const { data, error: fetchError } = await supabase
         .from('orders')
-        .select('*')
+        .select(`
+  *,
+  shipping_address:shipping_addresses!orders_shipping_address_id_fkey (*),
+  order_items (*)
+`)
         .order('created_at', { ascending: false });
 
       if (fetchError) {
-        // eslint-disable-next-line @typescript-eslint/no-require-imports
-        const { MOCK_ORDERS } = require('@/mock');
-        setOrders(MOCK_ORDERS);
+        setOrders(MOCK_ADMIN_ORDERS);
         return;
       }
 
-      setOrders((data as Order[]) || []);
+      setOrders((data as AdminOrder[]) || []);
     } catch (err) {
       console.error('Error fetching admin orders:', err);
-      const { MOCK_ORDERS } = require('@/mock');
-      setOrders(MOCK_ORDERS);
+      setOrders(MOCK_ADMIN_ORDERS);
     } finally {
       setIsLoading(false);
     }
   }, []);
 
   useEffect(() => {
-    if (isAdmin) {
-      fetchOrders();
+    if (!isAdmin) {
+      return;
     }
+
+    void (async () => {
+      await fetchOrders();
+    })();
   }, [isAdmin, fetchOrders]);
 
   const updateOrderStatus = async (
@@ -218,7 +225,7 @@ export function useAdminOrders(): UseAdminOrdersReturn {
       await fetchOrders();
       return { error: null };
     } catch (err) {
-      return { error: 'An unexpected error occurred' };
+      return { error: 'An unexpected error occurred', err };
     }
   };
 
@@ -236,7 +243,7 @@ export function useAdminOrders(): UseAdminOrdersReturn {
       await fetchOrders();
       return { error: null };
     } catch (err) {
-      return { error: 'An unexpected error occurred' };
+      return { error: 'An unexpected error occurred', err };
     }
   };
 
@@ -293,9 +300,13 @@ export function useAdminInquiries(): UseAdminInquiriesReturn {
   }, []);
 
   useEffect(() => {
-    if (isAdmin) {
-      fetchInquiries();
+    if (!isAdmin) {
+      return;
     }
+
+    void (async () => {
+      await fetchInquiries();
+    })();
   }, [isAdmin, fetchInquiries]);
 
   const markAsRead = async (id: string) => {
@@ -312,7 +323,7 @@ export function useAdminInquiries(): UseAdminInquiriesReturn {
       await fetchInquiries();
       return { error: null };
     } catch (err) {
-      return { error: 'An unexpected error occurred' };
+      return { error: 'An unexpected error occurred', err };
     }
   };
 
@@ -334,7 +345,7 @@ export function useAdminInquiries(): UseAdminInquiriesReturn {
       await fetchInquiries();
       return { error: null };
     } catch (err) {
-      return { error: 'An unexpected error occurred' };
+      return { error: 'An unexpected error occurred', err };
     }
   };
 

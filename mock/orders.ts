@@ -1,6 +1,6 @@
-import { Order } from '@/types';
+import { AdminOrder } from '@/types';
 
-export const MOCK_ORDERS: Order[] = [
+export const MOCK_ORDERS: any[] = [
   {
     id: 'order-1',
     customer_id: 'user-1',
@@ -101,7 +101,7 @@ export const MOCK_ORDERS: Order[] = [
     subtotal_php: 125000,
     shipping_fee_php: 0,
     total_amount_php: 125000,
-    payment_method: 'paymaya',
+    payment_method: 'maya',
     payment_status: 'pending',
     order_status: 'processing',
     shipping_address: {
@@ -243,5 +243,26 @@ export const MOCK_ORDERS: Order[] = [
     notes: 'For proposal - please pack discreetly!',
     created_at: '2024-02-20T09:30:00Z',
     updated_at: '2024-02-20T09:30:00Z',
+  },
+];
+
+export const MOCK_ADMIN_ORDERS: AdminOrder[] = [
+  {
+    id: 'mock-admin-order-1',
+    customer_id: null,
+    subtotal_php: 0,
+    shipping_fee_php: 0,
+    total_amount_php: 0,
+    payment_method: 'gcash',
+    payment_status: 'pending',
+    payment_reference: null,
+    order_status: 'pending',
+    shipping_address_id: null,
+    shipping_address: null,
+    tracking_number: null,
+    notes: null,
+    created_at: '1970-01-01T00:00:00Z',
+    updated_at: '1970-01-01T00:00:00Z',
+    order_items: [],
   },
 ];

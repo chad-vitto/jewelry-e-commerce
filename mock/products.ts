@@ -1,9 +1,8 @@
 import { Product } from '@/types';
 
-
 const mockDate = '2026-01-01T00:00:00Z';
 
-export const MOCK_PRODUCTS: Product[] = [
+const RAW_PRODUCTS: Omit<Product, 'image_url'>[] = [
   {
     id: '1',
     sku: 'RNG-001',
@@ -34,7 +33,6 @@ export const MOCK_PRODUCTS: Product[] = [
       },
     ],
   },
-
   {
     id: '2',
     sku: 'EAR-001',
@@ -63,7 +61,6 @@ export const MOCK_PRODUCTS: Product[] = [
       },
     ],
   },
-
   {
     id: '3',
     sku: 'NEC-001',
@@ -92,7 +89,6 @@ export const MOCK_PRODUCTS: Product[] = [
       },
     ],
   },
-
   {
     id: '4',
     sku: 'PEN-001',
@@ -121,7 +117,6 @@ export const MOCK_PRODUCTS: Product[] = [
       },
     ],
   },
-
   {
     id: '5',
     sku: 'BRA-001',
@@ -150,7 +145,6 @@ export const MOCK_PRODUCTS: Product[] = [
       },
     ],
   },
-
   {
     id: '6',
     sku: 'WED-001',
@@ -181,16 +175,19 @@ export const MOCK_PRODUCTS: Product[] = [
   },
 ];
 
-export const getFeaturedProducts = (): Product[] => {
-  return MOCK_PRODUCTS.filter((p) => p.is_featured);
-};
+// ✅ Final export with image_url injected automatically
+export const MOCK_PRODUCTS: Product[] = RAW_PRODUCTS.map(p => ({
+  ...p,
+  image_url: p.product_images[0]?.image_url,
+}));
 
-export const getNewArrivals = (): Product[] => {
-  return [...MOCK_PRODUCTS]
+export const getFeaturedProducts = (): Product[] =>
+  MOCK_PRODUCTS.filter((p) => p.is_featured);
+
+export const getNewArrivals = (): Product[] =>
+  [...MOCK_PRODUCTS]
     .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
     .slice(0, 8);
-};
 
-export const getProductsByCategory = (category: string): Product[] => {
-  return MOCK_PRODUCTS.filter((p) => p.category === category);
-};
+export const getProductsByCategory = (category: string): Product[] =>
+  MOCK_PRODUCTS.filter((p) => p.category === category);
