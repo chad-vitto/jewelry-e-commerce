@@ -1,4 +1,6 @@
 import { Colors } from '@/constants';
+import { useTheme } from '@/hooks/useTheme';
+import type { AppColors } from '@/constants/themes';
 import { ImagePlus } from 'lucide-react-native';
 import {
   Text,
@@ -20,6 +22,8 @@ export function UploadProofButton({
   loading = false,
   disabled = false,
 }: UploadProofButtonProps) {
+  const { colors } = useTheme();
+  const styles = createStyles(colors);
   return (
     <TouchableOpacity
       style={[styles.card, (disabled || loading) && styles.buttonDisabled]}
@@ -30,7 +34,7 @@ export function UploadProofButton({
         <>
           <ActivityIndicator
             size="large"
-            color={Colors.gold.DEFAULT}
+            color={colors.gold.DEFAULT}
           />
 
           <Text style={styles.hint}>
@@ -41,7 +45,7 @@ export function UploadProofButton({
         <>
           <ImagePlus
             size={32}
-            color={Colors.gold.DEFAULT}
+            color={colors.gold.DEFAULT}
           />
           <Text style={styles.title}>{label}</Text>
           <Text style={styles.subtitle}>Supports PNG, JPG & HEIC</Text>
@@ -52,15 +56,15 @@ export function UploadProofButton({
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: AppColors) => StyleSheet.create({
   card: {
     borderWidth: 2,
-    borderColor: Colors.gold.DEFAULT,
+    borderColor: colors.gold.DEFAULT,
     borderStyle: 'dashed',
     borderRadius: 12,
     padding: 24,
     marginVertical: 12,
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
 
     alignItems: 'center',
     justifyContent: 'center',
@@ -69,22 +73,18 @@ const styles = StyleSheet.create({
   buttonDisabled: {
     opacity: 0.5,
   },
-  icon: {
-    fontSize: 32,
-    marginBottom: 8,
-  },
   title: {
     fontSize: 16,
     fontWeight: '600',
-    color: Colors.text.primary,
+    color: colors.text.primary,
   },
   subtitle: {
     fontSize: 14,
-    color: Colors.text.secondary,
+    color: colors.text.secondary,
   },
   hint: {
     fontSize: 12,
-    color: Colors.text.muted,
+    color: colors.text.muted,
     marginTop: 4,
   },
 });

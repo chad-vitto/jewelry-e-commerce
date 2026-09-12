@@ -1,6 +1,8 @@
 import { AdminOrder, OrderStatus } from '@/types';
 import { ArrowLeft, ShoppingBag } from 'lucide-react-native';
 import { Colors, formatCurrency } from '@/constants';
+import { useTheme } from '@/hooks/useTheme';
+import type { AppColors } from '@/constants/themes';
 import { OrderStatusBadge, PaymentStatusBadge } from '@/components';
 import { Stack, useRouter } from 'expo-router';
 import { useAdminOrders } from '@/hooks';
@@ -25,6 +27,8 @@ const ORDER_FILTERS: { value: OrderStatus | 'all'; label: string }[] = [
 ];
 
 export default function AdminOrdersScreen() {
+  const { colors } = useTheme();
+  const styles = createStyles(colors);
   const router = useRouter();
   const { orders, isLoading, fetchOrders } = useAdminOrders();
   const [selectedStatus, setSelectedStatus] = useState<OrderStatus | 'all'>('all');
@@ -92,7 +96,7 @@ export default function AdminOrdersScreen() {
       {/* Header */}
       <View style={styles.header}>
         <Pressable style={styles.backButton} onPress={() => router.back()}>
-          <ArrowLeft size={24} color={Colors.text.primary} />
+          <ArrowLeft size={24} color={colors.text.primary} />
         </Pressable>
         <Text style={styles.headerTitle}>Orders</Text>
         <View style={{ width: 44 }} />
@@ -138,7 +142,7 @@ export default function AdminOrdersScreen() {
         showsVerticalScrollIndicator={false}
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
-            <ShoppingBag size={48} color={Colors.text.muted} />
+            <ShoppingBag size={48} color={colors.text.muted} />
             <Text style={styles.emptyText}>No orders found</Text>
           </View>
         }
@@ -147,10 +151,10 @@ export default function AdminOrdersScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: AppColors) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.primary,
+    backgroundColor: colors.primary,
   },
   header: {
     flexDirection: 'row',
@@ -164,14 +168,14 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     alignItems: 'center',
     justifyContent: 'center',
   },
   headerTitle: {
     fontFamily: 'CormorantGaramond_700Bold',
     fontSize: 24,
-    color: Colors.text.primary,
+    color: colors.text.primary,
   },
   filterContainer: {
     paddingHorizontal: 12,
@@ -184,45 +188,45 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     paddingHorizontal: 14,
     borderRadius: 20,
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderWidth: 1,
-    borderColor: Colors.border.DEFAULT,
+    borderColor: colors.border.DEFAULT,
     gap: 6,
   },
   filterPillActive: {
-    backgroundColor: Colors.gold.DEFAULT,
-    borderColor: Colors.gold.DEFAULT,
+    backgroundColor: colors.gold.DEFAULT,
+    borderColor: colors.gold.DEFAULT,
   },
   filterText: {
     fontFamily: 'Inter_500Medium',
     fontSize: 13,
-    color: Colors.text.secondary,
+    color: colors.text.secondary,
   },
   filterTextActive: {
-    color: Colors.primary,
+    color: colors.primary,
   },
   filterBadge: {
-    backgroundColor: Colors.border.DEFAULT,
+    backgroundColor: colors.border.DEFAULT,
     borderRadius: 10,
     paddingHorizontal: 8,
     paddingVertical: 2,
   },
   filterBadgeActive: {
-    backgroundColor: Colors.primary + '40',
+    backgroundColor: colors.primary + '40',
   },
   filterBadgeText: {
     fontFamily: 'Inter_700Bold',
     fontSize: 11,
-    color: Colors.text.secondary,
+    color: colors.text.secondary,
   },
   filterBadgeTextActive: {
-    color: Colors.primary,
+    color: colors.primary,
   },
   listContent: {
     padding: 16,
   },
   orderCard: {
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: 12,
     padding: 16,
     marginBottom: 12,
@@ -235,12 +239,12 @@ const styles = StyleSheet.create({
   orderId: {
     fontFamily: 'Inter_700Bold',
     fontSize: 14,
-    color: Colors.text.primary,
+    color: colors.text.primary,
   },
   orderDate: {
     fontFamily: 'Inter_400Regular',
     fontSize: 12,
-    color: Colors.text.muted,
+    color: colors.text.muted,
   },
   orderCustomer: {
     marginBottom: 12,
@@ -248,13 +252,13 @@ const styles = StyleSheet.create({
   customerName: {
     fontFamily: 'Inter_500Medium',
     fontSize: 15,
-    color: Colors.text.primary,
+    color: colors.text.primary,
     marginBottom: 2,
   },
   customerEmail: {
     fontFamily: 'Inter_400Regular',
     fontSize: 13,
-    color: Colors.text.muted,
+    color: colors.text.muted,
   },
   orderBadges: {
     flexDirection: 'row',
@@ -269,12 +273,12 @@ const styles = StyleSheet.create({
   itemCount: {
     fontFamily: 'Inter_400Regular',
     fontSize: 13,
-    color: Colors.text.secondary,
+    color: colors.text.secondary,
   },
   orderTotal: {
     fontFamily: 'Inter_700Bold',
     fontSize: 16,
-    color: Colors.gold.DEFAULT,
+    color: colors.gold.DEFAULT,
   },
   emptyContainer: {
     alignItems: 'center',
@@ -283,7 +287,7 @@ const styles = StyleSheet.create({
   emptyText: {
     fontFamily: 'Inter_500Medium',
     fontSize: 16,
-    color: Colors.text.muted,
+    color: colors.text.muted,
     marginTop: 12,
   },
 });

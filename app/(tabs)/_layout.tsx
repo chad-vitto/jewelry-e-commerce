@@ -1,132 +1,139 @@
-import { Colors } from '@/constants';
-import {
-  ColorValue,
-  Platform,
-  StyleSheet,
-  Text,
-  View
-  } from 'react-native';
+import React, { useRef } from 'react';
+import { ColorValue, Platform, StyleSheet, Text, View } from 'react-native';
 import { Tabs } from 'expo-router';
-import { useCartStore } from '@/store';
-import {
-  Home,
-  ShoppingBag,
-  Heart,
-  User,
-  ShoppingCart,
-} from 'lucide-react-native';
+import { useCartStore, useFlyToCartStore, useWishlistStore } from '@/store';
+import { Home, ShoppingBag, Heart, User, ShoppingCart, } from 'lucide-react-native';
+import { useTheme } from '@/hooks/useTheme';
+import type { AppColors } from '@/constants/themes';
 
 export default function TabLayout() {
+  const { colors } = useTheme();
+  const styles = createStyles(colors);
+
   const itemCount = useCartStore((state) =>
     state.items.reduce((total, item) => total + item.quantity, 0),
   );
 
+  const wishlistCount = useWishlistStore((state) => state.productIds.length,);
+
   const ICON_SIZE = 26;
 
   return (
-    <Tabs
-      screenOptions={{
-        headerShown: false,
+    <>
+      <Tabs
+        screenOptions={{
+          headerShown: false,
 
-        tabBarItemStyle: {
-          height: '100%',
-          justifyContent: 'center',
-          alignItems: 'center',
-        },
-
-        tabBarStyle: {
-          position: 'absolute',
-          marginHorizontal: 21,
-          bottom: 16,
-
-          height: Platform.OS === 'ios' ? 68 : 65,
-
-          backgroundColor: Colors.surface,
-
-          borderRadius: 30,
-
-          borderTopWidth: 0,
-
-          elevation: 12,
-
-          shadowColor: '#000',
-          shadowOffset: {
-            width: 0,
-            height: 4,
+          tabBarItemStyle: {
+            height: '100%',
+            justifyContent: 'center',
+            alignItems: 'center',
           },
-          shadowOpacity: 0.25,
-          shadowRadius: 12,
-        },
 
-        tabBarActiveTintColor: Colors.gold.DEFAULT,
-        tabBarInactiveTintColor: Colors.text.muted,
-
-        tabBarShowLabel: false,
-      }}
-    >
-      <Tabs.Screen
-        name="index"
-        options={{
-          title: 'Home',
-          tabBarIcon: ({ focused, color }) => (
-            <TabIconWrapper focused={focused}>
-              <Home size={ICON_SIZE} color={color} />
-            </TabIconWrapper>
-          ),
-        }}
-      />
-
-      <Tabs.Screen
-        name="shop"
-        options={{
-          title: 'Shop',
-          tabBarIcon: ({ focused, color }) => (
-            <TabIconWrapper focused={focused}>
-              <ShoppingBag size={ICON_SIZE} color={color} />
-            </TabIconWrapper>
-          ),
-        }}
-      />
-
-      <Tabs.Screen
-        name="wishlist"
-        options={{
-          title: 'Wishlist',
-          tabBarIcon: ({ focused, color }) => (
-            <TabIconWrapper focused={focused}>
-              <Heart size={ICON_SIZE} color={color} />
-            </TabIconWrapper>
-          ),
-        }}
-      />
-
-      <Tabs.Screen
-        name="cart"
-        options={{
-          title: 'Cart',
           tabBarStyle: {
-            display: 'none',
-          },
-          tabBarIcon: ({ focused, color }) => (
-            <TabIconWrapper focused={focused}>
-              <CartIcon size={ICON_SIZE} color={color} count={itemCount} />
-            </TabIconWrapper>
-          ),
-        }}
-      />
+            position: 'absolute',
+            marginHorizontal: 21,
+            bottom: 16,
 
-      <Tabs.Screen
-        name="profile"
-        options={{
-          title: 'Profile',
-          tabBarIcon: ({ focused, color }) => (
-            <TabIconWrapper focused={focused}>
-              <User size={ICON_SIZE} color={color} />
-            </TabIconWrapper>
-          ),
+            height: Platform.OS === 'ios' ? 68 : 65,
+
+            backgroundColor: colors.surface,
+
+            borderRadius: 30,
+
+            borderTopWidth: 0,
+
+            elevation: 12,
+
+            shadowColor: '#000',
+            shadowOffset: {
+              width: 0,
+              height: 4,
+            },
+            shadowOpacity: 0.25,
+            shadowRadius: 12,
+          },
+
+          tabBarActiveTintColor: colors.gold.DEFAULT,
+          tabBarInactiveTintColor: colors.text.muted,
+
+          tabBarShowLabel: false,
         }}
-      />
-    </Tabs>
+      >
+        <Tabs.Screen
+          name="index"
+          options={{
+            title: 'Home',
+            tabBarIcon: ({ focused, color }) => (
+              <TabIconWrapper focused={focused}>
+                <Home size={ICON_SIZE} color={color} />
+              </TabIconWrapper>
+            ),
+          }}
+        />
+
+        <Tabs.Screen
+          name="shop"
+          options={{
+            title: 'Shop',
+            tabBarIcon: ({ focused, color }) => (
+              <TabIconWrapper focused={focused}>
+                <ShoppingBag size={ICON_SIZE} color={color} />
+              </TabIconWrapper>
+            ),
+          }}
+        />
+
+        <Tabs.Screen
+          name="wishlist"
+          options={{
+            title: 'Wishlist',
+            tabBarIcon: ({ focused, color }) => (
+              <TabIconWrapper focused={focused}>
+                <View>
+                  <Heart size={ICON_SIZE} color={color} />
+
+                  {wishlistCount > 0 && (
+                    <View style={styles.cartBadge}>
+                      <Text style={styles.cartBadgeText}>
+                        {wishlistCount > 99 ? '99+' : wishlistCount}
+                      </Text>
+                    </View>
+                  )}
+                </View>
+              </TabIconWrapper>
+            ),
+          }}
+        />
+
+        <Tabs.Screen
+          name="cart"
+          options={{
+            title: 'Cart',
+            tabBarStyle: {
+              display: 'none',
+            },
+            tabBarIcon: ({ focused, color }) => (
+              <TabIconWrapper focused={focused}>
+                <CartIcon size={ICON_SIZE} color={color} count={itemCount} />
+              </TabIconWrapper>
+            ),
+          }}
+        />
+
+        <Tabs.Screen
+          name="profile"
+          options={{
+            title: 'Profile',
+            tabBarIcon: ({ focused, color }) => (
+              <TabIconWrapper focused={focused}>
+                <User size={ICON_SIZE} color={color} />
+              </TabIconWrapper>
+            ),
+          }}
+        />
+      </Tabs>
+    </>
   );
 }
 
@@ -137,6 +144,10 @@ function TabIconWrapper({
   focused: boolean;
   children: React.ReactNode;
 }) {
+
+  const { colors } = useTheme();
+  const styles = createStyles(colors);
+
   return (
     <View style={[styles.iconContainer, focused && styles.activePill]}>
       {children}
@@ -153,8 +164,38 @@ function CartIcon({
   color: ColorValue;
   count: number;
 }) {
+  const { colors } = useTheme();
+  const styles = createStyles(colors);
+
+  const cartRef = useRef<View>(null);
+  const setCartPosition = useFlyToCartStore((state) => state.setCartPosition);
+
+
   return (
-    <View>
+    <View
+      ref={cartRef}
+      onLayout={() => {
+        requestAnimationFrame(() => {
+          cartRef.current?.measureInWindow((x, y, width, height) => {
+            const position = {
+              x: x + width / 2,
+              y: y + height / 2,
+            };
+
+            // Ignore invalid measurements while the tab bar is hidden/not laid out
+            if (
+              width <= 0 ||
+              height <= 0 ||
+              (position.x === 0 && position.y === 0)
+            ) {
+              return;
+            }
+
+            setCartPosition(position);
+          });
+        });
+      }}
+    >
       <ShoppingCart size={size} color={color} />
 
       {count > 0 && (
@@ -166,7 +207,7 @@ function CartIcon({
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: AppColors) => StyleSheet.create({
   iconContainer: {
     width: 68,
     height: 48,
@@ -192,7 +233,7 @@ const styles = StyleSheet.create({
     right: -10,
     top: -6,
 
-    backgroundColor: Colors.gold.DEFAULT,
+    backgroundColor: colors.gold.DEFAULT,
 
     minWidth: 18,
     height: 18,

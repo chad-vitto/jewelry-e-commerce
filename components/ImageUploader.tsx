@@ -13,6 +13,8 @@ import * as ImagePicker from 'expo-image-picker';
 import { X, Upload, ChevronLeft, ChevronRight } from 'lucide-react-native';
 import { useImageUpload } from '@/hooks/useImageUpload';
 import { Colors } from '@/constants';
+import { useTheme } from '@/hooks/useTheme';
+import type { AppColors } from '@/constants/themes';
 import { Image } from 'expo-image';
 
 interface ImageUploaderProps {
@@ -30,6 +32,8 @@ export const ImageUploader = ({
   maxImages = 5,
   compact = false,
 }: ImageUploaderProps) => {
+  const { colors } = useTheme();
+  const styles = createStyles(colors);
   const [selectedImages, setSelectedImages] = useState<string[]>(initialImages);
   const { uploadImage, deleteImage, uploading, uploadProgress, error } =
     useImageUpload();
@@ -128,7 +132,7 @@ export const ImageUploader = ({
         >
           {uploading ? (
             <>
-              <ActivityIndicator size="small" color={Colors.gold.DEFAULT} />
+              <ActivityIndicator size="small" color={colors.gold.DEFAULT} />
               <Text style={styles.compactText}>Uploading...</Text>
               <Text style={styles.compactSubtext}>
                 {uploadProgress}% complete
@@ -136,7 +140,7 @@ export const ImageUploader = ({
             </>
           ) : (
             <>
-              <Upload size={20} color={Colors.gold.DEFAULT} />
+              <Upload size={20} color={colors.gold.DEFAULT} />
               <Text style={styles.compactText}>
                 {selectedImages.length}/{maxImages}
               </Text>
@@ -183,13 +187,13 @@ export const ImageUploader = ({
       >
         {uploading ? (
           <>
-            <ActivityIndicator size="large" color={Colors.gold.DEFAULT} />
+            <ActivityIndicator size="large" color={colors.gold.DEFAULT} />
             <Text style={styles.uploadText}>Uploading...</Text>
             <Text style={styles.uploadSubtext}>{uploadProgress}% complete</Text>
           </>
         ) : (
           <>
-            <Upload size={32} color={Colors.gold.DEFAULT} />
+            <Upload size={32} color={colors.gold.DEFAULT} />
             <Text style={styles.uploadText}>Add Images</Text>
             <Text style={styles.uploadSubtext}>
               Tap to select up to {maxImages} photos
@@ -220,7 +224,7 @@ export const ImageUploader = ({
                     i === 0 && styles.reorderButtonDisabled,
                   ]}
                 >
-                  <ChevronLeft size={16} color={Colors.primary} />
+                  <ChevronLeft size={16} color={colors.primary} />
                 </TouchableOpacity>
                 <TouchableOpacity
                   onPress={() => moveImage(i, 'right')}
@@ -231,7 +235,7 @@ export const ImageUploader = ({
                       styles.reorderButtonDisabled,
                   ]}
                 >
-                  <ChevronRight size={16} color={Colors.primary} />
+                  <ChevronRight size={16} color={colors.primary} />
                 </TouchableOpacity>
               </View>
               <TouchableOpacity
@@ -258,7 +262,7 @@ export const ImageUploader = ({
 const { width } = Dimensions.get('window');
 const imageSize = (width - 48) / 3;
 
-const styles = StyleSheet.create({
+const createStyles = (colors: AppColors) => StyleSheet.create({
   container: {
     gap: 16,
     marginBottom: 24,
@@ -271,21 +275,21 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 16,
     fontFamily: 'Inter_600SemiBold',
-    color: Colors.text.primary,
+    color: colors.text.primary,
   },
   subtitle: {
     fontSize: 14,
     fontFamily: 'Inter_500Medium',
-    color: Colors.text.secondary,
+    color: colors.text.secondary,
   },
   uploadButton: {
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: 12,
     padding: 24,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 2,
-    borderColor: Colors.gold.DEFAULT,
+    borderColor: colors.gold.DEFAULT,
     borderStyle: 'dashed',
     gap: 8,
     minHeight: 120,
@@ -296,12 +300,12 @@ const styles = StyleSheet.create({
   uploadText: {
     fontSize: 16,
     fontFamily: 'Inter_600SemiBold',
-    color: Colors.gold.DEFAULT,
+    color: colors.gold.DEFAULT,
   },
   uploadSubtext: {
     fontSize: 12,
     fontFamily: 'Inter_400Regular',
-    color: Colors.text.secondary,
+    color: colors.text.secondary,
   },
   imageScroll: {
     marginHorizontal: -16,
@@ -325,7 +329,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 6,
     right: 6,
-    backgroundColor: Colors.gold.DEFAULT,
+    backgroundColor: colors.gold.DEFAULT,
     width: 24,
     height: 24,
     borderRadius: 12,
@@ -343,7 +347,7 @@ const styles = StyleSheet.create({
     width: 28,
     height: 28,
     borderRadius: 14,
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -353,7 +357,7 @@ const styles = StyleSheet.create({
   imageNumberText: {
     fontSize: 12,
     fontFamily: 'Inter_600SemiBold',
-    color: Colors.primary,
+    color: colors.primary,
   },
   deleteButton: {
     position: 'absolute',
@@ -373,7 +377,7 @@ const styles = StyleSheet.create({
   emptyText: {
     fontSize: 14,
     fontFamily: 'Inter_500Medium',
-    color: Colors.text.muted,
+    color: colors.text.muted,
   },
 
   // Compact mode styles
@@ -387,7 +391,7 @@ const styles = StyleSheet.create({
     width: 60,
     height: 60,
     borderRadius: 8,
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     alignItems: 'center',
     justifyContent: 'center',
     gap: 4,
@@ -398,17 +402,17 @@ const styles = StyleSheet.create({
   compactText: {
     fontSize: 10,
     fontFamily: 'Inter_600SemiBold',
-    color: Colors.gold.DEFAULT,
+    color: colors.gold.DEFAULT,
   },
   compactSubtext: {
     fontSize: 10,
     fontFamily: 'Inter_400Regular',
-    color: Colors.text.secondary,
+    color: colors.text.secondary,
   },
   errorText: {
     fontSize: 12,
     fontFamily: 'Inter_500Medium',
-    color: Colors.status.error,
+    color: colors.status.error,
     marginTop: 8,
   },
   compactScroll: {

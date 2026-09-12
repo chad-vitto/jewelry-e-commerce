@@ -1,10 +1,12 @@
 import React from 'react';
-import { Colors, formatCurrency, Shadows } from '@/constants';
+import { formatCurrency, Shadows } from '@/constants';
 import { Dimensions, Pressable, StyleSheet, Text, View } from 'react-native';
 import { Heart } from 'lucide-react-native';
 import { Image } from 'expo-image';
 import { Product } from '@/types';
 import { useRouter } from 'expo-router';
+import { useTheme } from '@/hooks/useTheme';
+import type { AppColors } from '@/constants/themes';
 
 const { width } = Dimensions.get('window');
 const CARD_WIDTH = (width - 48) / 2;
@@ -22,7 +24,11 @@ function ProductCardComponent({
   isWishlisted = false,
   onWishlistToggle,
 }: ProductCardProps) {
+
   const router = useRouter();
+
+  const { colors } = useTheme();
+  const styles = createStyles(colors);
 
   const handlePress = () => {
     if (onPress) {
@@ -56,8 +62,8 @@ function ProductCardComponent({
         >
           <Heart
             size={20}
-            color={isWishlisted ? Colors.gold.DEFAULT : Colors.text.muted}
-            fill={isWishlisted ? Colors.gold.DEFAULT : 'transparent'}
+            color={isWishlisted ? colors.gold.DEFAULT : colors.text.muted}
+            fill={isWishlisted ? colors.gold.DEFAULT : 'transparent'}
           />
         </Pressable>
 
@@ -86,11 +92,11 @@ function ProductCardComponent({
 
 export const ProductCard = React.memo(ProductCardComponent);
 
-const styles = StyleSheet.create({
+const createStyles = (colors: AppColors) => StyleSheet.create({
   container: {
     width: CARD_WIDTH,
     marginBottom: 16,
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: 16,
     overflow: 'hidden',
   },
@@ -102,7 +108,7 @@ const styles = StyleSheet.create({
   image: {
     width: '100%',
     height: '100%',
-    backgroundColor: Colors.surfaceLight,
+    backgroundColor: colors.surfaceLight,
   },
   wishlistButton: {
     position: 'absolute',
@@ -121,14 +127,14 @@ const styles = StyleSheet.create({
     left: 12,
     paddingHorizontal: 10,
     paddingVertical: 4,
-    backgroundColor: Colors.gold.DEFAULT,
+    backgroundColor: colors.gold.DEFAULT,
     borderRadius: 12,
     ...Shadows.lg,
   },
   featuredText: {
     fontFamily: 'Inter_600SemiBold',
     fontSize: 10,
-    color: Colors.primary,
+    color: colors.primary,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
     ...Shadows.lg,
@@ -139,24 +145,24 @@ const styles = StyleSheet.create({
   name: {
     fontFamily: 'CormorantGaramond_600SemiBold',
     fontSize: 16,
-    color: Colors.text.primary,
+    color: colors.text.primary,
     marginBottom: 4,
   },
   price: {
     fontFamily: 'Inter_700Bold',
     fontSize: 16,
-    color: Colors.text.primary,
+    color: colors.text.primary,
   },
 
   productSpecs: {
     marginBottom: 5,
-    fontFamily: 'Inter_500medium',
+    fontFamily: 'Inter_500Medium',
     fontSize: 12,
-    color: Colors.text.secondary,
+    color: colors.text.secondary,
   },
 
   karatText: {
-    color: Colors.gold.DEFAULT,
+    color: colors.gold.DEFAULT,
     fontFamily: 'Inter_600SemiBold',
   },
 });

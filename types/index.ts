@@ -1,4 +1,3 @@
-// Database entity types
 
 import { Key } from "react";
 
@@ -111,6 +110,10 @@ export interface Order {
   shipping_address?: ShippingAddress | null;
 
   tracking_number: string | null;
+  processing_at: string | null;
+  shipped_at: string | null;
+  shipping_carrier: string | null;
+  delivered_at: string | null;
   notes: string | null;
 
   created_at: string;
@@ -174,6 +177,11 @@ export interface ShippingAddressForm {
 
 export interface ShippingAddressData extends ShippingAddressForm {
   id: string;
+}
+export interface SaveAddressPayload {
+  address: ShippingAddressForm;
+  label: string;
+  is_default: boolean;
 }
 export interface WishlistItem {
   id: string;

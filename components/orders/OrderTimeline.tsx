@@ -1,13 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { Colors } from '@/constants';
-import { formatDistanceToNow } from 'date-fns/formatDistanceToNow';
+import { format } from 'date-fns';
 import { OrderStatus, PaymentProofStatus } from '@/types';
 import {
   StyleSheet,
   Text,
   View,
   Animated,
-  Pressable,
 } from 'react-native';
 import {
   Package,
@@ -22,7 +21,7 @@ import {
 interface OrderTimelineProps {
   orderStatus: OrderStatus;
   paymentStatus: PaymentProofStatus;
-  timestamps?: Record<string, string>;
+  timestamps?: Partial<Record<string, string>>;
 }
 
 type TimelineStep = {
@@ -45,23 +44,16 @@ function buildTimeline(
   paymentStatus: PaymentProofStatus
 ): TimelineStep[] {
   const orderPlaced = true;
+  const preparing = ['processing', 'shipped', 'delivered'].includes(orderStatus);
 
-  const preparing =
-    orderStatus === 'processing' ||
-    orderStatus === 'shipped' ||
-    orderStatus === 'delivered';
+  const shipped = ['shipped', 'delivered'].includes(orderStatus);
 
-  const shipped =
-    orderStatus === 'shipped' ||
-    orderStatus === 'delivered';
-
-  const delivered =
-    orderStatus === 'delivered';
+  const delivered = orderStatus === 'delivered';
 
   return [
     {
       key: 'placed',
-      label: 'Order Placed',
+      label: 'Placed',
       icon: Package,
       completed: orderPlaced,
       active: false,
@@ -77,8 +69,8 @@ function buildTimeline(
           : paymentStatus === PaymentProofStatus.Submitted
             ? 'Verification in Progress'
             : paymentStatus === PaymentProofStatus.Verified
-              ? 'Payment Verified'
-              : 'Payment Rejected',
+              ? 'Verified'
+              : 'Rejected',
 
       icon: CreditCard,
 
@@ -94,7 +86,7 @@ function buildTimeline(
 
     {
       key: 'processing',
-      label: 'Preparing Order',
+      label: 'Preparing',
       icon: Clock3,
       completed: preparing,
       active:
@@ -134,82 +126,109 @@ function TimelineIcon({
   isActive?: boolean;
 }) {
   const [pulseAnim] = useState(() => new Animated.Value(1));
+  const [glowAnim] = useState(() => new Animated.Value(0));
 
   useEffect(() => {
     if (!isActive) {
       pulseAnim.setValue(1);
+      glowAnim.setValue(0);
       return;
     }
 
     const animation = Animated.loop(
-      Animated.sequence([
-        Animated.timing(pulseAnim, {
-          toValue: 1.2,
-          duration: 600,
-          useNativeDriver: true,
-        }),
-        Animated.timing(pulseAnim, {
-          toValue: 1,
-          duration: 600,
-          useNativeDriver: true,
-        }),
+      Animated.parallel([
+        Animated.sequence([
+          Animated.timing(pulseAnim, {
+            toValue: 1.3,
+            duration: 1200,
+            useNativeDriver: true,
+          }),
+          Animated.timing(pulseAnim, {
+            toValue: 1,
+            duration: 1200,
+            useNativeDriver: true,
+          }),
+        ]),
+
+        Animated.sequence([
+          Animated.timing(glowAnim, {
+            toValue: 1,
+            duration: 1200,
+            useNativeDriver: false,
+          }),
+          Animated.timing(glowAnim, {
+            toValue: 0,
+            duration: 1200,
+            useNativeDriver: false,
+          }),
+        ]),
       ])
     );
 
     animation.start();
 
     return () => animation.stop();
-  }, [isActive, pulseAnim]);
+  }, [isActive, pulseAnim, glowAnim]);
 
-  const backgroundColor = completed
-    ? Colors.status.success
-    : isActive
+  const borderColor =
+    completed || isActive
       ? Colors.gold.DEFAULT
       : Colors.border.subtle;
 
-  const iconColor = completed || isActive
-    ? Colors.surface
-    : Colors.text.secondary;
+  const iconColor =
+    completed || isActive
+      ? Colors.gold.DEFAULT
+      : Colors.text.secondary;
 
   return (
     <Animated.View
       style={[
         styles.iconCircle,
         {
-          backgroundColor,
-          transform: [{ scale: pulseAnim }],
+          flexShrink: 0,
+          borderColor,
+
+          shadowColor: Colors.gold.DEFAULT,
+          shadowOpacity: glowAnim.interpolate({
+            inputRange: [0, 1],
+            outputRange: [0.08, 0.22],
+          }),
+          shadowRadius: glowAnim.interpolate({
+            inputRange: [0, 1],
+            outputRange: [3, 6],
+          }),
+          elevation: glowAnim.interpolate({
+            inputRange: [0, 1],
+            outputRange: [2, 4],
+          }),
         },
       ]}
     >
-      <Icon
-        size={10}
-        color={iconColor}
-      />
+      <Animated.View
+        style={{
+          transform: [{ scale: pulseAnim }],
+        }}
+      >
+        <Icon
+          size={22}
+          color={iconColor}
+        />
+      </Animated.View>
+
+      {completed && (
+        <View style={styles.checkBadge}>
+          <CircleCheck
+            size={12}
+            color={Colors.surface}
+          />
+        </View>
+      )}
     </Animated.View>
   );
 }
 
-export function OrderTimeline({ orderStatus, paymentStatus, timestamps = {} }: OrderTimelineProps) {
-  const [tooltipIndex, setTooltipIndex] = useState<number | null>(null);
-  const [fadeAnim] = useState(() => new Animated.Value(0));
-
-
-  const showTooltip = (index: number) => {
-    setTooltipIndex(index);
-    Animated.timing(fadeAnim, {
-      toValue: 1,
-      duration: 200,
-      useNativeDriver: true,
-    }).start();
-  };
-
-  const hideTooltip = () => {
-    Animated.timing(fadeAnim, {
-      toValue: 0,
-      duration: 200,
-      useNativeDriver: true,
-    }).start(() => setTooltipIndex(null));
-  };
+export function OrderTimeline({ orderStatus, paymentStatus, timestamps = {
+} }: OrderTimelineProps) {
 
   const timeline = buildTimeline(
     orderStatus,
@@ -223,8 +242,6 @@ export function OrderTimeline({ orderStatus, paymentStatus, timestamps = {} }: O
         ? SPECIAL_TIMELINE_STATES.refunded
         : null;
 
-
-
   return (
     <View style={styles.container}>
       <View style={styles.header}>
@@ -232,85 +249,97 @@ export function OrderTimeline({ orderStatus, paymentStatus, timestamps = {} }: O
         <Text style={styles.title}>Order Timeline</Text>
       </View>
 
-      {!specialState &&
-        timeline.map((step, index) => {
-          const completed = step.completed;
-          const Icon = step.icon;
-          const isLast = index === timeline.length - 1;
-          const isActive = step.active;
-          const timestamp =
-            step.timestampKey
+      {!specialState && (
+        <View style={styles.timelineRow}>
+          {timeline.map((step, index) => {
+            const Icon = step.icon;
+            const completed = step.completed;
+            const active = step.active;
+
+            const timestamp = step.timestampKey
               ? timestamps[step.timestampKey]
               : undefined;
 
-          const nextStep = timeline[index + 1];
-          const connectorCompleted =
-            completed || nextStep?.active;
+            const nextStep = timeline[index + 1];
 
-          return (
-            <Pressable
-              key={step.key}
-              onPress={() =>
-                tooltipIndex === index ? hideTooltip() : showTooltip(index)
-              }
-              style={styles.stepRow}
-            >
-              <View style={styles.iconColumn}>
-                <TimelineIcon
-                  completed={completed}
-                  Icon={Icon}
-                  isActive={isActive}
-                />
-                {!isLast && <View style={[styles.connector, {
-                  backgroundColor: connectorCompleted
-                    ? Colors.status.success
-                    : Colors.border.subtle,
-                }]} />}
-              </View>
-              <View style={styles.labelColumn}>
-                <View style={styles.labelRow}>
-                  <Icon
-                    size={16}
-                    color={
-                      completed
-                        ? Colors.status.success
-                        : isActive
-                          ? Colors.gold.DEFAULT
-                          : Colors.text.secondary
-                    }
+            const leftConnectorColor =
+              completed || active
+                ? Colors.gold.DEFAULT
+                : Colors.border.subtle;
+
+            const rightConnectorColor =
+              nextStep?.completed || nextStep?.active
+                ? Colors.gold.DEFAULT
+                : Colors.border.subtle;
+
+            return (
+              <View
+                key={step.key}
+                style={styles.timelineItem}
+              >
+                {/* Icon + Connectors */}
+                <View style={styles.iconRow}>
+
+                  {/* Left Connector */}
+                  {index !== 0 && (
+                    <View
+                      style={[
+                        styles.connectorLine,
+                        { backgroundColor: leftConnectorColor },
+                      ]}
+                    />
+                  )}
+
+                  <TimelineIcon
+                    completed={completed}
+                    Icon={Icon}
+                    isActive={active}
                   />
-                  <Text
-                    style={[
-                      styles.stepLabel,
-                      completed
-                        ? styles.completedLabel
-                        : isActive
-                          ? { color: Colors.gold.DEFAULT, fontWeight: '600' }
-                          : styles.pendingLabel,
-                    ]}
-                  >{step.label}
-                  </Text>
+
+                  {/* Right Connector */}
+                  {index !== timeline.length - 1 && (
+                    <View
+                      style={[
+                        styles.connectorLine,
+                        { backgroundColor: rightConnectorColor },
+                      ]}
+                    />
+                  )}
+
                 </View>
 
-                {tooltipIndex === index && (
-                  <Animated.View
-                    style={[styles.tooltip, { opacity: fadeAnim }]}
-                  >
-                    <Text style={styles.tooltipText}>
-                      {step.label}
-                      {timestamp
-                        ? ` • ${formatDistanceToNow(
-                          new Date(timestamp),
-                          { addSuffix: true }
-                        )}`
-                        : ''}
+                <Text
+                  numberOfLines={1}
+                  adjustsFontSizeToFit
+                  minimumFontScale={0.85}
+                  style={[
+                    styles.stepLabel,
+                    completed
+                      ? styles.completedLabel
+                      : active
+                        ? styles.activeLabel
+                        : styles.pendingLabel,
+                  ]}
+                >
+                  {step.label}
+                </Text>
+
+                {timestamp && (
+                  <>
+                    <Text style={styles.stepDate}>
+                      {format(new Date(timestamp), 'MMM d')}
                     </Text>
-                  </Animated.View>
+
+                    <Text style={styles.stepTime}>
+                      {format(new Date(timestamp), 'h:mm a')}
+                    </Text>
+                  </>
                 )}
               </View>
-            </Pressable>
-          );
-        })}
+            );
+          })}
+        </View>
+      )}
 
       {specialState && (
         <View style={styles.stepRow}>
@@ -325,7 +354,7 @@ export function OrderTimeline({ orderStatus, paymentStatus, timestamps = {} }: O
             >
               {(() => {
                 const Icon = specialState.icon;
-                return <Icon size={10} color={Colors.surface} />;
+                return <Icon size={20} color={Colors.surface} />;
               })()}
             </View>
           </View>
@@ -359,13 +388,13 @@ export function OrderTimeline({ orderStatus, paymentStatus, timestamps = {} }: O
   );
 }
 
-
 const styles = StyleSheet.create({
   container: {
     backgroundColor: Colors.surfaceLight,
     borderRadius: 20,
-    padding: 18,
     marginBottom: 16,
+    paddingHorizontal: 12,
+    paddingVertical: 18,
     shadowColor: '#000',
     shadowOpacity: 0.05,
     shadowRadius: 10,
@@ -383,39 +412,105 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: Colors.text.primary,
   },
-  stepRow: { flexDirection: 'row', alignItems: 'flex-start', marginVertical: 6 },
-  iconColumn: { alignItems: 'center', width: 20 },
+  stepRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginVertical: 6
+  },
+  iconColumn: {
+    alignItems: 'center',
+    width: 20
+  },
   iconCircle: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
+    width: 46,
+    height: 46,
+    borderRadius: 23,
+
+    borderWidth: 2,
+    borderColor: Colors.gold.DEFAULT,
+
+    backgroundColor: Colors.surface,
+
     justifyContent: 'center',
     alignItems: 'center',
+
+    shadowOffset: {
+      width: 0,
+      height: 0,
+    },
   },
-  connector: {
-    width: 2,
-    flex: 1,
-    backgroundColor: Colors.border.subtle,
-    marginTop: 2,
-    marginBottom: 2,
-  },
-  labelColumn: { marginLeft: 8, flex: 1 },
-  labelRow: { flexDirection: 'row', alignItems: 'center' },
-  stepLabel: { fontSize: 14 },
-  completedLabel: { color: Colors.status.success, fontWeight: '600' },
-  pendingLabel: { color: Colors.text.secondary },
-  tooltip: {
-    backgroundColor: Colors.surfaceLight,
-    padding: 8,
+  checkBadge: {
+    position: 'absolute',
+    right: -2,
+    bottom: -2,
+    width: 16,
+    height: 16,
     borderRadius: 8,
-    marginTop: 4,
-    shadowColor: '#000',
-    shadowOpacity: 0.2,
-    shadowRadius: 6,
-    shadowOffset: { width: 0, height: 2 },
+    backgroundColor: Colors.status.success,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: Colors.surfaceLight,
   },
-  tooltipText: {
+  labelColumn: {
+    marginLeft: 8,
+    flex: 1
+  },
+  labelRow: {
+    flexDirection: 'row',
+    alignItems: 'center'
+  },
+  completedLabel: {
+    color: Colors.status.success,
+    fontWeight: '600'
+  },
+  pendingLabel: {
+    color: Colors.text.secondary
+  },
+  timelineRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+  },
+  timelineItem: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  iconRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    width: '100%',
+    height: 42,
+  },
+  connectorLine: {
+    flex: 1,
+    height: 2,
+    marginHorizontal: 0,
+  },
+  activeLabel: {
+    color: Colors.gold.DEFAULT,
+    fontWeight: '700',
+  },
+  stepDate: {
+    marginTop: 6,
+    fontSize: 10,
+    color: Colors.gold.DEFAULT,
+    fontFamily: 'Inter_500Medium',
+    textAlign: 'center',
+  },
+  stepTime: {
+    fontSize: 10,
+    color: Colors.text.secondary,
+    fontFamily: 'Inter_400Regular',
+    textAlign: 'center',
+  },
+  stepLabel: {
+    marginTop: 8,
+    textAlign: 'center',
     fontSize: 12,
-    color: Colors.text.primary,
+    fontFamily: 'Inter_500Medium',
   },
 });
+
+
+

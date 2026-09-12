@@ -5,9 +5,11 @@ import { formatDate, formatPrice } from './format';
 
 export function mapCustomerOrder(order: CustomerOrder): CustomerOrderCard {
   const firstItem = order.order_items?.[0];
-  
-  // Normalize order_status: trim whitespace and convert to lowercase
-  const normalizedStatus = (order.order_status?.trim().toLowerCase() || 'pending') as any;
+  const product = firstItem?.products;
+
+  const normalizedStatus = (
+    order.order_status?.trim().toLowerCase() || 'pending'
+  ) as any;
 
   return {
     ...order,
@@ -15,10 +17,23 @@ export function mapCustomerOrder(order: CustomerOrder): CustomerOrderCard {
     shortId: order.id.slice(0, 8).toUpperCase(),
 
     firstProductName:
-      firstItem?.product_name ?? 'Unknown Product',
+      firstItem?.product_name ??
+      product?.name ??
+      'Unknown Product',
 
     firstProductImage:
-      firstItem?.products?.product_images?.[0]?.image_url ?? null,
+      product?.product_images?.[0]?.image_url ??
+      null,
+
+    // ⭐ NEW
+    firstProductKarat:
+      product?.gold_purity ?? null,
+
+    firstProductWeight:
+      product?.weight_grams ?? null,
+
+    firstProductDescription:
+      product?.description ?? null,
 
     itemCount: order.order_items?.length ?? 0,
 
@@ -28,10 +43,11 @@ export function mapCustomerOrder(order: CustomerOrder): CustomerOrderCard {
     ),
 
     formattedDate: formatDate(order.created_at),
+
     formattedTotal: formatPrice(order.total_amount_php),
 
-    // Override with normalized order_status
     order_status: normalizedStatus,
+
     payment_reference: order.payment_reference,
   };
 }

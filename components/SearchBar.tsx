@@ -1,7 +1,7 @@
-import React from 'react';
 import { View, TextInput, StyleSheet, Pressable, Platform } from 'react-native';
 import { Search, X } from 'lucide-react-native';
-import { Colors } from '@/constants';
+import { useTheme } from '@/hooks/useTheme';
+import type { AppColors } from '@/constants/themes';
 
 interface SearchBarProps {
   value: string;
@@ -18,37 +18,41 @@ export function SearchBar({
   onFocus,
   onBlur,
 }: SearchBarProps) {
+
+  const { colors } = useTheme();
+  const styles = createStyles(colors);
+
   return (
     <View style={styles.container}>
-      <Search size={20} color={Colors.gold.DEFAULT} style={styles.searchIcon} />
+      <Search size={20} color={colors.gold.DEFAULT} style={styles.searchIcon} />
       <TextInput
         value={value}
         onChangeText={onChangeText}
         placeholder={placeholder}
-        placeholderTextColor={Colors.text.muted}
+        placeholderTextColor={colors.text.muted}
         style={styles.input}
         onFocus={onFocus}
         onBlur={onBlur}
-        selectionColor={Colors.gold.DEFAULT}
+        selectionColor={colors.gold.DEFAULT}
         accessibilityLabel="Search products"
       />
       {value.length > 0 && (
         <Pressable onPress={() => onChangeText('')} style={styles.clearButton}>
-          <X size={18} color={Colors.text.muted} />
+          <X size={18} color={colors.text.muted} />
         </Pressable>
       )}
     </View>
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: AppColors) => StyleSheet.create({
   container: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: Colors.border.DEFAULT,
+    borderColor: colors.border.DEFAULT,
     paddingHorizontal: 14,
     height: 48,
   },
@@ -59,7 +63,7 @@ const styles = StyleSheet.create({
     flex: 1,
     fontFamily: 'Inter_400Regular',
     fontSize: 16,
-    color: Colors.text.primary,
+    color: colors.text.primary,
     paddingVertical: Platform.OS === 'ios' ? 0 : 8,
   },
   clearButton: {

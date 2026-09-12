@@ -1,4 +1,5 @@
 export * from './GoldGradient';
+export * from './GoldInput';
 export * from './ProductCard';
 export * from './ProductCarousel';
 export * from './Skeleton';
@@ -7,3 +8,4 @@ export * from './StatusBadge';
 export * from './SearchBar';
 export * from './CategoryFilter';
 export * from './QuantitySelector';
+export * from './feedback/ProductFlyToCartOverlay'

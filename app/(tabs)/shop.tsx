@@ -1,9 +1,10 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import { Colors } from '@/constants';
+import { useEffect, useMemo, useState } from 'react';
 import { Product, ProductCategory, ProductFilters } from '@/types';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useProducts } from '@/hooks';
 import { useWishlistStore } from '@/store';
+import { useTheme } from '@/hooks/useTheme';
+import type { AppColors } from '@/constants/themes';
 import {
   View,
   StyleSheet,
@@ -28,6 +29,9 @@ type ShopCategory = ProductCategory | 'all';
 export default function ShopScreen() {
   const router = useRouter();
 
+  const { colors } = useTheme();
+  const styles = createStyles(colors);
+
   const params = useLocalSearchParams<{ category?: string }>();
 
   const { productIds: wishlistIds, toggleItem: toggleWishlist } =
@@ -36,6 +40,7 @@ export default function ShopScreen() {
   const [search, setSearch] = useState('');
 
   const [selectedCategory, setSelectedCategory] = useState<ShopCategory>('all');
+  const [page, setPage] = useState(1);
 
   useEffect(() => {
     if (!params.category) {
@@ -48,7 +53,6 @@ export default function ShopScreen() {
   }, [params.category]);
 
   const [sortBy, setSortBy] = useState<ProductFilters['sortBy']>('newest');
-  const [page, setPage] = useState(1);
 
   const filters: ProductFilters = useMemo(
     () => ({
@@ -59,7 +63,7 @@ export default function ShopScreen() {
     [selectedCategory, search, sortBy],
   );
 
-  const { products, isLoading, refetch } = useProducts(filters);
+  const { products, isLoading } = useProducts(filters);
 
   const handleCategoryChange = (category: ProductCategory | 'all') => {
     setSelectedCategory(category);
@@ -104,7 +108,7 @@ export default function ShopScreen() {
     if (!hasMore) return null;
     return (
       <View style={styles.footer}>
-        <ActivityIndicator color={Colors.gold.DEFAULT} />
+        <ActivityIndicator color={colors.gold.DEFAULT} />
       </View>
     );
   };
@@ -188,10 +192,10 @@ export default function ShopScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: AppColors) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.primary,
+    backgroundColor: colors.primary,
   },
   header: {
     paddingHorizontal: 16,
@@ -210,21 +214,21 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 8,
     borderRadius: 20,
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderWidth: 1,
-    borderColor: Colors.border.DEFAULT,
+    borderColor: colors.border.DEFAULT,
   },
   sortChipActive: {
-    backgroundColor: Colors.gold.DEFAULT,
-    borderColor: Colors.gold.DEFAULT,
+    backgroundColor: colors.gold.DEFAULT,
+    borderColor: colors.gold.DEFAULT,
   },
   sortChipLabel: {
     fontFamily: 'Inter_500Medium',
     fontSize: 13,
-    color: Colors.text.secondary,
+    color: colors.text.secondary,
   },
   sortChipLabelActive: {
-    color: Colors.primary,
+    color: colors.primary,
   },
   gridContainer: {
     flex: 1,

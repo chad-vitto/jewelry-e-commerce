@@ -1,5 +1,6 @@
-import React from 'react';
 import { Colors } from '@/constants';
+import { useTheme } from '@/hooks/useTheme';
+import type { AppColors } from '@/constants/themes';
 import { PaymentMethod, PaymentProof, PaymentProofStatus } from '@/types';
 import {
   View,
@@ -24,6 +25,9 @@ export function AdminPaymentCard({
   loading = false,
   onPreviewReceipt,
 }: AdminPaymentCardProps) {
+  const { colors } = useTheme();
+  const styles = createStyles(colors);
+
   if (loading) {
     return (
       <View style={styles.card}>
@@ -54,15 +58,15 @@ export function AdminPaymentCard({
   const statusColor = (() => {
     switch (paymentProof.status) {
       case PaymentProofStatus.Verified:
-        return Colors.status.success;
+        return colors.status.success;
 
       case PaymentProofStatus.Rejected:
-        return Colors.status.error;
+        return colors.status.error;
 
       case PaymentProofStatus.Pending:
       case PaymentProofStatus.Submitted:
       default:
-        return Colors.status.warning;
+        return colors.status.warning;
     }
   })();
 
@@ -163,30 +167,30 @@ export function AdminPaymentCard({
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: AppColors) => StyleSheet.create({
   card: {
     width: '100%',
     maxWidth: 400,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: Colors.border.DEFAULT,
-    backgroundColor: Colors.surface,
+    borderColor: colors.border.DEFAULT,
+    backgroundColor: colors.surface,
     padding: 16,
-    shadowColor: Colors.primary,
+    shadowColor: colors.primary,
     shadowOpacity: 0.2,
     shadowRadius: 6,
     elevation: 3,
   },
   header: {
     borderBottomWidth: 1,
-    borderBottomColor: Colors.border.subtle,
+    borderBottomColor: colors.border.subtle,
     paddingBottom: 8,
     marginBottom: 16,
   },
   headerText: {
     fontSize: 18,
     fontWeight: '600',
-    color: Colors.gold.DEFAULT,
+    color: colors.gold.DEFAULT,
   },
   section: {
     marginBottom: 12,
@@ -194,26 +198,26 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 14,
     fontWeight: '500',
-    color: Colors.text.secondary,
+    color: colors.text.secondary,
   },
   value: {
     fontSize: 14,
-    color: Colors.text.primary,
+    color: colors.text.primary,
   },
   rejection: {
-    color: Colors.status.error,
+    color: colors.status.error,
   },
   receiptBox: {
     borderWidth: 1,
-    borderColor: Colors.border.gold,
+    borderColor: colors.border.gold,
     borderRadius: 6,
     padding: 12,
     alignItems: 'center',
-    backgroundColor: Colors.surfaceLight,
+    backgroundColor: colors.surfaceLight,
   },
   receiptFile: {
     fontSize: 14,
-    color: Colors.text.muted,
+    color: colors.text.muted,
     marginBottom: 8,
   },
   thumbnail: {
@@ -226,16 +230,16 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderWidth: 1,
-    borderColor: Colors.gold.DEFAULT,
+    borderColor: colors.gold.DEFAULT,
     borderRadius: 4,
   },
   previewButtonText: {
     fontSize: 14,
     fontWeight: '500',
-    color: Colors.gold.light,
+    color: colors.gold.light,
   },
   loadingText: {
     textAlign: 'center',
-    color: Colors.text.muted,
+    color: colors.text.muted,
   },
 });

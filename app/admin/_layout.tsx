@@ -1,17 +1,21 @@
-import { View, Text, StyleSheet, ActivityIndicator } from 'react-native';
+import { View, StyleSheet, ActivityIndicator } from 'react-native';
 import { Stack } from 'expo-router';
 import { useAuthStore } from '@/store';
 import { Colors } from '@/constants';
 import AccessDenied from '@/components/AccessDenied';
+import { useTheme } from '@/hooks/useTheme';
+import type { AppColors } from '@/constants/themes';
 
 export default function AdminLayout() {
+  const { colors } = useTheme();
+  const styles = createStyles(colors);
   const { user, isAuthenticated, isLoading } = useAuthStore();
   const canAccessDashboard = user?.role === 'admin' || user?.role === 'staff';
 
   if (isLoading) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color={Colors.gold.DEFAULT} />
+        <ActivityIndicator size="large" color={colors.gold.DEFAULT} />
       </View>
     );
   }
@@ -26,7 +30,7 @@ export default function AdminLayout() {
       <Stack
         screenOptions={{
           headerShown: false,
-          contentStyle: { backgroundColor: Colors.primary },
+          contentStyle: { backgroundColor: colors.primary },
         }}
       >
         <Stack.Screen name="index" />
@@ -41,33 +45,15 @@ export default function AdminLayout() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: AppColors) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.primary,
+    backgroundColor: colors.primary,
   },
   loadingContainer: {
     flex: 1,
-    backgroundColor: Colors.primary,
+    backgroundColor: colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  accessDenied: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 32,
-  },
-  accessDeniedText: {
-    fontFamily: 'CormorantGaramond_700Bold',
-    fontSize: 32,
-    color: Colors.status.error,
-    marginBottom: 8,
-  },
-  accessDeniedSubtext: {
-    fontFamily: 'Inter_400Regular',
-    fontSize: 16,
-    color: Colors.text.secondary,
-    textAlign: 'center',
   },
 });

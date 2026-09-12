@@ -1,4 +1,13 @@
-import React, { useState } from 'react';
+import { useState, useRef } from 'react';
+import { CartSnackbar } from '@/components/feedback/CartSnackbar';
+import { Colors, formatCurrency } from '@/constants';
+import { useTheme } from '@/hooks/useTheme';
+import type { AppColors } from '@/constants/themes';
+import { GoldButton } from '@/components/GoldGradient';
+import { Image } from 'expo-image';
+import { useCartStore, useFlyToCartStore, useWishlistStore } from '@/store';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useProduct, useProducts } from '@/hooks';
 import {
   View,
   Text,
@@ -11,18 +20,12 @@ import {
   NativeScrollEvent,
   NativeSyntheticEvent,
 } from 'react-native';
-import { Image } from 'expo-image';
-import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useProduct, useProducts } from '@/hooks';
-import { useWishlistStore, useCartStore } from '@/store';
 import {
   SectionSkeleton,
   GoldPurityBadge,
   StockBadge,
   ProductCarousel,
 } from '@/components';
-import { GoldButton } from '@/components/GoldGradient';
-import { Colors, formatCurrency } from '@/constants';
 import {
   ArrowLeft,
   Heart,
@@ -35,17 +38,23 @@ const { width, height } = Dimensions.get('window');
 const IMAGE_HEIGHT = height * 0.5;
 
 export default function ProductDetailScreen() {
+  const { colors } = useTheme();
+  const styles = createStyles(colors);
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
-  const { product, isLoading, error } = useProduct(id as string);
+  const { product, isLoading } = useProduct(id as string);
   const { productIds: wishlistIds, toggleItem: toggleWishlist } =
     useWishlistStore();
   const { items, addItem: addToCart } = useCartStore();
   const { products: relatedProducts } = useProducts();
 
+  const imageContainerRef = useRef<View>(null);
+
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isExpanded, setIsExpanded] = useState(false);
   const [selectedSize, setSelectedSize] = useState<string>();
+  const [showSnackbar, setShowSnackbar] = useState(false);
+  const showAnimation = useFlyToCartStore(state => state.showAnimation);
 
   const isWishlisted = product ? wishlistIds.includes(product.id) : false;
 
@@ -90,9 +99,25 @@ export default function ProductDetailScreen() {
       return;
     }
 
-    addToCart(product, 1, selectedSize);
-    router.push('/cart');
-  };
+
+    requestAnimationFrame(() => {
+      imageContainerRef.current?.measureInWindow((x, y, width, height) => {
+        addToCart(product, 1, selectedSize);
+
+        showAnimation(
+          images[currentImageIndex],
+          {
+            x: x + width / 2,
+            y: y + height / 2,
+          },
+          () => {
+            setShowSnackbar(true);
+          }
+        );
+      });
+    });
+
+  }
 
   const handleBuyNow = () => {
     if (!validatePurchase() || !product) return;
@@ -129,11 +154,11 @@ export default function ProductDetailScreen() {
 
   const images = product.product_images?.length
     ? product.product_images
-        .sort(
-          (a: { display_order: number }, b: { display_order: number }) =>
-            a.display_order - b.display_order,
-        )
-        .map((img: { image_url: string }) => img.image_url)
+      .sort(
+        (a: { display_order: number }, b: { display_order: number }) =>
+          a.display_order - b.display_order,
+      )
+      .map((img: { image_url: string }) => img.image_url)
     : ['https://images.pexels.com/photos/269228/pexels-photo-269228.jpeg'];
 
   return (
@@ -141,18 +166,18 @@ export default function ProductDetailScreen() {
       {/* Header */}
       <View style={styles.header}>
         <Pressable style={styles.headerButton} onPress={() => router.back()}>
-          <ArrowLeft size={24} color={Colors.text.primary} />
+          <ArrowLeft size={24} color={colors.text.primary} />
         </Pressable>
         <View style={styles.headerActions}>
           <Pressable style={styles.headerButton} onPress={handleWishlistToggle}>
             <Heart
               size={24}
-              color={isWishlisted ? Colors.gold.DEFAULT : Colors.text.secondary}
-              fill={isWishlisted ? Colors.gold.DEFAULT : 'transparent'}
+              color={isWishlisted ? colors.gold.DEFAULT : colors.text.secondary}
+              fill={isWishlisted ? colors.gold.DEFAULT : 'transparent'}
             />
           </Pressable>
           <Pressable style={styles.headerButton}>
-            <Share2 size={24} color={Colors.text.secondary} />
+            <Share2 size={24} color={colors.text.secondary} />
           </Pressable>
         </View>
       </View>
@@ -170,24 +195,32 @@ export default function ProductDetailScreen() {
             pagingEnabled
             showsHorizontalScrollIndicator={false}
             onScroll={handleImageScroll}
-            renderItem={({ item }) => (
-              <Image
-                source={{ uri: item }}
-                style={styles.productImage}
-                contentFit="cover"
-                transition={300}
-              />
+            renderItem={({ item, index }) => (
+              <View
+                ref={index === currentImageIndex ? imageContainerRef : null}
+                collapsable={false}
+              >
+                <Image
+                  source={{ uri: item }}
+                  style={styles.productImage}
+                  contentFit="cover"
+                  transition={300}
+                />
+              </View>
             )}
           />
-          {images.map((_: any, index: React.Key | null | undefined) => (
-            <View
-              key={index}
-              style={[
-                styles.paginationDot,
-                index === currentImageIndex && styles.paginationDotActive,
-              ]}
-            />
-          ))}
+
+          <View style={styles.paginationContainer}>
+            {images.map((_: string, index: number) => (
+              <View
+                key={index}
+                style={[
+                  styles.paginationDot,
+                  index === currentImageIndex && styles.paginationDotActive,
+                ]}
+              />
+            ))}
+          </View>
         </View>
 
         {/* Product Info */}
@@ -203,7 +236,7 @@ export default function ProductDetailScreen() {
           {/* Specifications */}
           <View style={styles.specsContainer}>
             <View style={styles.specItem}>
-              <Scale size={16} color={Colors.gold.DEFAULT} />
+              <Scale size={16} color={colors.gold.DEFAULT} />
               <Text style={styles.specLabel}>Weight</Text>
               <Text style={styles.specValue}>{product.weight_grams}g</Text>
             </View>
@@ -274,7 +307,7 @@ export default function ProductDetailScreen() {
             />
             <View style={styles.buttonSpacer} />
             <Pressable style={styles.inquireButton} onPress={handleInquire}>
-              <MessageCircle size={18} color={Colors.gold.DEFAULT} />
+              <MessageCircle size={18} color={colors.gold.DEFAULT} />
               <Text style={styles.inquireText}>Inquire About This Piece</Text>
             </Pressable>
           </View>
@@ -292,14 +325,27 @@ export default function ProductDetailScreen() {
           )}
         </View>
       </ScrollView>
+
+      {/* Floating Snackbar */}
+      <CartSnackbar
+        visible={showSnackbar}
+        productName={product.name}
+        imageUri={images[currentImageIndex] ?? images[0]}
+        onDismiss={() => setShowSnackbar(false)}
+        onViewCart={() => {
+          setShowSnackbar(false);
+          router.push('/cart');
+        }}
+      />
     </View>
   );
 }
 
-const styles = StyleSheet.create({
+
+const createStyles = (colors: AppColors) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.primary,
+    backgroundColor: colors.primary,
   },
   header: {
     position: 'absolute',
@@ -332,18 +378,23 @@ const styles = StyleSheet.create({
   imageContainer: {
     height: IMAGE_HEIGHT,
   },
-  productImage: {
-    width: width,
-    height: IMAGE_HEIGHT,
-  },
-  pagination: {
+  paginationContainer: {
     position: 'absolute',
     bottom: 16,
     left: 0,
     right: 0,
+
     flexDirection: 'row',
     justifyContent: 'center',
-    gap: 6,
+    alignItems: 'center',
+
+    gap: 8,
+
+    zIndex: 5,
+  },
+  productImage: {
+    width: width,
+    height: IMAGE_HEIGHT,
   },
   paginationDot: {
     width: 8,
@@ -352,14 +403,14 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(201, 168, 76, 0.4)',
   },
   paginationDotActive: {
-    backgroundColor: Colors.gold.DEFAULT,
+    backgroundColor: colors.gold.DEFAULT,
     width: 24,
   },
   content: {
     padding: 20,
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
-    backgroundColor: Colors.primary,
+    backgroundColor: colors.primary,
     marginTop: -24,
   },
   categoryRow: {
@@ -370,14 +421,14 @@ const styles = StyleSheet.create({
   productName: {
     fontFamily: 'CormorantGaramond_700Bold',
     fontSize: 28,
-    color: Colors.text.primary,
+    color: colors.text.primary,
     letterSpacing: 0.5,
     marginBottom: 8,
   },
   price: {
     fontFamily: 'Inter_700Bold',
     fontSize: 32,
-    color: Colors.gold.DEFAULT,
+    color: colors.gold.DEFAULT,
     marginBottom: 20,
   },
   specsContainer: {
@@ -386,9 +437,9 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     paddingVertical: 16,
     borderTopWidth: 1,
-    borderTopColor: Colors.border.DEFAULT,
+    borderTopColor: colors.border.DEFAULT,
     borderBottomWidth: 1,
-    borderBottomColor: Colors.border.DEFAULT,
+    borderBottomColor: colors.border.DEFAULT,
   },
   specItem: {
     flexDirection: 'row',
@@ -398,12 +449,12 @@ const styles = StyleSheet.create({
   specLabel: {
     fontFamily: 'Inter_400Regular',
     fontSize: 14,
-    color: Colors.text.muted,
+    color: colors.text.muted,
   },
   specValue: {
     fontFamily: 'Inter_600SemiBold',
     fontSize: 16,
-    color: Colors.text.primary,
+    color: colors.text.primary,
   },
   sizesContainer: {
     marginBottom: 20,
@@ -411,7 +462,7 @@ const styles = StyleSheet.create({
   sizesTitle: {
     fontFamily: 'Inter_600SemiBold',
     fontSize: 14,
-    color: Colors.text.secondary,
+    color: colors.text.secondary,
     marginBottom: 10,
   },
   sizesRow: {
@@ -423,22 +474,22 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 10,
     borderRadius: 8,
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderWidth: 1,
-    borderColor: Colors.border.DEFAULT,
+    borderColor: colors.border.DEFAULT,
   },
   sizeText: {
     fontFamily: 'Inter_500Medium',
     fontSize: 14,
-    color: Colors.text.secondary,
+    color: colors.text.secondary,
   },
   sizeChipSelected: {
-    backgroundColor: Colors.gold.DEFAULT,
-    borderColor: Colors.gold.DEFAULT,
+    backgroundColor: colors.gold.DEFAULT,
+    borderColor: colors.gold.DEFAULT,
   },
 
   sizeTextSelected: {
-    color: Colors.primary,
+    color: colors.primary,
     fontFamily: 'Inter_600SemiBold',
   },
   descriptionContainer: {
@@ -447,19 +498,19 @@ const styles = StyleSheet.create({
   descriptionTitle: {
     fontFamily: 'Inter_600SemiBold',
     fontSize: 16,
-    color: Colors.text.primary,
+    color: colors.text.primary,
     marginBottom: 12,
   },
   description: {
     fontFamily: 'Inter_400Regular',
     fontSize: 15,
-    color: Colors.text.secondary,
+    color: colors.text.secondary,
     lineHeight: 24,
   },
   expandText: {
     fontFamily: 'Inter_500Medium',
     fontSize: 14,
-    color: Colors.gold.DEFAULT,
+    color: colors.gold.DEFAULT,
     marginTop: 8,
   },
   actionsContainer: {
@@ -475,7 +526,7 @@ const styles = StyleSheet.create({
   inquireText: {
     fontFamily: 'Inter_500Medium',
     fontSize: 15,
-    color: Colors.gold.DEFAULT,
+    color: colors.gold.DEFAULT,
   },
   relatedContainer: {
     marginBottom: 40,
@@ -483,7 +534,7 @@ const styles = StyleSheet.create({
   errorText: {
     fontFamily: 'Inter_500Medium',
     fontSize: 16,
-    color: Colors.text.secondary,
+    color: colors.text.secondary,
     textAlign: 'center',
     marginTop: 100,
   },

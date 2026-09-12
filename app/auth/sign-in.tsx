@@ -8,16 +8,19 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
-  Alert,
 } from 'react-native';
 import { useRouter, Stack } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useAuth } from '@/hooks';
 import { Colors } from '@/constants';
+import { useTheme } from '@/hooks/useTheme';
+import type { AppColors } from '@/constants/themes';
 import { ArrowLeft } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 
 export default function SignInScreen() {
+  const { colors } = useTheme();
+  const styles = createStyles(colors);
   const router = useRouter();
   const { signIn, isLoading } = useAuth();
   const [email, setEmail] = useState('');
@@ -50,7 +53,7 @@ export default function SignInScreen() {
       <Stack.Screen options={{ headerShown: false }} />
 
       <LinearGradient
-        colors={[Colors.primary, '#0F0F0F']}
+        colors={[colors.primary, '#0F0F0F']}
         style={styles.gradient}
       />
 
@@ -66,7 +69,7 @@ export default function SignInScreen() {
           {/* Header */}
           <View style={styles.header}>
             <Pressable style={styles.backButton} onPress={() => router.back()}>
-              <ArrowLeft size={24} color={Colors.text.primary} />
+              <ArrowLeft size={24} color={colors.text.primary} />
             </Pressable>
           </View>
 
@@ -93,7 +96,7 @@ export default function SignInScreen() {
                 value={email}
                 onChangeText={setEmail}
                 placeholder="your@email.com"
-                placeholderTextColor={Colors.text.muted}
+                placeholderTextColor={colors.text.muted}
                 keyboardType="email-address"
                 autoCapitalize="none"
                 autoCorrect={false}
@@ -107,7 +110,7 @@ export default function SignInScreen() {
                 value={password}
                 onChangeText={setPassword}
                 placeholder="Enter your password"
-                placeholderTextColor={Colors.text.muted}
+                placeholderTextColor={colors.text.muted}
                 secureTextEntry
               />
             </View>
@@ -125,7 +128,7 @@ export default function SignInScreen() {
               disabled={isLoading}
             >
               <LinearGradient
-                colors={Colors.gold.gradient}
+                colors={colors.gold.gradient}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 0 }}
                 style={styles.buttonGradient}
@@ -157,10 +160,10 @@ export default function SignInScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: AppColors) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.primary,
+    backgroundColor: colors.primary,
   },
   gradient: {
     position: 'absolute',
@@ -186,7 +189,7 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -196,14 +199,14 @@ const styles = StyleSheet.create({
   brandTitle: {
     fontFamily: 'CormorantGaramond_700Bold',
     fontSize: 36,
-    color: Colors.text.primary,
+    color: colors.text.primary,
     letterSpacing: 0.5,
     marginBottom: 8,
   },
   brandSubtitle: {
     fontFamily: 'Inter_400Regular',
     fontSize: 16,
-    color: Colors.text.secondary,
+    color: colors.text.secondary,
     lineHeight: 24,
   },
   form: {
@@ -218,7 +221,7 @@ const styles = StyleSheet.create({
   errorText: {
     fontFamily: 'Inter_500Medium',
     fontSize: 14,
-    color: Colors.status.error,
+    color: colors.status.error,
   },
   inputGroup: {
     marginBottom: 20,
@@ -226,19 +229,19 @@ const styles = StyleSheet.create({
   label: {
     fontFamily: 'Inter_500Medium',
     fontSize: 14,
-    color: Colors.text.secondary,
+    color: colors.text.secondary,
     marginBottom: 8,
   },
   input: {
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: Colors.border.DEFAULT,
+    borderColor: colors.border.DEFAULT,
     paddingHorizontal: 16,
     paddingVertical: 16,
     fontFamily: 'Inter_400Regular',
     fontSize: 16,
-    color: Colors.text.primary,
+    color: colors.text.primary,
   },
   forgotPassword: {
     alignSelf: 'flex-end',
@@ -247,7 +250,7 @@ const styles = StyleSheet.create({
   forgotPasswordText: {
     fontFamily: 'Inter_500Medium',
     fontSize: 14,
-    color: Colors.gold.DEFAULT,
+    color: colors.gold.DEFAULT,
   },
   button: {
     borderRadius: 12,
@@ -263,7 +266,7 @@ const styles = StyleSheet.create({
   buttonText: {
     fontFamily: 'Inter_600SemiBold',
     fontSize: 16,
-    color: Colors.primary,
+    color: colors.primary,
   },
   divider: {
     flexDirection: 'row',
@@ -273,12 +276,12 @@ const styles = StyleSheet.create({
   dividerLine: {
     flex: 1,
     height: 1,
-    backgroundColor: Colors.border.DEFAULT,
+    backgroundColor: colors.border.DEFAULT,
   },
   dividerText: {
     fontFamily: 'Inter_500Medium',
     fontSize: 14,
-    color: Colors.text.muted,
+    color: colors.text.muted,
     marginHorizontal: 16,
   },
   signUpSection: {
@@ -290,11 +293,11 @@ const styles = StyleSheet.create({
   signUpText: {
     fontFamily: 'Inter_400Regular',
     fontSize: 16,
-    color: Colors.text.secondary,
+    color: colors.text.secondary,
   },
   signUpLink: {
     fontFamily: 'Inter_600SemiBold',
     fontSize: 16,
-    color: Colors.gold.DEFAULT,
+    color: colors.gold.DEFAULT,
   },
 });

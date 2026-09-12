@@ -1,12 +1,15 @@
+import Toast from 'react-native-toast-message';
 import { AdminPaymentCard } from '@/components/admin/AdminPaymentCard';
 import { AdminReceiptViewer } from '@/components/admin/AdminReceiptViewer';
 import { Colors, formatCurrency, PAYMENT_METHODS } from '@/constants';
+import { FulfillmentActions } from '@/components/admin/FulfillmentActions';
 import { OrderHeroCard } from '@/components/orders/OrderHeroCard';
 import { OrderItemCard } from '@/components/orders/OrderItemCard';
 import { OrderTimeline } from '@/components/orders/OrderTimeline';
 import { PaymentVerificationActions } from '@/components/admin/PaymentVerificationActions';
 import { RejectionReasonModal } from '@/components/admin/RejectionReasonModal';
 import { SectionCard } from '@/components/orders/SectionCard';
+import { ShippingInfoCard } from '@/components/orders/ShippingInfoCard';
 import { useAdminPayments } from '@/hooks/useAdminPayments';
 import { useEffect, useState } from 'react';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -14,10 +17,9 @@ import { useOrder } from '@/hooks/useOrders';
 import { usePaymentProofImage } from '@/hooks/usePaymentProofImage';
 import {
     ArrowLeft,
-    CreditCard,
-    MapPin,
-    Package,
+    CreditCard, Package,
     Receipt,
+    Truck
 } from 'lucide-react-native';
 import {
     Text,
@@ -25,15 +27,24 @@ import {
     StyleSheet,
     Pressable,
     View,
-    ActivityIndicator,
+    ActivityIndicator
 } from 'react-native';
-import { PaymentProofStatus, type PaymentProof } from '@/types';
+import { OrderStatus, PaymentProofStatus, type PaymentProof } from '@/types';
+import { ShippingAddressCard } from '@/components/orders/ShippingAddressCard';
+import { useTheme } from '@/hooks/useTheme';
+import type { AppColors } from '@/constants/themes';
 
 export default function AdminOrderDetailScreen() {
+    const { colors } = useTheme();
+    const styles = createStyles(colors);
     const router = useRouter();
     const { id } = useLocalSearchParams<{ id: string }>();
-    const { order, isLoading, error, refetch: refetchOrder } = useOrder(id);
 
+    const [paymentProof, setPaymentProof] = useState<PaymentProof | null>(null);
+    const [receiptVisible, setReceiptVisible] = useState(false);
+    const [rejectModalVisible, setRejectModalVisible] = useState(false);
+
+    const { order, isLoading, error, refetch: refetchOrder } = useOrder(id);
     const {
         getPaymentProof,
         verifyPayment,
@@ -41,10 +52,6 @@ export default function AdminOrderDetailScreen() {
         loading: paymentLoading,
         error: paymentError,
     } = useAdminPayments();
-
-    const [paymentProof, setPaymentProof] = useState<PaymentProof | null>(null);
-    const [receiptVisible, setReceiptVisible] = useState(false);
-    const [rejectModalVisible, setRejectModalVisible] = useState(false);
     const { signedUrl: receiptUrl } = usePaymentProofImage(paymentProof?.storage_path)
 
 
@@ -57,10 +64,11 @@ export default function AdminOrderDetailScreen() {
         loadProof();
     }, [id, getPaymentProof]);
 
-    const refreshOrderDetail = async () => {
+    const refreshOrderData = async () => {
         const refreshedProof = await getPaymentProof(id);
 
         setPaymentProof(refreshedProof);
+
         await refetchOrder();
     };
 
@@ -73,9 +81,10 @@ export default function AdminOrderDetailScreen() {
             });
 
             setPaymentProof(updatedProof);
-            await refreshOrderDetail();
+
+            await refreshOrderData();
         } catch {
-            // useAdminPayments exposes the user-facing error through paymentError.
+            // Error is exposed through paymentError
         }
     };
 
@@ -88,21 +97,48 @@ export default function AdminOrderDetailScreen() {
         });
 
         setPaymentProof(updatedProof);
-        await refreshOrderDetail();
+
+        await refreshOrderData();
+
         setRejectModalVisible(false);
     };
 
+    const handleFulfillmentUpdated = async (
+        status: OrderStatus
+    ) => {
+        await refreshOrderData();
+
+        Toast.show({
+            type: 'success',
+            text1: `Order moved to ${status}`,
+            position: 'bottom',
+        });
+    };
+
+    const handleFulfillmentError = (error: Error) => {
+        Toast.show({
+            type: 'error',
+            text1: 'Fulfillment Failed',
+            text2: error.message,
+            position: 'bottom',
+        });
+    };
+
+    const handleOpenMap = () => {
+        // TODO: Open Google Maps / Apple Maps
+    };
 
     if (isLoading) {
         return (
             <View style={styles.container}>
-                <ActivityIndicator size="large" color={Colors.gold.DEFAULT} />
+                <ActivityIndicator size="large" color={colors.gold.DEFAULT} />
                 <Text style={styles.text}>Loading order...</Text>
             </View>
         );
     }
 
     if (error || !order) {
+
         return (
             <View style={styles.container}>
                 <Text style={styles.text}>Order not found</Text>
@@ -118,7 +154,7 @@ export default function AdminOrderDetailScreen() {
             {/* Floating Back Button */}
             <View style={styles.header}>
                 <Pressable style={styles.headerButton} onPress={() => router.back()}>
-                    <ArrowLeft size={24} color={Colors.text.primary} />
+                    <ArrowLeft size={24} color={colors.text.primary} />
                 </Pressable>
             </View>
 
@@ -134,45 +170,44 @@ export default function AdminOrderDetailScreen() {
                 <OrderTimeline
                     orderStatus={order.order_status}
                     paymentStatus={paymentProof?.status ?? PaymentProofStatus.Pending}
+                    timestamps={{
+                        pending: order.created_at,
+                        confirmed: paymentProof?.verified_at ?? undefined,
+                        processing: order.processing_at ?? undefined,
+                        shipped: order.shipped_at ?? undefined,
+                        delivered: order.delivered_at ?? undefined,
+                    }}
                 />
 
                 {/* Items */}
                 <SectionCard
-                    title={`Items (${order.itemCount})`}
-                    icon={<Package size={18} color={Colors.gold.DEFAULT} />}
+                    title={
+                        order.itemCount > 1
+                            ? `Purchase Details (${order.itemCount} Items)`
+                            : 'Purchase Details'
+                    }
+                    icon={<Package size={18} color={colors.gold.DEFAULT} />}
                 >
                     {order.order_items?.map((item) => (
-                        <OrderItemCard key={item.id} item={item} />
+                        <OrderItemCard
+                            key={item.id}
+                            item={item}
+                        />
                     ))}
                 </SectionCard>
 
                 {/* Shipping Address */}
-                <SectionCard
-                    title="Shipping Address"
-                    icon={<MapPin size={18} color={Colors.gold.DEFAULT} />}
-                >
-                    {shippingAddress ? (
-                        <>
-                            <Text style={styles.text}>{shippingAddress.full_name}</Text>
-                            <Text style={styles.text}>{shippingAddress.phone_number}</Text>
-                            <Text style={styles.text}>{shippingAddress.address_line1}</Text>
-                            {shippingAddress.address_line2 && (
-                                <Text style={styles.text}>{shippingAddress.address_line2}</Text>
-                            )}
-                            <Text style={styles.text}>
-                                {shippingAddress.city}, {shippingAddress.province}
-                            </Text>
-                            <Text style={styles.text}>{shippingAddress.postal_code}</Text>
-                        </>
-                    ) : (
-                        <Text style={styles.text}>No shipping address found</Text>
-                    )}
-                </SectionCard>
+                <ShippingAddressCard
+                    address={shippingAddress}
+                    onPressMap={handleOpenMap}
+                    style={{
+                        backgroundColor: ''
+                    }} />
 
                 {/* Payment Section */}
                 <SectionCard
                     title="Payment"
-                    icon={<CreditCard size={18} color={Colors.gold.DEFAULT} />}
+                    icon={<CreditCard size={18} color={colors.gold.DEFAULT} />}
                 >
                     {paymentProof ? (
                         <>
@@ -198,10 +233,29 @@ export default function AdminOrderDetailScreen() {
                     )}
                 </SectionCard>
 
+                <SectionCard
+                    title="Fulfillment"
+                    icon={<Package size={18} color={colors.gold.DEFAULT} />}
+                >
+                    <FulfillmentActions
+                        orderId={order.id}
+                        currentStatus={order.order_status}
+                        onStatusChanged={handleFulfillmentUpdated}
+                        onError={handleFulfillmentError}
+                    />
+                </SectionCard>
+
+                <SectionCard
+                    title="Shipping"
+                    icon={<Truck size={18} color={colors.gold.DEFAULT} />}
+                >
+                    <ShippingInfoCard order={order} />
+                </SectionCard>
+
                 {/* Summary */}
                 <SectionCard
                     title="Summary"
-                    icon={<Receipt size={18} color={Colors.gold.DEFAULT} />}
+                    icon={<Receipt size={18} color={colors.gold.DEFAULT} />}
                 >
                     <View style={styles.summaryRow}>
                         <Text style={styles.text}>Subtotal</Text>
@@ -244,8 +298,8 @@ export default function AdminOrderDetailScreen() {
     );
 }
 
-const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: Colors.surface },
+const createStyles = (colors: AppColors) => StyleSheet.create({
+    container: { flex: 1, backgroundColor: colors.surface },
     scroll: { flex: 1 },
     content: { padding: 12, paddingBottom: 24 },
 
@@ -273,23 +327,23 @@ const styles = StyleSheet.create({
     totalLabel: {
         fontSize: 16,
         fontWeight: '600',
-        color: Colors.text.primary,
+        color: colors.text.primary,
     },
 
     totalValue: {
         fontSize: 18,
         fontWeight: '700',
-        color: Colors.gold.DEFAULT,
+        color: colors.gold.DEFAULT,
     },
 
     text: {
         fontSize: 14,
-        color: Colors.text.primary,
+        color: colors.text.primary,
         marginBottom: 2
     },
     errorText: {
         fontSize: 14,
-        color: Colors.status.error,
+        color: colors.status.error,
         marginTop: 8,
     },
 });

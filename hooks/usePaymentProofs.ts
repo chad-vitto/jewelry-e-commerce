@@ -1,11 +1,7 @@
-import { useState, useCallback } from 'react';
-import { supabase } from '@/lib/supabase';
-import {
-  PaymentProof,
-  PaymentProofInsert,
-  PaymentProofUpdate
-} from '@/types';
 import { File } from 'expo-file-system';
+import { PaymentProof, PaymentProofInsert, PaymentProofUpdate } from '@/types';
+import { supabase } from '@/lib/supabase';
+import { useCallback, useState } from 'react';
 
 // Status constants
 export enum PaymentProofStatus {
@@ -40,20 +36,15 @@ export function usePaymentProofs() {
         if (userError) throw userError;
         if (!user) throw new Error('User not authenticated');
 
-        const safeName = (imageAsset.fileName ?? 'receipt.jpg').replace(/\s+/g, '-');
-        const path = `${user.id}/${orderId}/${Date.now()}-${safeName}`;
+        const safeFileName = (imageAsset.fileName ?? 'receipt.jpg').replace(/\s+/g, '-');
+        const storagePath = `${user.id}/${orderId}/${Date.now()}-${safeFileName}`;
 
         const file = new File(imageAsset.uri);
         const arrayBuffer = await file.arrayBuffer();
 
-        const {
-          data: { session },
-        } = await supabase.auth.getSession();
-
-
         const { error: uploadError } = await supabase.storage
           .from('payment-proofs')
-          .upload(path, arrayBuffer, {
+          .upload(storagePath, arrayBuffer, {
             contentType: imageAsset.mimeType ?? 'image/jpeg',
             upsert: false,
           });
@@ -61,12 +52,14 @@ export function usePaymentProofs() {
         if (uploadError) throw uploadError;
 
         return {
-          storagePath: path,
+          storagePath: storagePath,
           uploadedBy: user.id,
-        }
+        };
 
-      } catch (err: any) {
-        setError(err instanceof Error ? err.message : 'Failed to upload receipt');
+      } catch (err) {
+        const message = err instanceof Error ? err.message : 'Failed to upload receipt';
+
+        setError(message)
         throw err;
 
       } finally {

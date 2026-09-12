@@ -105,7 +105,7 @@ export function useProducts(filters?: ProductFilters): UseProductsReturn {
   }, [filters]);
 
   useEffect(() => {
-    fetchProducts();
+    void fetchProducts();
   }, [fetchProducts]);
 
   return { products, isLoading, error, refetch: fetchProducts };
@@ -150,11 +150,7 @@ export function useProduct(id: string) {
     }
   }, [id]);
 
-  return {
-    product,
-    isLoading,
-    error,
-  };
+  return { product, isLoading, error, };
 }
 
 export function useFeaturedProducts() {
@@ -197,12 +193,8 @@ export function useFeaturedProducts() {
   }, []);
 
   useEffect(() => {
-    fetchFeatured();
+    void fetchFeatured();
   }, [fetchFeatured]);
 
-  return {
-    products,
-    isLoading,
-    refetch: fetchFeatured,
-  };
+  return { products, isLoading, refetch: fetchFeatured, };
 }

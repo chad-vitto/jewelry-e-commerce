@@ -62,7 +62,7 @@ export function useAdminUsers() {
         return false;
       }
     },
-    []
+    [fetchUsers]
   );
 
   return {

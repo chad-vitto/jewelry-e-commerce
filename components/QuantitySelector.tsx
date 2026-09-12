@@ -1,8 +1,9 @@
 import * as Haptics from 'expo-haptics';
 import React from 'react';
-import { Colors } from '@/constants';
 import { Minus, Plus } from 'lucide-react-native';
 import { Platform, Pressable, StyleSheet, Text, View } from 'react-native';
+import { useTheme } from '@/hooks/useTheme';
+import type { AppColors } from '@/constants/themes';
 
 interface QuantitySelectorProps {
   quantity: number;
@@ -27,6 +28,8 @@ export function QuantitySelector({
   max = 99,
   size = 'md',
 }: QuantitySelectorProps) {
+  const { colors } = useTheme();
+  const styles = createStyles(colors);
   const handleDecrease = () => {
     if (quantity > min) {
       triggerHaptic();
@@ -58,7 +61,7 @@ export function QuantitySelector({
       >
         <Minus
           size={iconSize}
-          color={quantity <= min ? Colors.text.muted : Colors.gold.DEFAULT}
+          color={quantity <= min ? colors.text.muted : colors.gold.DEFAULT}
         />
       </Pressable>
 
@@ -78,14 +81,14 @@ export function QuantitySelector({
       >
         <Plus
           size={iconSize}
-          color={quantity >= max ? Colors.text.muted : Colors.gold.DEFAULT}
+          color={quantity >= max ? colors.text.muted : colors.gold.DEFAULT}
         />
       </Pressable>
     </View>
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: AppColors) => StyleSheet.create({
   container: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -93,7 +96,7 @@ const styles = StyleSheet.create({
   },
   button: {
     borderRadius: 8,
-    backgroundColor: Colors.surfaceLight,
+    backgroundColor: colors.surfaceLight,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -102,7 +105,7 @@ const styles = StyleSheet.create({
   },
   quantity: {
     fontFamily: 'Inter_600SemiBold',
-    color: Colors.text.primary,
+    color: colors.text.primary,
     minWidth: 24,
     textAlign: 'center',
   },

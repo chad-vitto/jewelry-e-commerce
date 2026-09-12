@@ -8,11 +8,12 @@ import {
   ActivityIndicator,
   Alert,
   RefreshControl,
-  ActionSheetIOS,
 } from 'react-native';
 import { useRouter, Stack } from 'expo-router';
 import { useAdminUsers } from '@/hooks';
 import { Colors } from '@/constants';
+import { useTheme } from '@/hooks/useTheme';
+import type { AppColors } from '@/constants/themes';
 import {
   ArrowLeft,
   Users,
@@ -25,6 +26,8 @@ import { useAuthStore } from '@/store/authStore';
 import AccessDenied from '@/components/AccessDenied';
 
 export default function AdminUsersScreen() {
+  const { colors } = useTheme();
+  const styles = createStyles(colors);
   const router = useRouter();
   const { users, isLoading, error, fetchUsers, updateUserRole } = useAdminUsers();
   const [selectedRole, setSelectedRole] = useState<{ userId: string; role: UserRole } | null>(null);
@@ -78,22 +81,22 @@ export default function AdminUsersScreen() {
   const getRoleIcon = (role: UserRole) => {
     switch (role) {
       case 'admin':
-        return <Shield size={20} color={Colors.status.error} />;
+        return <Shield size={20} color={colors.status.error} />;
       case 'staff':
-        return <UserCheck size={20} color={Colors.gold.DEFAULT} />;
+        return <UserCheck size={20} color={colors.gold.DEFAULT} />;
       default:
-        return <UserIcon size={20} color={Colors.text.muted} />;
+        return <UserIcon size={20} color={colors.text.muted} />;
     }
   };
 
   const getRoleColor = (role: UserRole) => {
     switch (role) {
       case 'admin':
-        return Colors.status.error;
+        return colors.status.error;
       case 'staff':
-        return Colors.gold.DEFAULT;
+        return colors.gold.DEFAULT;
       default:
-        return Colors.text.muted;
+        return colors.text.muted;
     }
   };
 
@@ -104,10 +107,10 @@ export default function AdminUsersScreen() {
       {/* Header */}
       <View style={styles.header}>
         <Pressable style={styles.backButton} onPress={() => router.back()}>
-          <ArrowLeft size={24} color={Colors.text.primary} />
+          <ArrowLeft size={24} color={colors.text.primary} />
         </Pressable>
         <View style={styles.headerTitle}>
-          <Users size={28} color={Colors.gold.DEFAULT} />
+          <Users size={28} color={colors.gold.DEFAULT} />
           <Text style={styles.title}>Manage Users</Text>
         </View>
         <View style={{ width: 40 }} />
@@ -121,7 +124,7 @@ export default function AdminUsersScreen() {
 
       {isLoading && !refreshing ? (
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={Colors.gold.DEFAULT} />
+          <ActivityIndicator size="large" color={colors.gold.DEFAULT} />
         </View>
       ) : (
         <ScrollView
@@ -133,7 +136,7 @@ export default function AdminUsersScreen() {
         >
           {users.length === 0 ? (
             <View style={styles.emptyContainer}>
-              <Users size={48} color={Colors.text.muted} />
+              <Users size={48} color={colors.text.muted} />
               <Text style={styles.emptyText}>No users found</Text>
             </View>
           ) : (
@@ -227,10 +230,10 @@ export default function AdminUsersScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: AppColors) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.primary,
+    backgroundColor: colors.primary,
   },
   header: {
     flexDirection: 'row',
@@ -240,13 +243,13 @@ const styles = StyleSheet.create({
     paddingTop: 50,
     paddingBottom: 16,
     borderBottomWidth: 1,
-    borderBottomColor: Colors.surface,
+    borderBottomColor: colors.surface,
   },
   backButton: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -258,12 +261,12 @@ const styles = StyleSheet.create({
   title: {
     fontFamily: 'CormorantGaramond_700Bold',
     fontSize: 24,
-    color: Colors.text.primary,
+    color: colors.text.primary,
   },
   errorContainer: {
-    backgroundColor: Colors.status.error + '20',
+    backgroundColor: colors.status.error + '20',
     borderLeftWidth: 4,
-    borderLeftColor: Colors.status.error,
+    borderLeftColor: colors.status.error,
     paddingHorizontal: 16,
     paddingVertical: 12,
     marginHorizontal: 16,
@@ -273,7 +276,7 @@ const styles = StyleSheet.create({
   errorText: {
     fontFamily: 'Inter_400Regular',
     fontSize: 14,
-    color: Colors.status.error,
+    color: colors.status.error,
   },
   loadingContainer: {
     flex: 1,
@@ -292,7 +295,7 @@ const styles = StyleSheet.create({
   emptyText: {
     fontFamily: 'Inter_400Regular',
     fontSize: 16,
-    color: Colors.text.muted,
+    color: colors.text.muted,
     marginTop: 12,
   },
   usersContainer: {
@@ -302,13 +305,13 @@ const styles = StyleSheet.create({
   userCountText: {
     fontFamily: 'Inter_500Medium',
     fontSize: 12,
-    color: Colors.text.muted,
+    color: colors.text.muted,
     marginBottom: 12,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
   userCard: {
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: 12,
     padding: 16,
     marginBottom: 12,
@@ -325,7 +328,7 @@ const styles = StyleSheet.create({
   userName: {
     fontFamily: 'Inter_600SemiBold',
     fontSize: 16,
-    color: Colors.text.primary,
+    color: colors.text.primary,
     flex: 1,
   },
   roleBadge: {
@@ -344,19 +347,19 @@ const styles = StyleSheet.create({
   userEmail: {
     fontFamily: 'Inter_400Regular',
     fontSize: 14,
-    color: Colors.text.muted,
+    color: colors.text.muted,
     marginBottom: 4,
   },
   userPhone: {
     fontFamily: 'Inter_400Regular',
     fontSize: 14,
-    color: Colors.text.muted,
+    color: colors.text.muted,
     marginBottom: 4,
   },
   joinDate: {
     fontFamily: 'Inter_400Regular',
     fontSize: 12,
-    color: Colors.text.muted,
+    color: colors.text.muted,
   },
   roleButtonsContainer: {
     flexDirection: 'row',
@@ -368,19 +371,19 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: Colors.gold.DEFAULT,
+    borderColor: colors.gold.DEFAULT,
     backgroundColor: 'transparent',
     alignItems: 'center',
   },
   roleButtonActive: {
-    backgroundColor: Colors.gold.DEFAULT,
+    backgroundColor: colors.gold.DEFAULT,
   },
   roleButtonText: {
     fontFamily: 'Inter_500Medium',
     fontSize: 12,
-    color: Colors.gold.DEFAULT,
+    color: colors.gold.DEFAULT,
   },
   roleButtonTextActive: {
-    color: Colors.primary,
+    color: colors.primary,
   },
 });

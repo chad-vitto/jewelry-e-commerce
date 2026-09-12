@@ -1,14 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import { useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, Pressable } from 'react-native';
 import { useRouter, Stack } from 'expo-router';
 import { useAuthStore } from '@/store';
 import { useAdminOrders, useAdminProducts, useAdminInquiries } from '@/hooks';
-import {
-  OrderStatusBadge,
-  PaymentStatusBadge,
-  InquiryStatusBadge,
-} from '@/components';
+import { OrderStatusBadge, InquiryStatusBadge } from '@/components';
 import { Colors, formatCurrency } from '@/constants';
+import { useTheme } from '@/hooks/useTheme';
+import type { AppColors } from '@/constants/themes';
 import {
   PackageOpen,
   ShoppingBag,
@@ -16,12 +14,13 @@ import {
   Inbox,
   TrendingUp,
   ChevronRight,
-  ArrowLeft,
   Settings,
   Users,
 } from 'lucide-react-native';
 
 export default function AdminDashboardScreen() {
+  const { colors } = useTheme();
+  const styles = createStyles(colors);
   const router = useRouter();
   const { user } = useAuthStore();
   const { orders, fetchOrders } = useAdminOrders();
@@ -56,7 +55,7 @@ export default function AdminDashboardScreen() {
           <Text style={styles.userName}>{user?.full_name}</Text>
         </View>
         <Pressable style={styles.settingsButton}>
-          <Settings size={24} color={Colors.gold.DEFAULT} />
+          <Settings size={24} color={colors.gold.DEFAULT} />
         </Pressable>
       </View>
 
@@ -68,7 +67,7 @@ export default function AdminDashboardScreen() {
         <View style={styles.statsContainer}>
           <View style={[styles.statCard, styles.salesCard]}>
             <View style={styles.statIconContainer}>
-              <TrendingUp size={24} color={Colors.primary} />
+              <TrendingUp size={24} color={colors.primary} />
             </View>
             <Text style={styles.statValue}>{formatCurrency(totalSales)}</Text>
             <Text style={styles.statLabel}>Total Sales</Text>
@@ -76,7 +75,7 @@ export default function AdminDashboardScreen() {
 
           <View style={[styles.statCard, styles.ordersCard]}>
             <View style={styles.statIconContainer}>
-              <ShoppingBag size={24} color={Colors.primary} />
+              <ShoppingBag size={24} color={colors.primary} />
             </View>
             <Text style={styles.statValue}>{totalOrders}</Text>
             <Text style={styles.statLabel}>Total Orders</Text>
@@ -84,7 +83,7 @@ export default function AdminDashboardScreen() {
 
           <View style={[styles.statCard, styles.productsCard]}>
             <View style={styles.statIconContainer}>
-              <PackageOpen size={24} color={Colors.primary} />
+              <PackageOpen size={24} color={colors.primary} />
             </View>
             <Text style={styles.statValue}>{activeProducts}</Text>
             <Text style={styles.statLabel}>Active Products</Text>
@@ -92,7 +91,7 @@ export default function AdminDashboardScreen() {
 
           <View style={[styles.statCard, styles.inquiriesCard]}>
             <View style={styles.statIconContainer}>
-              <AlertCircle size={24} color={Colors.primary} />
+              <AlertCircle size={24} color={colors.primary} />
             </View>
             <Text style={styles.statValue}>{newInquiries}</Text>
             <Text style={styles.statLabel}>New Inquiries</Text>
@@ -107,27 +106,27 @@ export default function AdminDashboardScreen() {
               style={styles.actionCard}
               onPress={() => router.push('/admin/products')}
             >
-              <PackageOpen size={28} color={Colors.gold.DEFAULT} />
+              <PackageOpen size={28} color={colors.gold.DEFAULT} />
               <Text style={styles.actionText}>Manage Products</Text>
-              <ChevronRight size={20} color={Colors.text.muted} />
+              <ChevronRight size={20} color={colors.text.muted} />
             </Pressable>
-            
+
             <Pressable
               style={styles.actionCard}
               onPress={() => router.push('/admin/orders')}
             >
-              <ShoppingBag size={28} color={Colors.gold.DEFAULT} />
+              <ShoppingBag size={28} color={colors.gold.DEFAULT} />
               <Text style={styles.actionText}>Manage Orders</Text>
-              <ChevronRight size={20} color={Colors.text.muted} />
+              <ChevronRight size={20} color={colors.text.muted} />
             </Pressable>
 
             <Pressable
               style={styles.actionCard}
               onPress={() => router.push('/admin/inquiries')}
             >
-              <Inbox size={28} color={Colors.gold.DEFAULT} />
+              <Inbox size={28} color={colors.gold.DEFAULT} />
               <Text style={styles.actionText}>View Inquiries</Text>
-              <ChevronRight size={20} color={Colors.text.muted} />
+              <ChevronRight size={20} color={colors.text.muted} />
             </Pressable>
 
             {user?.role === 'admin' && (
@@ -135,9 +134,9 @@ export default function AdminDashboardScreen() {
                 style={styles.actionCard}
                 onPress={() => router.push('/admin/users')}
               >
-                <Users size={28} color={Colors.gold.DEFAULT} />
+                <Users size={28} color={colors.gold.DEFAULT} />
                 <Text style={styles.actionText}>Manage Users</Text>
-                <ChevronRight size={20} color={Colors.text.muted} />
+                <ChevronRight size={20} color={colors.text.muted} />
               </Pressable>
             )}
           </View>
@@ -198,10 +197,10 @@ export default function AdminDashboardScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: AppColors) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.primary,
+    backgroundColor: colors.primary,
   },
   header: {
     flexDirection: 'row',
@@ -217,19 +216,19 @@ const styles = StyleSheet.create({
   greeting: {
     fontFamily: 'Inter_400Regular',
     fontSize: 14,
-    color: Colors.text.muted,
+    color: colors.text.muted,
     marginBottom: 2,
   },
   userName: {
     fontFamily: 'CormorantGaramond_700Bold',
     fontSize: 28,
-    color: Colors.text.primary,
+    color: colors.text.primary,
   },
   settingsButton: {
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -247,29 +246,29 @@ const styles = StyleSheet.create({
     width: '48%',
     borderRadius: 16,
     padding: 16,
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
   },
   salesCard: {
     borderTopWidth: 3,
-    borderTopColor: Colors.status.success,
+    borderTopColor: colors.status.success,
   },
   ordersCard: {
     borderTopWidth: 3,
-    borderTopColor: Colors.status.info,
+    borderTopColor: colors.status.info,
   },
   productsCard: {
     borderTopWidth: 3,
-    borderTopColor: Colors.gold.DEFAULT,
+    borderTopColor: colors.gold.DEFAULT,
   },
   inquiriesCard: {
     borderTopWidth: 3,
-    borderTopColor: Colors.status.warning,
+    borderTopColor: colors.status.warning,
   },
   statIconContainer: {
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: Colors.gold.DEFAULT,
+    backgroundColor: colors.gold.DEFAULT,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 12,
@@ -277,13 +276,13 @@ const styles = StyleSheet.create({
   statValue: {
     fontFamily: 'Inter_700Bold',
     fontSize: 20,
-    color: Colors.text.primary,
+    color: colors.text.primary,
     marginBottom: 4,
   },
   statLabel: {
     fontFamily: 'Inter_400Regular',
     fontSize: 12,
-    color: Colors.text.muted,
+    color: colors.text.muted,
   },
   section: {
     paddingHorizontal: 16,
@@ -298,13 +297,13 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontFamily: 'CormorantGaramond_600SemiBold',
     fontSize: 20,
-    color: Colors.text.primary,
+    color: colors.text.primary,
     marginBottom: 12,
   },
   seeAll: {
     fontFamily: 'Inter_500Medium',
     fontSize: 14,
-    color: Colors.gold.DEFAULT,
+    color: colors.gold.DEFAULT,
     marginBottom: 12,
   },
   actionsContainer: {
@@ -313,7 +312,7 @@ const styles = StyleSheet.create({
   actionCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: 12,
     padding: 16,
     gap: 12,
@@ -322,12 +321,12 @@ const styles = StyleSheet.create({
     flex: 1,
     fontFamily: 'Inter_500Medium',
     fontSize: 16,
-    color: Colors.text.primary,
+    color: colors.text.primary,
   },
   orderCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: 12,
     padding: 12,
     marginBottom: 8,
@@ -338,12 +337,12 @@ const styles = StyleSheet.create({
   orderId: {
     fontFamily: 'Inter_600SemiBold',
     fontSize: 14,
-    color: Colors.text.primary,
+    color: colors.text.primary,
   },
   orderDate: {
     fontFamily: 'Inter_400Regular',
     fontSize: 12,
-    color: Colors.text.muted,
+    color: colors.text.muted,
     marginTop: 2,
   },
   orderBadges: {
@@ -354,10 +353,10 @@ const styles = StyleSheet.create({
   orderTotal: {
     fontFamily: 'Inter_700Bold',
     fontSize: 14,
-    color: Colors.gold.DEFAULT,
+    color: colors.gold.DEFAULT,
   },
   inquiryCard: {
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: 12,
     padding: 12,
     marginBottom: 8,
@@ -373,12 +372,12 @@ const styles = StyleSheet.create({
   inquirySubject: {
     fontFamily: 'Inter_600SemiBold',
     fontSize: 14,
-    color: Colors.text.primary,
+    color: colors.text.primary,
     marginBottom: 2,
   },
   inquiryCustomer: {
     fontFamily: 'Inter_400Regular',
     fontSize: 12,
-    color: Colors.text.muted,
+    color: colors.text.muted,
   },
 });

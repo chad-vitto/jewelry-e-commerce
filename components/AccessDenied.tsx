@@ -1,8 +1,9 @@
-import React from 'react';
 import { View, Text, StyleSheet, Pressable } from 'react-native';
 import { useRouter } from 'expo-router';
 import { ShieldX, ArrowLeft } from 'lucide-react-native';
 import { Colors } from '@/constants';
+import { useTheme } from '@/hooks/useTheme';
+import type { AppColors } from '@/constants/themes';
 
 interface AccessDeniedProps {
   title?: string;
@@ -15,13 +16,15 @@ export default function AccessDenied({
   message = 'You do not have permission to access this page.',
   showBackButton = true,
 }: AccessDeniedProps) {
+  const { colors } = useTheme();
+  const styles = createStyles(colors);
   const router = useRouter();
 
   return (
     <View style={styles.container}>
       <View style={styles.content}>
         <View style={styles.iconContainer}>
-          <ShieldX size={64} color={Colors.status.error} />
+          <ShieldX size={64} color={colors.status.error} />
         </View>
 
         <Text style={styles.title}>{title}</Text>
@@ -35,7 +38,7 @@ export default function AccessDenied({
             style={styles.button}
             onPress={() => router.back()}
           >
-            <ArrowLeft size={18} color={Colors.primary} />
+            <ArrowLeft size={18} color={colors.primary} />
             <Text style={styles.buttonText}>Go Back</Text>
           </Pressable>
         )}
@@ -44,10 +47,10 @@ export default function AccessDenied({
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: AppColors) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.primary,
+    backgroundColor: colors.primary,
     justifyContent: 'center',
     alignItems: 'center',
     padding: 24,
@@ -66,7 +69,7 @@ const styles = StyleSheet.create({
   title: {
     fontFamily: 'CormorantGaramond_700Bold',
     fontSize: 32,
-    color: Colors.status.error,
+    color: colors.status.error,
     marginBottom: 12,
     textAlign: 'center',
   },
@@ -74,7 +77,7 @@ const styles = StyleSheet.create({
   message: {
     fontFamily: 'Inter_400Regular',
     fontSize: 16,
-    color: Colors.text.secondary,
+    color: colors.text.secondary,
     textAlign: 'center',
     lineHeight: 24,
     marginBottom: 32,
@@ -84,7 +87,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    backgroundColor: Colors.gold.DEFAULT,
+    backgroundColor: colors.gold.DEFAULT,
     paddingHorizontal: 20,
     paddingVertical: 14,
     borderRadius: 12,
@@ -93,6 +96,6 @@ const styles = StyleSheet.create({
   buttonText: {
     fontFamily: 'Inter_600SemiBold',
     fontSize: 14,
-    color: Colors.primary,
+    color: colors.primary,
   },
 });

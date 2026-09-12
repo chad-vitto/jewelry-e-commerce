@@ -1,9 +1,9 @@
-import React from 'react';
 import { View, Text, StyleSheet, FlatList, Dimensions } from 'react-native';
 import { Product } from '@/types';
 import { ProductCard } from './ProductCard';
-import { Colors } from '@/constants';
 import { useRouter } from 'expo-router';
+import { useTheme } from '@/hooks/useTheme';
+import type { AppColors } from '@/constants/themes';
 
 const { width } = Dimensions.get('window');
 
@@ -25,6 +25,8 @@ export function ProductCarousel({
   onWishlistToggle,
 }: ProductCarouselProps) {
   const router = useRouter();
+  const { colors } = useTheme();
+  const styles = createStyles(colors);
 
   const handleProductPress = (product: Product) => {
     router.push({
@@ -85,6 +87,8 @@ export function ProductGrid({
   numColumns = 2,
 }: ProductGridProps) {
   const router = useRouter();
+  const { colors } = useTheme();
+  const styles = createStyles(colors);
 
   const handleProductPress = (product: Product) => {
     router.push({
@@ -111,7 +115,7 @@ export function ProductGrid({
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: AppColors) => StyleSheet.create({
   container: {
     marginBottom: 24,
   },
@@ -125,13 +129,13 @@ const styles = StyleSheet.create({
   title: {
     fontFamily: 'CormorantGaramond_700Bold',
     fontSize: 24,
-    color: Colors.text.primary,
+    color: colors.text.primary,
     letterSpacing: 0.5,
   },
   seeAll: {
     fontFamily: 'Inter_500Medium',
     fontSize: 14,
-    color: Colors.gold.DEFAULT,
+    color: colors.gold.DEFAULT,
   },
   listContent: {
     paddingHorizontal: 16,

@@ -9,6 +9,8 @@ import {
   StyleSheet,
 } from 'react-native';
 import { Colors } from '@/constants';
+import { useTheme } from '@/hooks/useTheme';
+import type { AppColors } from '@/constants/themes';
 
 interface RejectionReasonModalProps {
   visible: boolean;
@@ -25,6 +27,8 @@ export const RejectionReasonModal: React.FC<RejectionReasonModalProps> = ({
   onCancel,
   onConfirm,
 }) => {
+  const { colors } = useTheme();
+  const styles = createStyles(colors);
   const [reason, setReason] = useState('');
   const maxChars = 200;
 
@@ -53,7 +57,7 @@ export const RejectionReasonModal: React.FC<RejectionReasonModalProps> = ({
             style={styles.textarea}
             multiline
             placeholder="Enter reason..."
-            placeholderTextColor={Colors.text.muted}
+            placeholderTextColor={colors.text.muted}
             value={reason}
             onChangeText={setReason}
             maxLength={maxChars}
@@ -91,7 +95,7 @@ export const RejectionReasonModal: React.FC<RejectionReasonModalProps> = ({
               disabled={loading || reason.trim().length === 0}
             >
               {loading ? (
-                <ActivityIndicator size="small" color={Colors.text.primary} />
+                <ActivityIndicator size="small" color={colors.text.primary} />
               ) : (
                 <Text style={styles.rejectText}>Reject Payment</Text>
               )}
@@ -103,7 +107,7 @@ export const RejectionReasonModal: React.FC<RejectionReasonModalProps> = ({
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (colors: AppColors) => StyleSheet.create({
   overlay: {
     flex: 1,
     backgroundColor: 'rgba(10,10,10,0.85)',
@@ -113,43 +117,43 @@ const styles = StyleSheet.create({
   modal: {
     width: '90%',
     borderRadius: 12,
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     padding: 20,
     borderWidth: 1,
-    borderColor: Colors.border.DEFAULT,
+    borderColor: colors.border.DEFAULT,
   },
   title: {
     fontSize: 18,
     fontWeight: '700',
-    color: Colors.gold.light,
+    color: colors.gold.light,
     marginBottom: 8,
     textAlign: 'center',
   },
   subtitle: {
     fontSize: 14,
-    color: Colors.text.primary,
+    color: colors.text.primary,
     marginBottom: 12,
     textAlign: 'center',
   },
   textarea: {
     minHeight: 100,
     borderWidth: 1,
-    borderColor: Colors.border.subtle,
+    borderColor: colors.border.subtle,
     borderRadius: 8,
     padding: 10,
-    color: Colors.text.primary,
-    backgroundColor: Colors.surfaceLight,
+    color: colors.text.primary,
+    backgroundColor: colors.surfaceLight,
     textAlignVertical: 'top',
   },
   counter: {
     fontSize: 12,
-    color: Colors.text.muted,
+    color: colors.text.muted,
     textAlign: 'right',
     marginTop: 4,
   },
   errorText: {
     fontSize: 13,
-    color: Colors.status.error,
+    color: colors.status.error,
     marginTop: 8,
   },
   examples: {
@@ -158,12 +162,12 @@ const styles = StyleSheet.create({
   exampleTitle: {
     fontSize: 14,
     fontWeight: '600',
-    color: Colors.text.secondary,
+    color: colors.text.secondary,
     marginBottom: 4,
   },
   example: {
     fontSize: 13,
-    color: Colors.text.muted,
+    color: colors.text.muted,
   },
   actions: {
     flexDirection: 'row',
@@ -178,20 +182,20 @@ const styles = StyleSheet.create({
     marginHorizontal: 4,
   },
   cancelButton: {
-    backgroundColor: Colors.border.subtle,
+    backgroundColor: colors.border.subtle,
   },
   rejectButton: {
-    backgroundColor: Colors.status.error,
+    backgroundColor: colors.status.error,
   },
   cancelText: {
     fontSize: 14,
     fontWeight: '600',
-    color: Colors.text.primary,
+    color: colors.text.primary,
   },
   rejectText: {
     fontSize: 14,
     fontWeight: '600',
-    color: Colors.text.primary,
+    color: colors.text.primary,
   },
   disabled: {
     opacity: 0.6,

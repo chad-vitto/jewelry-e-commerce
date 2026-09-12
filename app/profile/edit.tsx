@@ -1,11 +1,12 @@
 import * as ImagePicker from 'expo-image-picker';
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { ArrowLeft, Camera, User } from 'lucide-react-native';
-import { Colors } from '@/constants';
 import { GoldButton } from '@/components';
 import { supabase } from '@/lib/supabase';
 import { useAuthStore } from '@/store';
 import { useImageUpload } from '@/hooks';
+import { useTheme } from '@/hooks/useTheme';
+import type { AppColors } from '@/constants/themes';
 import { useRouter } from 'expo-router';
 import {
   View,
@@ -20,6 +21,8 @@ import {
 
 export default function EditProfileScreen() {
   const router = useRouter();
+  const { colors } = useTheme();
+  const styles = createStyles(colors);
   const { user, fetchProfile } = useAuthStore();
 
   const [fullName, setFullName] = useState(user?.full_name ?? '');
@@ -99,7 +102,7 @@ export default function EditProfileScreen() {
     >
       <View style={styles.header}>
         <Pressable style={styles.backButton} onPress={() => router.back()}>
-          <ArrowLeft size={22} color={Colors.text.primary} />
+          <ArrowLeft size={22} color={colors.text.primary} />
         </Pressable>
 
         <Text style={styles.title}>Edit Profile</Text>
@@ -112,11 +115,11 @@ export default function EditProfileScreen() {
           {avatar ? (
             <Image source={{ uri: avatar }} style={styles.avatar} />
           ) : (
-            <User size={42} color={Colors.gold.DEFAULT} />
+            <User size={42} color={colors.gold.DEFAULT} />
           )}
 
           <View style={styles.cameraBadge}>
-            <Camera size={16} color={Colors.primary} />
+            <Camera size={16} color={colors.primary} />
           </View>
         </Pressable>
       </View>
@@ -135,7 +138,7 @@ export default function EditProfileScreen() {
             value={fullName}
             onChangeText={setFullName}
             placeholder="Enter your full name"
-            placeholderTextColor={Colors.text.muted}
+            placeholderTextColor={colors.text.muted}
             style={styles.input}
           />
         </View>
@@ -158,7 +161,7 @@ export default function EditProfileScreen() {
             onChangeText={setPhone}
             keyboardType="phone-pad"
             placeholder="+63 912 345 6789"
-            placeholderTextColor={Colors.text.muted}
+            placeholderTextColor={colors.text.muted}
             style={styles.input}
           />
         </View>
@@ -173,10 +176,10 @@ export default function EditProfileScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: AppColors) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.primary,
+    backgroundColor: colors.primary,
   },
 
   content: {
@@ -198,7 +201,7 @@ const styles = StyleSheet.create({
     fontFamily: 'CormorantGaramond_700Bold',
     fontSize: 28,
 
-    color: Colors.text.primary,
+    color: colors.text.primary,
   },
 
   backButton: {
@@ -207,7 +210,7 @@ const styles = StyleSheet.create({
 
     borderRadius: 20,
 
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
 
     alignItems: 'center',
     justifyContent: 'center',
@@ -224,10 +227,10 @@ const styles = StyleSheet.create({
 
     borderRadius: 55,
 
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
 
     borderWidth: 2,
-    borderColor: Colors.gold.DEFAULT,
+    borderColor: colors.gold.DEFAULT,
 
     justifyContent: 'center',
     alignItems: 'center',
@@ -251,7 +254,7 @@ const styles = StyleSheet.create({
 
     borderRadius: 15,
 
-    backgroundColor: Colors.gold.DEFAULT,
+    backgroundColor: colors.gold.DEFAULT,
 
     justifyContent: 'center',
     alignItems: 'center',
@@ -263,10 +266,10 @@ const styles = StyleSheet.create({
     fontFamily: 'Inter_500Medium',
     fontSize: 14,
 
-    color: Colors.gold.DEFAULT,
+    color: colors.gold.DEFAULT,
   },
   card: {
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
 
     borderRadius: 20,
 
@@ -279,7 +282,7 @@ const styles = StyleSheet.create({
     fontFamily: 'CormorantGaramond_700Bold',
     fontSize: 22,
 
-    color: Colors.text.primary,
+    color: colors.text.primary,
 
     marginBottom: 20,
   },
@@ -290,18 +293,18 @@ const styles = StyleSheet.create({
   label: {
     fontFamily: 'Inter_600SemiBold',
     fontSize: 13,
-    color: Colors.gold.DEFAULT,
+    color: colors.gold.DEFAULT,
 
     marginBottom: 8,
   },
 
   input: {
-    backgroundColor: Colors.primary,
+    backgroundColor: colors.primary,
 
     borderRadius: 14,
 
     borderWidth: 1,
-    borderColor: Colors.border.DEFAULT,
+    borderColor: colors.border.DEFAULT,
 
     paddingHorizontal: 16,
     paddingVertical: 14,
@@ -309,7 +312,7 @@ const styles = StyleSheet.create({
     fontFamily: 'Inter_400Regular',
     fontSize: 16,
 
-    color: Colors.text.primary,
+    color: colors.text.primary,
   },
 
   disabledInput: {

@@ -1,55 +1,36 @@
 import * as Clipboard from 'expo-clipboard';
-import React, { useEffect, useState } from 'react';
-import {
-  Colors,
-  formatCurrency,
-  PAYMENT_METHODS,
-  Shadows
-} from '@/constants';
+import { useEffect, useState } from 'react';
+import { formatCurrency, PAYMENT_METHODS, Shadows } from '@/constants';
 import { GoldButton } from '@/components/GoldGradient';
-import { Image } from 'expo-image';
-import { Order, PaymentMethodType, ShippingAddressForm } from '@/types';
+import { Order, PaymentMethodType } from '@/types';
+import { ShippingAddressCard } from '@/components/orders/ShippingAddressCard';
 import { Stack, useRouter } from 'expo-router';
 import { supabase } from '@/lib/supabase';
-import { useAuth, useCart } from '@/hooks';
-
-
-import {
-  ArrowLeft,
-  Building,
-  Check,
-  CreditCard,
-  Pencil,
-  Smartphone,
-  User,
-  MapPin,
-  Phone,
-  CheckCircle2,
-  Copy,
-  ShoppingCart,
-  ShieldCheck,
-  Clock3,
-} from 'lucide-react-native';
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  Pressable,
-  TextInput,
-  Alert,
-} from 'react-native';
+import { useAuth, useCart, useAddresses } from '@/hooks';
+import { useTheme } from '@/hooks/useTheme';
+import type { AppColors } from '@/constants/themes';
+import { View, Text, StyleSheet, ScrollView, Pressable, Alert } from 'react-native';
+import { ArrowLeft, Building, Check, CreditCard, Pencil, Smartphone, User, MapPin, Phone, CheckCircle2, Copy, ShieldCheck, Clock3 } from 'lucide-react-native';
+import { toShippingAddressDisplay } from '@/utils/address';
+import { CheckoutOrderCard } from '@/components/orders/CheckoutOrderCard';
+import { CheckoutSummaryCard } from '@/components/orders/CheckoutSummaryCard';
+import { AddressForm } from '@/components/address/AddressForm';
 
 type CheckoutStep = 'address' | 'payment' | 'review' | 'confirmation';
 
 export default function CheckoutScreen() {
   const router = useRouter();
+  const { colors } = useTheme();
+  const styles = createStyles(colors);
   const { user, isAuthenticated } = useAuth();
+  const { address, setAddress, shippingAddressId, isLoading: isAddressLoading, loadDefaultAddress, saveAddress, currentAddress, } = useAddresses(user?.id)
+  const [isPlacingOrder, setIsPlacingOrder] = useState(false);
+
   const { items, subtotal, shippingFee, total, clearCart } = useCart();
 
   const [currentStep, setCurrentStep] = useState<CheckoutStep>('address');
-  const [isLoading, setIsLoading] = useState(false);
   const [orderPlaced, setOrderPlaced] = useState<Order | null>(null);
+  const [orderedItemCount, setOrderedItemCount] = useState(0);
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -57,26 +38,14 @@ export default function CheckoutScreen() {
     }
   }, [isAuthenticated, router]);
 
-  // Form state
-  const [address, setAddress] = useState<ShippingAddressForm>({
-    full_name: user?.full_name || '',
-    phone_number: '',
-    address_line1: '',
-    address_line2: '',
-    city: '',
-    province: '',
-    postal_code: '',
-  });
 
-  const [selectedPayment, setSelectedPayment] =
-    useState<PaymentMethodType>('gcash');
+  const [selectedPayment, setSelectedPayment] = useState<PaymentMethodType>('gcash');
   const [email, setEmail] = useState(user?.email || '');
   const [notes, setNotes] = useState('');
-  const [loadingAddress, setLoadingAddress] = useState(true);
   const [isEditingAddress, setIsEditingAddress] = useState(false);
-  const [shippingAddressId, setShippingAddressId] = useState<string | null>(
-    null,
-  );
+
+
+  const shippingAddressDisplay = toShippingAddressDisplay(address);
 
   const canProceedToPayment =
     address.full_name &&
@@ -87,107 +56,23 @@ export default function CheckoutScreen() {
     address.postal_code;
 
   useEffect(() => {
-    if (!user) return;
-
-    const fetchDefaultAddress = async () => {
-      setLoadingAddress(true);
-
-      const { data, error } = await supabase
-        .from('shipping_addresses')
-        .select('*')
-        .eq('customer_id', user.id)
-        .eq('is_default', true)
-        .order('updated_at', { ascending: false })
-        .limit(1)
-        .single();
-
-      if (error) {
-        if (error.code !== 'PGRST116') {
-          console.error('Load Address Error:', error);
-        }
-
-        setLoadingAddress(false);
-        return;
-      }
-
-      setShippingAddressId(data.id);
-
-      setAddress({
-        full_name: data.full_name,
-        phone_number: data.phone_number,
-        address_line1: data.address_line1,
-        address_line2: data.address_line2 ?? '',
-        city: data.city,
-        province: data.province,
-        postal_code: data.postal_code,
-      });
-
-      setLoadingAddress(false);
-    };
-
-    fetchDefaultAddress();
-  }, [user]);
+    void loadDefaultAddress();
+  }, [loadDefaultAddress]);
 
   const hasSavedAddress = !!shippingAddressId;
   const showAddressForm = !hasSavedAddress || isEditingAddress;
   const isEditingSavedAddress = Boolean(shippingAddressId && isEditingAddress);
 
-  const saveShippingAddress = async () => {
-    if (!user) {
-      throw new Error('User not found.');
-    }
 
-    if (shippingAddressId) {
-      const { data, error } = await supabase
-        .from('shipping_addresses')
-        .update({
-          full_name: address.full_name,
-          phone_number: address.phone_number,
-          address_line1: address.address_line1,
-          address_line2: address.address_line2 || null,
-          city: address.city,
-          province: address.province,
-          postal_code: address.postal_code,
-        })
-        .eq('id', shippingAddressId)
-        .eq('customer_id', user.id)
-        .select()
-        .single();
-
-      if (error) throw error;
-
-      return data;
-    }
-
-    const { data, error } = await supabase
-      .from('shipping_addresses')
-      .insert({
-        customer_id: user.id,
-        label: 'Home',
-        full_name: address.full_name,
-        phone_number: address.phone_number,
-        address_line1: address.address_line1,
-        address_line2: address.address_line2 || null,
-        city: address.city,
-        province: address.province,
-        postal_code: address.postal_code,
-        is_default: true,
-      })
-      .select()
-      .single();
-
-    if (error) throw error;
-
-    setShippingAddressId(data.id);
-
-    return data;
-  };
 
   const handleSaveAddress = async () => {
     try {
-      setIsLoading(true);
 
-      await saveShippingAddress();
+      await saveAddress({
+        address,
+        label: currentAddress?.label ?? 'Home',
+        is_default: currentAddress?.is_default ?? true,
+      });
 
       setIsEditingAddress(false);
 
@@ -197,7 +82,6 @@ export default function CheckoutScreen() {
 
       Alert.alert('Error', 'Unable to update your shipping address.');
     } finally {
-      setIsLoading(false);
     }
   };
 
@@ -227,9 +111,13 @@ export default function CheckoutScreen() {
       Alert.alert('Error', 'Please log in first.');
       return;
     }
-    setIsLoading(true);
+    setIsPlacingOrder(true);
     try {
-      const shippingAddress = await saveShippingAddress();
+      const shippingAddress = await saveAddress({
+        address,
+        label: currentAddress?.label ?? 'Home',
+        is_default: currentAddress?.is_default ?? true,
+      });
 
       const { data: order, error: orderError } = await supabase
         .from('orders')
@@ -283,6 +171,11 @@ export default function CheckoutScreen() {
 
       setOrderPlaced(order as Order);
 
+      const totalItems = items.reduce(
+        (sum, item) => sum + item.quantity, 0);
+
+      setOrderedItemCount(totalItems);
+
       clearCart();
 
       setCurrentStep('confirmation');
@@ -290,7 +183,7 @@ export default function CheckoutScreen() {
       console.error('Place Order Error:', error);
       Alert.alert('Error', 'Unable to place order. Please try again.');
     } finally {
-      setIsLoading(false);
+      setIsPlacingOrder(false);
     }
   };
 
@@ -310,7 +203,7 @@ export default function CheckoutScreen() {
               ]}
             >
               {index < currentIndex ? (
-                <Check size={14} color={Colors.primary} />
+                <Check size={14} color={colors.primary} />
               ) : (
                 <Text
                   style={[
@@ -344,6 +237,7 @@ export default function CheckoutScreen() {
     );
   };
 
+  {/* Shipping Address Next to Proceed to Checkout */ }
   const renderAddressStep = () => (
     <View style={styles.stepContent}>
       <Text style={styles.stepTitle}>Shipping Address</Text>
@@ -352,7 +246,7 @@ export default function CheckoutScreen() {
         <View style={styles.savedAddressCard}>
           <View style={styles.savedAddressHeader}>
             <View style={styles.nameRow}>
-              <User size={18} color={Colors.gold.DEFAULT} />
+              <User size={22} color={colors.gold.DEFAULT} />
               <Text style={styles.savedName}>{address.full_name}</Text>
             </View>
 
@@ -361,7 +255,7 @@ export default function CheckoutScreen() {
               style={styles.changeChip}
             >
               <Text style={styles.changeText}>Change</Text>
-              <Pencil size={16} color={Colors.gold.DEFAULT} />
+              <Pencil size={16} color={colors.gold.DEFAULT} />
             </Pressable>
           </View>
 
@@ -370,7 +264,7 @@ export default function CheckoutScreen() {
           <View style={[styles.infoRow, styles.lastInfoRow]}>
             <MapPin
               size={18}
-              color={Colors.gold.DEFAULT}
+              color={colors.gold.DEFAULT}
               style={styles.infoIcon}
             />
 
@@ -389,7 +283,7 @@ export default function CheckoutScreen() {
           <View style={[styles.infoRow, styles.lastInfoRow]}>
             <Phone
               size={18}
-              color={Colors.gold.DEFAULT}
+              color={colors.gold.DEFAULT}
               style={styles.infoIcon}
             />
 
@@ -398,134 +292,20 @@ export default function CheckoutScreen() {
           <View style={styles.divider} />
 
           <View style={styles.defaultAddressRow}>
-            <CheckCircle2 size={16} color={Colors.gold.DEFAULT} />
+            <CheckCircle2 size={16} color={colors.gold.DEFAULT} />
             <Text style={styles.defaultAddressText}>
               Default Shipping Address
             </Text>
           </View>
         </View>
       ) : (
-        <>
-          <View style={styles.formGroup}>
-            <Text style={styles.label}>Full Name *</Text>
-            <TextInput
-              style={styles.input}
-              value={address.full_name}
-              onChangeText={(text) =>
-                setAddress({ ...address, full_name: text })
-              }
-              placeholder="Enter your full name"
-              placeholderTextColor={Colors.text.muted}
-            />
-          </View>
-
-          <View style={styles.formGroup}>
-            <Text style={styles.label}>Phone Number *</Text>
-            <TextInput
-              style={styles.input}
-              value={address.phone_number}
-              onChangeText={(text) =>
-                setAddress({ ...address, phone_number: text })
-              }
-              placeholder="09XX XXX XXXX"
-              placeholderTextColor={Colors.text.muted}
-              keyboardType="phone-pad"
-            />
-          </View>
-
-          <View style={styles.formGroup}>
-            <Text style={styles.label}>Address Line 1 *</Text>
-            <TextInput
-              style={styles.input}
-              value={address.address_line1}
-              onChangeText={(text) =>
-                setAddress({ ...address, address_line1: text })
-              }
-              placeholder="Street address"
-              placeholderTextColor={Colors.text.muted}
-            />
-          </View>
-
-          <View style={styles.formGroup}>
-            <Text style={styles.label}>Address Line 2</Text>
-            <TextInput
-              style={styles.input}
-              value={address.address_line2 || ''}
-              onChangeText={(text) =>
-                setAddress({ ...address, address_line2: text })
-              }
-              placeholder="Apartment, unit, etc. (optional)"
-              placeholderTextColor={Colors.text.muted}
-            />
-          </View>
-
-          <View style={styles.row}>
-            <View style={[styles.formGroup, { flex: 1 }]}>
-              <Text style={styles.label}>City *</Text>
-              <TextInput
-                style={styles.input}
-                value={address.city}
-                onChangeText={(text) => setAddress({ ...address, city: text })}
-                placeholder="City"
-                placeholderTextColor={Colors.text.muted}
-              />
-            </View>
-            <View style={[styles.formGroup, { flex: 1, marginLeft: 12 }]}>
-              <Text style={styles.label}>Province *</Text>
-              <TextInput
-                style={styles.input}
-                value={address.province}
-                onChangeText={(text) =>
-                  setAddress({ ...address, province: text })
-                }
-                placeholder="Province"
-                placeholderTextColor={Colors.text.muted}
-              />
-            </View>
-          </View>
-
-          <View style={styles.formGroup}>
-            <Text style={styles.label}>Postal Code *</Text>
-            <TextInput
-              style={styles.input}
-              value={address.postal_code}
-              onChangeText={(text) =>
-                setAddress({ ...address, postal_code: text })
-              }
-              placeholder="1234"
-              placeholderTextColor={Colors.text.muted}
-              keyboardType="numeric"
-            />
-          </View>
-
-          <View style={styles.formGroup}>
-            <Text style={styles.label}>Email *</Text>
-            <TextInput
-              style={styles.input}
-              value={email}
-              onChangeText={setEmail}
-              placeholder="your@email.com"
-              placeholderTextColor={Colors.text.muted}
-              keyboardType="email-address"
-              autoCapitalize="none"
-            />
-          </View>
-
-          <View style={styles.formGroup}>
-            <Text style={styles.label}>Order Notes</Text>
-            <TextInput
-              style={[styles.input, styles.textArea]}
-              value={notes}
-              onChangeText={setNotes}
-              placeholder="Special instructions (optional)"
-              placeholderTextColor={Colors.text.muted}
-              multiline
-              numberOfLines={3}
-              textAlignVertical="top"
-            />
-          </View>
-        </>
+        <AddressForm
+          value={address}
+          onChange={setAddress}
+          errors={{}}
+        />
       )}
+
       {isEditingSavedAddress ? (
         <View style={styles.actionButtons}>
           <View style={styles.actionButton}>
@@ -542,7 +322,7 @@ export default function CheckoutScreen() {
               title="Save Changes"
               variant="gradient"
               size="lg"
-              loading={isLoading}
+              loading={isAddressLoading}
               onPress={handleSaveAddress}
             />
           </View>
@@ -592,13 +372,13 @@ export default function CheckoutScreen() {
         >
           <View style={styles.paymentIcon}>
             {method.id === 'gcash' && (
-              <Smartphone size={24} color={Colors.gold.DEFAULT} />
+              <Smartphone size={24} color={colors.gold.DEFAULT} />
             )}
             {method.id === 'maya' && (
-              <CreditCard size={24} color={Colors.gold.DEFAULT} />
+              <CreditCard size={24} color={colors.gold.DEFAULT} />
             )}
             {method.id === 'bank_transfer' && (
-              <Building size={24} color={Colors.gold.DEFAULT} />
+              <Building size={24} color={colors.gold.DEFAULT} />
             )}
           </View>
           <View style={styles.paymentInfo}>
@@ -631,7 +411,7 @@ export default function CheckoutScreen() {
             }
           </Text>
           <Pressable style={styles.copyRow} onPress={handleCopyAccountNumber}>
-            <Copy size={16} color={Colors.gold.DEFAULT} />
+            <Copy size={16} color={colors.gold.DEFAULT} />
             <Text style={styles.copyText}>Copy Account Number</Text>
           </Pressable>
         </View>
@@ -663,95 +443,46 @@ export default function CheckoutScreen() {
       <Text style={styles.stepTitle}>Review Your Order</Text>
 
       {/* Items Summary */}
-      <View style={styles.reviewSection}>
-        <View style={styles.reviewHeader}>
-          <Text style={styles.reviewLabel}>Items ({items.length})</Text>
+      <CheckoutOrderCard
+        items={items}
+        onEditCart={() => router.push('/cart')}
+      />
 
+      {/* Shipping Address Inside Review Your Order */}
+      <ShippingAddressCard
+        address={shippingAddressDisplay}
+        rightContent={
           <Pressable
+            onPress={() => {
+              setIsEditingAddress(true);
+              setCurrentStep('address');
+            }}
             style={styles.changeButton}
-            onPress={() => router.push('/cart')}
           >
-            <Text style={styles.changeText}>Edit Cart</Text>
-            <ShoppingCart size={16} color={Colors.gold.DEFAULT} />
+            <Text style={styles.changeText}>
+              Change
+            </Text>
+
+            <Pencil
+              size={15}
+              color={colors.gold.DEFAULT}
+            />
           </Pressable>
-        </View>
-        {items.map((item, index) => {
-          const imageUri =
-            item.product.product_images?.[0]?.image_url ||
-            'https://images.pexels.com/photos/269228/pexels-photo-269228.jpeg?auto=compress&cs=tinysrgb&w=200';
+        }
+        footer={
+          <View style={styles.defaultAddressRow}>
+            <CheckCircle2
+              size={16}
+              color={colors.gold.DEFAULT}
+            />
 
-          return (
-            <React.Fragment key={item.product.id}>
-              <View style={styles.reviewItem}>
-                <View style={styles.imageWrapper}>
-                  <Image
-                    source={{ uri: imageUri }}
-                    style={styles.reviewItemImage}
-                    contentFit="cover"
-                  />
-                </View>
-
-                <View style={styles.reviewItemInfo}>
-                  <Text style={styles.reviewItemName} numberOfLines={2}>
-                    {item.product.name}
-                  </Text>
-                  <Text style={styles.reviewItemDetails}>
-                    {item.product.gold_purity && `${item.product.gold_purity}`}
-                    {item.product.gold_purity && item.product.weight_grams
-                      ? ' • '
-                      : ''}
-                    {item.product.weight_grams &&
-                      `${item.product.weight_grams}g`}
-                  </Text>
-                  {item.quantity > 1 && (
-                    <View style={styles.reviewItemMeta}>
-                      <Text style={styles.reviewItemQty}>
-                        Qty × {item.quantity}
-                      </Text>
-
-                      <Text style={styles.reviewItemUnitPrice}>
-                        {formatCurrency(item.product.price_php)} each
-                      </Text>
-                    </View>
-                  )}
-                </View>
-
-                <Text style={styles.reviewItemPrice}>
-                  {formatCurrency(item.product.price_php * item.quantity)}
-                </Text>
-              </View>
-
-              {index < items.length - 1 && (
-                <View style={styles.reviewDivider} />
-              )}
-            </React.Fragment>
-          );
-        })}
-      </View>
-
-      {/* Shipping Address */}
-      <View style={styles.reviewSection}>
-        <View style={styles.reviewHeader}>
-          <Text style={styles.reviewLabel}>Shipping Address</Text>
-
-          <Pressable
-            style={styles.changeButton}
-            onPress={() => setCurrentStep('address')}
-          >
-            <Text style={styles.changeText}>Change</Text>
-            <Pencil size={16} color={Colors.gold.DEFAULT} />
-          </Pressable>
-        </View>
-        <Text style={styles.reviewName}>{address.full_name}</Text>
-        <Text style={styles.reviewText}>{address.address_line1}</Text>
-        {address.address_line2 && (
-          <Text style={styles.reviewText}>{address.address_line2}</Text>
-        )}
-        <Text style={styles.reviewText}>
-          {address.city}, {address.province} {address.postal_code}
-        </Text>
-        <Text style={styles.reviewText}>{address.phone_number}</Text>
-      </View>
+            <Text style={styles.defaultAddressText}>
+              Default Shipping Address
+            </Text>
+          </View>
+        }
+        style={{ backgroundColor: colors.surface }}
+      />
 
       {/* Payment Method */}
       <View style={styles.reviewSection}>
@@ -763,7 +494,7 @@ export default function CheckoutScreen() {
             onPress={() => setCurrentStep('payment')}
           >
             <Text style={styles.changeText}>Change</Text>
-            <Pencil size={16} color={Colors.gold.DEFAULT} />
+            <Pencil size={16} color={colors.gold.DEFAULT} />
           </Pressable>
         </View>
         <Text style={styles.reviewText}>
@@ -779,7 +510,7 @@ export default function CheckoutScreen() {
           </Text>
 
           <Pressable onPress={handleCopyAccountNumber}>
-            <Copy size={16} color={Colors.gold.DEFAULT} />
+            <Copy size={16} color={colors.gold.DEFAULT} />
           </Pressable>
         </View>
       </View>
@@ -802,7 +533,7 @@ export default function CheckoutScreen() {
         </View>
       </View>
       <View style={styles.secureNote}>
-        <ShieldCheck size={16} color={Colors.gold.DEFAULT} />
+        <ShieldCheck size={16} color={colors.gold.DEFAULT} />
         <Text style={styles.secureText}>
           Your order details will be securely processed.
         </Text>
@@ -822,7 +553,7 @@ export default function CheckoutScreen() {
             onPress={confirmPlaceOrder}
             variant="gradient"
             size="lg"
-            loading={isLoading}
+            loading={isPlacingOrder}
           />
         </View>
       </View>
@@ -832,7 +563,7 @@ export default function CheckoutScreen() {
   const renderConfirmationStep = () => (
     <View style={styles.confirmationContent}>
       <View style={styles.checkmarkIcon}>
-        <Check size={48} color={Colors.primary} />
+        <Check size={48} color={colors.primary} />
       </View>
       <Text style={styles.confirmationTitle}>Order Confirmed!</Text>
       <Text style={styles.confirmationSubtitle}>
@@ -841,33 +572,22 @@ export default function CheckoutScreen() {
       </Text>
 
       {orderPlaced && (
-        <View style={styles.orderInfoCard}>
-          <Text style={styles.orderCardTitle}>ORDER SUMMARY</Text>
-
-          <Text style={styles.orderNumber}>#{orderPlaced.id.slice(0, 12)}</Text>
-
-          <View style={styles.orderDivider} />
-
-          <Text style={styles.orderTotalLabel}>Total Amount</Text>
-
-          <Text style={styles.orderAmount}>
-            {formatCurrency(orderPlaced.total_amount_php)}
-          </Text>
-
-          <Text style={styles.orderPayment}>
-            Payment Method:{' '}
-            {
-              PAYMENT_METHODS.find((m) => m.id === orderPlaced.payment_method)
-                ?.name
-            }
-          </Text>
-        </View>
+        <CheckoutSummaryCard
+          orderNumber={orderPlaced.id.slice(0, 12).toUpperCase()}
+          total={orderPlaced.total_amount_php}
+          paymentMethod={
+            PAYMENT_METHODS.find(
+              (m) => m.id === orderPlaced.payment_method,
+            )?.name ?? ''
+          }
+          itemCount={orderedItemCount}
+        />
       )}
       <View style={styles.paymentNote}>
         <View style={styles.paymentNoteTitleRow}>
           <Clock3
             size={16}
-            color={Colors.gold.DEFAULT}
+            color={colors.gold.DEFAULT}
             style={{ marginTop: 1 }}
           />
           <Text style={styles.paymentNoteTitle}>Next Steps</Text>
@@ -906,7 +626,7 @@ export default function CheckoutScreen() {
         <Stack.Screen options={{ headerShown: false }} />
         <View style={styles.header}>
           <Pressable style={styles.backButton} onPress={() => router.back()}>
-            <ArrowLeft size={24} color={Colors.text.primary} />
+            <ArrowLeft size={24} color={colors.text.primary} />
           </Pressable>
           <Text style={styles.headerTitle}>Checkout</Text>
           <View style={{ width: 44 }} />
@@ -931,7 +651,7 @@ export default function CheckoutScreen() {
       {/* Header */}
       <View style={styles.header}>
         <Pressable style={styles.backButton} onPress={() => router.back()}>
-          <ArrowLeft size={24} color={Colors.text.primary} />
+          <ArrowLeft size={24} color={colors.text.primary} />
         </Pressable>
         <Text style={styles.headerTitle}>Checkout</Text>
         <View style={{ width: 44 }} />
@@ -952,10 +672,10 @@ export default function CheckoutScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: AppColors) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.primary,
+    backgroundColor: colors.primary,
   },
   header: {
     flexDirection: 'row',
@@ -969,14 +689,14 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     alignItems: 'center',
     justifyContent: 'center',
   },
   headerTitle: {
     fontFamily: 'CormorantGaramond_700Bold',
     fontSize: 24,
-    color: Colors.text.primary,
+    color: colors.text.primary,
   },
   scrollView: {
     flex: 1,
@@ -996,55 +716,54 @@ const styles = StyleSheet.create({
     width: 28,
     height: 28,
     borderRadius: 14,
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderWidth: 2,
-    borderColor: Colors.border.DEFAULT,
+    borderColor: colors.border.DEFAULT,
     alignItems: 'center',
     justifyContent: 'center',
   },
   stepCircleActive: {
-    backgroundColor: Colors.gold.DEFAULT,
-    borderColor: Colors.gold.DEFAULT,
+    backgroundColor: colors.gold.DEFAULT,
+    borderColor: colors.gold.DEFAULT,
   },
   stepNumber: {
     fontFamily: 'Inter_600SemiBold',
     fontSize: 12,
-    color: Colors.text.muted,
+    color: colors.text.muted,
   },
   stepNumberActive: {
-    color: Colors.primary,
+    color: colors.primary,
   },
   stepLabel: {
     fontFamily: 'Inter_500Medium',
     fontSize: 12,
-    color: Colors.text.muted,
+    color: colors.text.muted,
     marginLeft: 8,
   },
   stepLabelActive: {
-    color: Colors.gold.DEFAULT,
+    color: colors.gold.DEFAULT,
   },
   stepLine: {
     width: 40,
     height: 2,
-    backgroundColor: Colors.border.DEFAULT,
+    backgroundColor: colors.border.DEFAULT,
     marginHorizontal: 8,
   },
   stepLineActive: {
-    backgroundColor: Colors.gold.DEFAULT,
+    backgroundColor: colors.gold.DEFAULT,
   },
   savedAddressCard: {
     padding: 18,
     borderRadius: 16,
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderWidth: 1,
-    borderColor: Colors.border.DEFAULT,
+    borderColor: colors.border.DEFAULT,
   },
 
   savedName: {
     fontSize: 18,
-    fontWeight: '700',
-    color: Colors.text.primary,
-    marginBottom: 10,
+    fontWeight: '800',
+    color: colors.text.primary,
   },
   savedAddressHeader: {
     flexDirection: 'row',
@@ -1055,7 +774,7 @@ const styles = StyleSheet.create({
   changeButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Colors.gold.light + '20',
+    backgroundColor: colors.gold.light + '20',
     paddingHorizontal: 10,
     paddingVertical: 6,
     borderRadius: 999,
@@ -1067,19 +786,20 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 999,
-    backgroundColor: Colors.gold.light, // or a very light gold tint
+    backgroundColor: colors.gold.light, // or a very light gold tint
     gap: 6,
   },
   changeText: {
-    color: Colors.gold.DEFAULT,
+    color: colors.gold.DEFAULT,
     fontWeight: '600',
     fontSize: 15,
   },
   divider: {
     height: 1,
-    backgroundColor: Colors.border.gold,
-    marginTop: 5,
-    marginBottom: 12,
+    backgroundColor: colors.border.gold,
+    opacity: 0.5,
+    marginTop: 2,
+    marginBottom: 8,
   },
   defaultAddressRow: {
     flexDirection: 'row',
@@ -1091,7 +811,7 @@ const styles = StyleSheet.create({
     marginLeft: 8,
     fontSize: 14,
     fontWeight: '600',
-    color: Colors.text.secondary,
+    color: colors.text.secondary,
   },
   nameRow: {
     flexDirection: 'row',
@@ -1107,10 +827,6 @@ const styles = StyleSheet.create({
     marginTop: 2,
     marginRight: 12,
   },
-  imageWrapper: {
-    borderRadius: 12,
-    overflow: 'hidden',
-  },
   lastInfoRow: {
     marginBottom: 8,
   },
@@ -1118,7 +834,7 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 15,
     lineHeight: 22,
-    color: Colors.text.secondary,
+    color: colors.text.secondary,
   },
   stepContent: {
     padding: 20,
@@ -1126,13 +842,13 @@ const styles = StyleSheet.create({
   stepTitle: {
     fontFamily: 'CormorantGaramond_700Bold',
     fontSize: 28,
-    color: Colors.text.primary,
+    color: colors.text.primary,
     marginBottom: 8,
   },
   stepSubtitle: {
     fontFamily: 'Inter_400Regular',
     fontSize: 14,
-    color: Colors.text.secondary,
+    color: colors.text.secondary,
     marginBottom: 16,
     lineHeight: 20,
   },
@@ -1142,19 +858,19 @@ const styles = StyleSheet.create({
   label: {
     fontFamily: 'Inter_500Medium',
     fontSize: 14,
-    color: Colors.text.secondary,
+    color: colors.text.secondary,
     marginBottom: 8,
   },
   input: {
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: Colors.border.DEFAULT,
+    borderColor: colors.border.DEFAULT,
     paddingHorizontal: 16,
     paddingVertical: 14,
     fontFamily: 'Inter_400Regular',
     fontSize: 16,
-    color: Colors.text.primary,
+    color: colors.text.primary,
   },
   textArea: {
     height: 100,
@@ -1166,22 +882,22 @@ const styles = StyleSheet.create({
   paymentOption: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: 12,
     padding: 12,
     marginBottom: 10,
     borderWidth: 1,
-    borderColor: Colors.border.DEFAULT,
+    borderColor: colors.border.DEFAULT,
   },
   paymentOptionActive: {
-    borderColor: Colors.gold.DEFAULT,
-    backgroundColor: Colors.gold.light + '20',
+    borderColor: colors.gold.DEFAULT,
+    backgroundColor: colors.gold.light + '20',
   },
   paymentIcon: {
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: Colors.border.gold,
+    backgroundColor: colors.border.gold,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 16,
@@ -1192,19 +908,19 @@ const styles = StyleSheet.create({
   paymentName: {
     fontFamily: 'Inter_600SemiBold',
     fontSize: 18,
-    color: Colors.text.primary,
+    color: colors.text.primary,
     marginBottom: 0,
   },
   paymentPreview: {
     fontFamily: 'Inter_400Regular',
     fontSize: 16,
-    color: Colors.text.muted,
+    color: colors.text.muted,
   },
   paymentLabel: {
     marginTop: 6,
     fontSize: 11,
     fontFamily: 'Inter_500Medium',
-    color: Colors.text.muted,
+    color: colors.text.muted,
     textTransform: 'uppercase',
     letterSpacing: 0.8,
   },
@@ -1213,35 +929,35 @@ const styles = StyleSheet.create({
     height: 22,
     borderRadius: 11,
     borderWidth: 2,
-    borderColor: Colors.border.DEFAULT,
+    borderColor: colors.border.DEFAULT,
     padding: 2,
   },
   radioButtonActive: {
-    borderColor: Colors.gold.DEFAULT,
+    borderColor: colors.gold.DEFAULT,
   },
   radioButtonInner: {
     flex: 1,
     borderRadius: 5,
-    backgroundColor: Colors.gold.DEFAULT,
+    backgroundColor: colors.gold.DEFAULT,
   },
   paymentInstructions: {
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: 12,
     padding: 12,
     marginBottom: 16,
     borderWidth: 1,
-    borderColor: Colors.border.gold,
+    borderColor: colors.border.gold,
   },
   instructionsTitle: {
     fontFamily: 'Inter_600SemiBold',
     fontSize: 14,
-    color: Colors.gold.DEFAULT,
+    color: colors.gold.DEFAULT,
     marginBottom: 8,
   },
   instructionsText: {
     fontFamily: 'Inter_400Regular',
     fontSize: 14,
-    color: Colors.text.secondary,
+    color: colors.text.secondary,
     lineHeight: 20,
   },
   copyRow: {
@@ -1253,17 +969,9 @@ const styles = StyleSheet.create({
   },
 
   copyText: {
-    color: Colors.gold.DEFAULT,
+    color: colors.gold.DEFAULT,
     fontFamily: 'Inter_600SemiBold',
     fontSize: 16,
-  },
-  copyButtonContainer: {
-    marginTop: 20,
-  },
-  stepButtons: {
-    flexDirection: 'row',
-    marginTop: 24,
-    marginBottom: 40,
   },
   actionButtons: {
     flexDirection: 'row',
@@ -1276,11 +984,6 @@ const styles = StyleSheet.create({
   continueButtonContainer: {
     marginTop: 24,
   },
-  itemImage: {
-    width: 100,
-    height: 100,
-    borderRadius: 12,
-  },
   reviewHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -1288,7 +991,7 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   reviewSection: {
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surfaceLight,
     borderRadius: 12,
     padding: 16,
     marginBottom: 16,
@@ -1296,75 +999,14 @@ const styles = StyleSheet.create({
   reviewLabel: {
     fontFamily: 'Inter_600SemiBold',
     fontSize: 14,
-    color: Colors.text.secondary,
+    color: colors.text.primary,
     marginBottom: 12,
-  },
-  reviewName: {
-    fontFamily: 'Inter_600SemiBold',
-    fontSize: 15,
-    color: Colors.text.primary,
-    marginBottom: 6,
   },
   reviewText: {
     fontFamily: 'Inter_400Regular',
     fontSize: 14,
-    color: Colors.text.secondary,
+    color: colors.text.secondary,
     lineHeight: 20,
-  },
-  reviewItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 8,
-  },
-  reviewItemImage: {
-    width: 64,
-    height: 64,
-    borderRadius: 12,
-    marginRight: 16,
-  },
-  reviewItemInfo: {
-    flex: 1,
-    justifyContent: 'center',
-  },
-  reviewItemName: {
-    fontSize: 16,
-    fontFamily: 'Inter_600SemiBold',
-    color: Colors.text.primary,
-  },
-  reviewItemDetails: {
-    fontFamily: 'Inter_400Regular',
-    fontSize: 13,
-    color: Colors.text.muted,
-    marginTop: 4,
-  },
-  reviewItemPrice: {
-    marginTop: 8,
-    marginLeft: 16,
-    fontSize: 16,
-    alignSelf: 'center',
-    fontFamily: 'Inter_700Bold',
-    color: Colors.gold.DEFAULT,
-  },
-  reviewItemMeta: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: 6,
-    gap: 10,
-  },
-  reviewItemQty: {
-    fontSize: 13,
-    color: Colors.text.secondary,
-  },
-
-  reviewItemUnitPrice: {
-    fontSize: 12,
-    color: Colors.text.muted,
-  },
-  reviewDivider: {
-    height: StyleSheet.hairlineWidth,
-    backgroundColor: Colors.gold.DEFAULT,
-    marginVertical: 8,
-    marginLeft: 76,
   },
   summaryRow: {
     flexDirection: 'row',
@@ -1374,30 +1016,30 @@ const styles = StyleSheet.create({
   summaryLabel: {
     fontFamily: 'Inter_400Regular',
     fontSize: 15,
-    color: Colors.text.secondary,
+    color: colors.text.secondary,
     ...Shadows.lg,
   },
   summaryValue: {
     fontFamily: 'Inter_600SemiBold',
     fontSize: 15,
-    color: Colors.text.primary,
+    color: colors.text.primary,
     ...Shadows.lg,
   },
   totalRow: {
-    borderTopWidth: 1,
-    borderTopColor: Colors.gold.muted,
+    borderTopWidth: 2,
+    borderTopColor: colors.gold.muted,
     marginTop: 16,
     paddingTop: 16,
   },
   totalLabel: {
-    fontSize: 18,
+    fontSize: 22,
     fontFamily: 'PlayfairDisplay_700Bold',
-    color: Colors.text.primary,
+    color: colors.text.primary,
   },
   totalValue: {
-    fontSize: 26,
+    fontSize: 24,
     fontFamily: 'Inter_700Bold',
-    color: Colors.gold.DEFAULT,
+    color: colors.gold.DEFAULT,
   },
   secureNote: {
     flexDirection: 'row',
@@ -1410,7 +1052,7 @@ const styles = StyleSheet.create({
 
   secureText: {
     fontSize: 12,
-    color: Colors.text.muted,
+    color: colors.text.muted,
   },
   confirmationContent: {
     flex: 1,
@@ -1423,7 +1065,7 @@ const styles = StyleSheet.create({
     width: 88,
     height: 88,
     borderRadius: 44,
-    backgroundColor: Colors.gold.DEFAULT,
+    backgroundColor: colors.gold.DEFAULT,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 20,
@@ -1431,67 +1073,22 @@ const styles = StyleSheet.create({
   confirmationTitle: {
     fontFamily: 'CormorantGaramond_700Bold',
     fontSize: 36,
-    color: Colors.text.primary,
+    color: colors.text.primary,
     marginBottom: 8,
     textAlign: 'center',
   },
   confirmationSubtitle: {
     fontFamily: 'Inter_400Regular',
     fontSize: 16,
-    color: Colors.text.secondary,
+    color: colors.text.secondary,
     textAlign: 'center',
     marginBottom: 32,
     lineHeight: 24,
   },
-  orderCardTitle: {
-    fontFamily: 'Inter_600SemiBold',
-    fontSize: 12,
-    letterSpacing: 1.2,
-    color: Colors.gold.DEFAULT,
-    marginBottom: 12,
-  },
-  orderNumber: {
-    fontFamily: 'Inter_700Bold',
-    fontSize: 18,
-    color: Colors.text.primary,
-    marginBottom: 16,
-  },
-  orderDivider: {
-    width: '100%',
-    height: 1,
-    backgroundColor: Colors.border.gold,
-    marginBottom: 16,
-  },
-  orderAmount: {
-    fontFamily: 'Inter_700Bold',
-    fontSize: 26,
-    color: Colors.gold.DEFAULT,
-    marginTop: 6,
-    marginBottom: 12,
-  },
-  orderInfoCard: {
-    backgroundColor: Colors.surface,
-    borderRadius: 16,
-    padding: 24,
-    alignItems: 'center',
-    marginBottom: 24,
-    width: '100%',
-  },
-  orderTotalLabel: {
-    fontFamily: 'Inter_600SemiBold',
-    fontSize: 16,
-    color: Colors.text.primary,
-  },
-  orderPayment: {
-    fontFamily: 'Inter_400Regular',
-    fontSize: 14,
-    color: Colors.text.muted,
-    marginTop: 4,
-  },
   paymentMethodRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderTopColor: Colors.border.gold,
+    borderTopColor: colors.border.gold,
     marginTop: 12,
     paddingTop: 10,
     borderTopWidth: 1,
@@ -1500,13 +1097,13 @@ const styles = StyleSheet.create({
 
   paymentMethodLabel: {
     fontSize: 14,
-    color: Colors.text.secondary,
+    color: colors.gold.DEFAULT,
     fontFamily: 'Inter_400Regular',
   },
 
   paymentMethodValue: {
     fontSize: 14,
-    color: Colors.gold.DEFAULT,
+    color: colors.text.primary,
     fontFamily: 'Inter_600SemiBold',
   },
   paymentNoteTitleRow: {
@@ -1516,7 +1113,7 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   paymentNote: {
-    backgroundColor: Colors.border.gold,
+    backgroundColor: colors.border.gold,
     borderRadius: 12,
     padding: 16,
     marginBottom: 32,
@@ -1525,19 +1122,19 @@ const styles = StyleSheet.create({
   paymentNoteTitle: {
     fontFamily: 'Inter_600SemiBold',
     fontSize: 14,
-    color: Colors.gold.DEFAULT,
+    color: colors.gold.DEFAULT,
   },
   paymentNoteText: {
     fontFamily: 'Inter_400Regular',
     fontSize: 14,
-    color: Colors.text.primary,
+    color: colors.text.primary,
     lineHeight: 22,
   },
   accountLabel: {
     marginTop: 8,
     fontSize: 12,
     fontFamily: 'Inter_500Medium',
-    color: Colors.text.muted,
+    color: colors.text.muted,
     textTransform: 'uppercase',
     letterSpacing: 0.8,
   },
@@ -1550,6 +1147,6 @@ const styles = StyleSheet.create({
   accountNumber: {
     fontSize: 15,
     fontFamily: 'Inter_600SemiBold',
-    color: Colors.gold.DEFAULT,
+    color: colors.gold.DEFAULT,
   },
 });

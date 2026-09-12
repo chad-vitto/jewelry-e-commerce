@@ -4,8 +4,12 @@ import { useRouter, Stack } from 'expo-router';
 import { ProductForm } from '@/components/ProductForm';
 import { supabase } from '@/lib/supabase';
 import { Colors } from '@/constants';
+import { useTheme } from '@/hooks/useTheme';
+import type { AppColors } from '@/constants/themes';
 
 export default function NewProductScreen() {
+  const { colors } = useTheme();
+  const styles = createStyles(colors);
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
 
@@ -94,9 +98,9 @@ export default function NewProductScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: AppColors) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.primary,
+    backgroundColor: colors.primary,
   },
 });

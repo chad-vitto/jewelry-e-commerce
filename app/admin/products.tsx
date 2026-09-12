@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   ArrowLeft,
   Edit3,
@@ -8,8 +8,10 @@ import {
   ToggleLeft,
   ToggleRight,
   Trash2
-  } from 'lucide-react-native';
+} from 'lucide-react-native';
 import { CATEGORIES, Colors, formatCurrency } from '@/constants';
+import { useTheme } from '@/hooks/useTheme';
+import type { AppColors } from '@/constants/themes';
 import { GoldPurityBadge, StockBadge } from '@/components';
 import { Image } from 'expo-image';
 import { Product, ProductCategory } from '@/types';
@@ -27,6 +29,8 @@ import {
 } from 'react-native';
 
 export default function AdminProductsScreen() {
+  const { colors } = useTheme();
+  const styles = createStyles(colors);
   const router = useRouter();
   const { products, isLoading, fetchProducts, toggleActive, deleteProduct } =
     useAdminProducts();
@@ -103,9 +107,9 @@ export default function AdminProductsScreen() {
       <View style={styles.productActions}>
         <Pressable onPress={() => handleToggleActive(item)}>
           {item.is_active ? (
-            <ToggleRight size={24} color={Colors.status.success} />
+            <ToggleRight size={24} color={colors.status.success} />
           ) : (
-            <ToggleLeft size={24} color={Colors.text.muted} />
+            <ToggleLeft size={24} color={colors.text.muted} />
           )}
         </Pressable>
         <Pressable
@@ -117,7 +121,7 @@ export default function AdminProductsScreen() {
             })
           }
         >
-          <ImageIcon size={18} color={Colors.gold.DEFAULT} />
+          <ImageIcon size={18} color={colors.gold.DEFAULT} />
         </Pressable>
         <Pressable
           style={styles.actionButton}
@@ -128,13 +132,13 @@ export default function AdminProductsScreen() {
             })
           }
         >
-          <Edit3 size={18} color={Colors.gold.DEFAULT} />
+          <Edit3 size={18} color={colors.gold.DEFAULT} />
         </Pressable>
         <Pressable
           style={styles.actionButton}
           onPress={() => handleDelete(item)}
         >
-          <Trash2 size={18} color={Colors.status.error} />
+          <Trash2 size={18} color={colors.status.error} />
         </Pressable>
       </View>
     </View>
@@ -147,27 +151,27 @@ export default function AdminProductsScreen() {
       {/* Header */}
       <View style={styles.header}>
         <Pressable style={styles.backButton} onPress={() => router.back()}>
-          <ArrowLeft size={24} color={Colors.text.primary} />
+          <ArrowLeft size={24} color={colors.text.primary} />
         </Pressable>
         <Text style={styles.headerTitle}>Products</Text>
         <Pressable
           style={styles.addButton}
           onPress={() => router.push('/admin/products/newProduct' as any)}
         >
-          <Plus size={24} color={Colors.gold.DEFAULT} />
+          <Plus size={24} color={colors.gold.DEFAULT} />
         </Pressable>
       </View>
 
       {/* Search */}
       <View style={styles.searchContainer}>
         <View style={styles.searchBar}>
-          <Search size={18} color={Colors.text.muted} />
+          <Search size={18} color={colors.text.muted} />
           <TextInput
             style={styles.searchInput}
             value={search}
             onChangeText={setSearch}
             placeholder="Search products..."
-            placeholderTextColor={Colors.text.muted}
+            placeholderTextColor={colors.text.muted}
           />
         </View>
       </View>
@@ -218,10 +222,10 @@ export default function AdminProductsScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: AppColors) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.primary,
+    backgroundColor: colors.primary,
   },
   header: {
     flexDirection: 'row',
@@ -235,20 +239,20 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     alignItems: 'center',
     justifyContent: 'center',
   },
   headerTitle: {
     fontFamily: 'CormorantGaramond_700Bold',
     fontSize: 24,
-    color: Colors.text.primary,
+    color: colors.text.primary,
   },
   addButton: {
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -259,7 +263,7 @@ const styles = StyleSheet.create({
   searchBar: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: 12,
     paddingHorizontal: 16,
     height: 44,
@@ -270,7 +274,7 @@ const styles = StyleSheet.create({
     flex: 1,
     fontFamily: 'Inter_400Regular',
     fontSize: 16,
-    color: Colors.text.primary,
+    color: colors.text.primary,
   },
   filterContainer: {
     paddingHorizontal: 12,
@@ -281,28 +285,28 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     paddingHorizontal: 16,
     borderRadius: 20,
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderWidth: 1,
-    borderColor: Colors.border.DEFAULT,
+    borderColor: colors.border.DEFAULT,
   },
   filterPillActive: {
-    backgroundColor: Colors.gold.DEFAULT,
-    borderColor: Colors.gold.DEFAULT,
+    backgroundColor: colors.gold.DEFAULT,
+    borderColor: colors.gold.DEFAULT,
   },
   filterText: {
     fontFamily: 'Inter_500Medium',
     fontSize: 13,
-    color: Colors.text.secondary,
+    color: colors.text.secondary,
   },
   filterTextActive: {
-    color: Colors.primary,
+    color: colors.primary,
   },
   listContent: {
     padding: 16,
   },
   productCard: {
     flexDirection: 'row',
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: 16,
     padding: 12,
     marginBottom: 12,
@@ -321,7 +325,7 @@ const styles = StyleSheet.create({
   productName: {
     fontFamily: 'Inter_600SemiBold',
     fontSize: 15,
-    color: Colors.text.primary,
+    color: colors.text.primary,
     marginBottom: 4,
   },
   productMeta: {
@@ -332,7 +336,7 @@ const styles = StyleSheet.create({
   productPrice: {
     fontFamily: 'Inter_700Bold',
     fontSize: 14,
-    color: Colors.gold.DEFAULT,
+    color: colors.gold.DEFAULT,
   },
   productActions: {
     flexDirection: 'row',
@@ -350,6 +354,6 @@ const styles = StyleSheet.create({
   emptyText: {
     fontFamily: 'Inter_500Medium',
     fontSize: 16,
-    color: Colors.text.muted,
+    color: colors.text.muted,
   },
 });

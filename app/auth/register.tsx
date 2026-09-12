@@ -13,10 +13,14 @@ import { useRouter, Stack } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useAuth } from '@/hooks';
 import { Colors } from '@/constants';
+import { useTheme } from '@/hooks/useTheme';
+import type { AppColors } from '@/constants/themes';
 import { ArrowLeft } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 
 export default function RegisterScreen() {
+  const { colors } = useTheme();
+  const styles = createStyles(colors);
   const router = useRouter();
   const { signUp, isLoading } = useAuth();
   const [fullName, setFullName] = useState('');
@@ -62,7 +66,7 @@ export default function RegisterScreen() {
       <Stack.Screen options={{ headerShown: false }} />
 
       <LinearGradient
-        colors={[Colors.primary, '#0F0F0F']}
+        colors={[colors.primary, '#0F0F0F']}
         style={styles.gradient}
       />
 
@@ -78,7 +82,7 @@ export default function RegisterScreen() {
           {/* Header */}
           <View style={styles.header}>
             <Pressable style={styles.backButton} onPress={() => router.back()}>
-              <ArrowLeft size={24} color={Colors.text.primary} />
+              <ArrowLeft size={24} color={colors.text.primary} />
             </Pressable>
           </View>
 
@@ -105,7 +109,7 @@ export default function RegisterScreen() {
                 value={fullName}
                 onChangeText={setFullName}
                 placeholder="Enter your full name"
-                placeholderTextColor={Colors.text.muted}
+                placeholderTextColor={colors.text.muted}
                 autoCapitalize="words"
               />
             </View>
@@ -117,7 +121,7 @@ export default function RegisterScreen() {
                 value={email}
                 onChangeText={setEmail}
                 placeholder="your@email.com"
-                placeholderTextColor={Colors.text.muted}
+                placeholderTextColor={colors.text.muted}
                 keyboardType="email-address"
                 autoCapitalize="none"
                 autoCorrect={false}
@@ -131,7 +135,7 @@ export default function RegisterScreen() {
                 value={phone}
                 onChangeText={setPhone}
                 placeholder="09XX XXX XXXX"
-                placeholderTextColor={Colors.text.muted}
+                placeholderTextColor={colors.text.muted}
                 keyboardType="phone-pad"
               />
             </View>
@@ -143,7 +147,7 @@ export default function RegisterScreen() {
                 value={password}
                 onChangeText={setPassword}
                 placeholder="Create a password (min 6 characters)"
-                placeholderTextColor={Colors.text.muted}
+                placeholderTextColor={colors.text.muted}
                 secureTextEntry
               />
             </View>
@@ -155,7 +159,7 @@ export default function RegisterScreen() {
                 value={confirmPassword}
                 onChangeText={setConfirmPassword}
                 placeholder="Re-enter your password"
-                placeholderTextColor={Colors.text.muted}
+                placeholderTextColor={colors.text.muted}
                 secureTextEntry
               />
             </View>
@@ -166,7 +170,7 @@ export default function RegisterScreen() {
               disabled={isLoading}
             >
               <LinearGradient
-                colors={Colors.gold.gradient}
+                colors={colors.gold.gradient}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 0 }}
                 style={styles.buttonGradient}
@@ -191,10 +195,10 @@ export default function RegisterScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: AppColors) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.primary,
+    backgroundColor: colors.primary,
   },
   gradient: {
     position: 'absolute',
@@ -220,7 +224,7 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -230,14 +234,14 @@ const styles = StyleSheet.create({
   brandTitle: {
     fontFamily: 'CormorantGaramond_700Bold',
     fontSize: 36,
-    color: Colors.text.primary,
+    color: colors.text.primary,
     letterSpacing: 0.5,
     marginBottom: 8,
   },
   brandSubtitle: {
     fontFamily: 'Inter_400Regular',
     fontSize: 16,
-    color: Colors.text.secondary,
+    color: colors.text.secondary,
     lineHeight: 24,
   },
   form: {
@@ -252,7 +256,7 @@ const styles = StyleSheet.create({
   errorText: {
     fontFamily: 'Inter_500Medium',
     fontSize: 14,
-    color: Colors.status.error,
+    color: colors.status.error,
   },
   inputGroup: {
     marginBottom: 18,
@@ -260,19 +264,19 @@ const styles = StyleSheet.create({
   label: {
     fontFamily: 'Inter_500Medium',
     fontSize: 14,
-    color: Colors.text.secondary,
+    color: colors.text.secondary,
     marginBottom: 8,
   },
   input: {
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: Colors.border.DEFAULT,
+    borderColor: colors.border.DEFAULT,
     paddingHorizontal: 16,
     paddingVertical: 16,
     fontFamily: 'Inter_400Regular',
     fontSize: 16,
-    color: Colors.text.primary,
+    color: colors.text.primary,
   },
   button: {
     borderRadius: 12,
@@ -289,7 +293,7 @@ const styles = StyleSheet.create({
   buttonText: {
     fontFamily: 'Inter_600SemiBold',
     fontSize: 16,
-    color: Colors.primary,
+    color: colors.primary,
   },
   signInSection: {
     flexDirection: 'row',
@@ -301,11 +305,11 @@ const styles = StyleSheet.create({
   signInText: {
     fontFamily: 'Inter_400Regular',
     fontSize: 16,
-    color: Colors.text.secondary,
+    color: colors.text.secondary,
   },
   signInLink: {
     fontFamily: 'Inter_600SemiBold',
     fontSize: 16,
-    color: Colors.gold.DEFAULT,
+    color: colors.gold.DEFAULT,
   },
 });

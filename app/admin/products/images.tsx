@@ -16,6 +16,8 @@ import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import { useProductImages } from '@/hooks';
 import { Colors } from '@/constants';
+import { useTheme } from '@/hooks/useTheme';
+import type { AppColors } from '@/constants/themes';
 import {
   ArrowLeft,
   Upload,
@@ -29,6 +31,8 @@ const { width } = Dimensions.get('window');
 const IMAGE_SIZE = (width - 48) / 2;
 
 export default function ProductImagesScreen() {
+  const { colors } = useTheme();
+  const styles = createStyles(colors);
   const { id: productId } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const {
@@ -145,7 +149,7 @@ export default function ProductImagesScreen() {
         >
           <ChevronUp
             size={18}
-            color={index === 0 ? Colors.text.muted : Colors.gold.DEFAULT}
+            color={index === 0 ? colors.text.muted : colors.gold.DEFAULT}
           />
         </Pressable>
 
@@ -158,8 +162,8 @@ export default function ProductImagesScreen() {
             size={18}
             color={
               index === images.length - 1
-                ? Colors.text.muted
-                : Colors.gold.DEFAULT
+                ? colors.text.muted
+                : colors.gold.DEFAULT
             }
           />
         </Pressable>
@@ -168,7 +172,7 @@ export default function ProductImagesScreen() {
           style={styles.deleteButton}
           onPress={() => handleDeleteImage(item.id, item.image_url)}
         >
-          <Trash2 size={18} color={Colors.status.error} />
+          <Trash2 size={18} color={colors.status.error} />
         </Pressable>
       </View>
     </View>
@@ -181,10 +185,10 @@ export default function ProductImagesScreen() {
       {/* Header */}
       <View style={styles.header}>
         <Pressable style={styles.backButton} onPress={() => router.back()}>
-          <ArrowLeft size={24} color={Colors.text.primary} />
+          <ArrowLeft size={24} color={colors.text.primary} />
         </Pressable>
         <View style={styles.headerTitle}>
-          <ImageIcon size={28} color={Colors.gold.DEFAULT} />
+          <ImageIcon size={28} color={colors.gold.DEFAULT} />
           <Text style={styles.title}>Manage Images</Text>
         </View>
         <Pressable
@@ -192,13 +196,13 @@ export default function ProductImagesScreen() {
           onPress={handlePickImage}
           disabled={uploading}
         >
-          <Upload size={24} color={Colors.gold.DEFAULT} />
+          <Upload size={24} color={colors.gold.DEFAULT} />
         </Pressable>
       </View>
 
       {isLoading ? (
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={Colors.gold.DEFAULT} />
+          <ActivityIndicator size="large" color={colors.gold.DEFAULT} />
         </View>
       ) : (
         <ScrollView
@@ -210,7 +214,7 @@ export default function ProductImagesScreen() {
         >
           {images.length === 0 ? (
             <View style={styles.emptyContainer}>
-              <ImageIcon size={48} color={Colors.text.muted} />
+              <ImageIcon size={48} color={colors.text.muted} />
               <Text style={styles.emptyText}>No images yet</Text>
               <Text style={styles.emptySubtext}>
                 Upload your first product image
@@ -239,10 +243,10 @@ export default function ProductImagesScreen() {
               disabled={uploading}
             >
               {uploading ? (
-                <ActivityIndicator size="small" color={Colors.primary} />
+                <ActivityIndicator size="small" color={colors.primary} />
               ) : (
                 <>
-                  <Upload size={24} color={Colors.primary} />
+                  <Upload size={24} color={colors.primary} />
                   <Text style={styles.uploadButtonText}>Upload New Image</Text>
                 </>
               )}
@@ -256,10 +260,10 @@ export default function ProductImagesScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: AppColors) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.primary,
+    backgroundColor: colors.primary,
   },
   header: {
     flexDirection: 'row',
@@ -269,13 +273,13 @@ const styles = StyleSheet.create({
     paddingTop: 50,
     paddingBottom: 16,
     borderBottomWidth: 1,
-    borderBottomColor: Colors.surface,
+    borderBottomColor: colors.surface,
   },
   backButton: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -288,13 +292,13 @@ const styles = StyleSheet.create({
   title: {
     fontFamily: 'CormorantGaramond_700Bold',
     fontSize: 24,
-    color: Colors.text.primary,
+    color: colors.text.primary,
   },
   uploadButtonHeader: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -314,13 +318,13 @@ const styles = StyleSheet.create({
   emptyText: {
     fontFamily: 'Inter_600SemiBold',
     fontSize: 16,
-    color: Colors.text.primary,
+    color: colors.text.primary,
     marginTop: 12,
   },
   emptySubtext: {
     fontFamily: 'Inter_400Regular',
     fontSize: 14,
-    color: Colors.text.muted,
+    color: colors.text.muted,
     marginTop: 4,
   },
   imagesGrid: {
@@ -337,7 +341,7 @@ const styles = StyleSheet.create({
     height: IMAGE_SIZE,
     borderRadius: 12,
     overflow: 'hidden',
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
   },
   productImage: {
     width: '100%',
@@ -349,7 +353,7 @@ const styles = StyleSheet.create({
     right: 8,
   },
   orderBadge: {
-    backgroundColor: Colors.gold.DEFAULT,
+    backgroundColor: colors.gold.DEFAULT,
     borderRadius: 16,
     paddingHorizontal: 10,
     paddingVertical: 4,
@@ -359,7 +363,7 @@ const styles = StyleSheet.create({
   orderText: {
     fontFamily: 'Inter_700Bold',
     fontSize: 12,
-    color: Colors.primary,
+    color: colors.primary,
   },
   imageControls: {
     position: 'absolute',
@@ -371,7 +375,7 @@ const styles = StyleSheet.create({
   },
   controlButton: {
     flex: 1,
-    backgroundColor: Colors.surface + 'E0',
+    backgroundColor: colors.surface + 'E0',
     borderRadius: 8,
     alignItems: 'center',
     justifyContent: 'center',
@@ -379,7 +383,7 @@ const styles = StyleSheet.create({
   },
   deleteButton: {
     flex: 1,
-    backgroundColor: Colors.status.error + '30',
+    backgroundColor: colors.status.error + '30',
     borderRadius: 8,
     alignItems: 'center',
     justifyContent: 'center',
@@ -393,7 +397,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: Colors.gold.DEFAULT,
+    backgroundColor: colors.gold.DEFAULT,
     borderRadius: 12,
     paddingVertical: 16,
     gap: 12,
@@ -404,6 +408,6 @@ const styles = StyleSheet.create({
   uploadButtonText: {
     fontFamily: 'Inter_600SemiBold',
     fontSize: 16,
-    color: Colors.primary,
+    color: colors.primary,
   },
 });

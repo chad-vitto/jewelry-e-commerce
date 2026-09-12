@@ -10,7 +10,8 @@ import {
   View,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Colors } from '@/constants';
+import { useTheme } from '@/hooks/useTheme';
+import type { AppColors } from '@/constants/themes';
 
 interface GoldGradientProps {
   children: React.ReactNode;
@@ -23,9 +24,11 @@ export function GoldGradient({
   style,
   horizontal = false,
 }: GoldGradientProps) {
+  const { colors } = useTheme();
+
   return (
     <LinearGradient
-      colors={Colors.gold.gradient}
+      colors={colors.gold.gradient}
       start={{ x: 0, y: 0 }}
       end={horizontal ? { x: 1, y: 0 } : { x: 0, y: 1 }}
       style={style}
@@ -43,6 +46,8 @@ interface GoldButtonProps extends Omit<PressableProps, 'style'> {
   disabled?: boolean;
   loading?: boolean;
   style?: StyleProp<ViewStyle>;
+  leftIcon?: React.ReactNode;
+  rightIcon?: React.ReactNode;
 }
 
 export function GoldButton({
@@ -53,8 +58,12 @@ export function GoldButton({
   disabled = false,
   loading = false,
   style,
+  leftIcon,
+  rightIcon,
   ...props
 }: GoldButtonProps) {
+  const { colors } = useTheme();
+  const styles = createStyles(colors);
   const sizeStyles = {
     sm: {
       minHeight: 36,
@@ -75,6 +84,37 @@ export function GoldButton({
     },
   };
 
+  const renderContent = (textColor: string) => {
+    if (loading) {
+      return <LoadingSpinner color={textColor} />;
+    }
+
+    return (
+      <View style={styles.content}>
+        {leftIcon && (
+          <View style={styles.leftIcon}>
+            {leftIcon}
+          </View>
+        )}
+
+        <Text
+          style={[
+            styles.buttonText,
+            { color: textColor },
+          ]}
+        >
+          {title}
+        </Text>
+
+        {rightIcon && (
+          <View style={styles.rightIcon}>
+            {rightIcon}
+          </View>
+        )}
+      </View>
+    );
+  };
+
   if (variant === 'gradient') {
     return (
       <Pressable
@@ -84,13 +124,7 @@ export function GoldButton({
         {...props}
       >
         <GoldGradient style={[styles.gradientButton, sizeStyles[size]]}>
-          {loading ? (
-            <LoadingSpinner color={Colors.primary} />
-          ) : (
-            <Text style={[styles.buttonText, { color: Colors.primary }]}>
-              {title}
-            </Text>
-          )}
+          {renderContent(colors.primary)}
         </GoldGradient>
       </Pressable>
     );
@@ -105,13 +139,7 @@ export function GoldButton({
         {...props}
       >
         <View style={[styles.solidButton, sizeStyles[size]]}>
-          {loading ? (
-            <LoadingSpinner color={Colors.primary} />
-          ) : (
-            <Text style={[styles.buttonText, { color: Colors.primary }]}>
-              {title}
-            </Text>
-          )}
+          {renderContent(colors.primary)}
         </View>
       </Pressable>
     );
@@ -126,13 +154,7 @@ export function GoldButton({
       {...props}
     >
       <View style={[styles.outlineButton, sizeStyles[size]]}>
-        {loading ? (
-          <LoadingSpinner color={Colors.gold.DEFAULT} />
-        ) : (
-          <Text style={[styles.buttonText, { color: Colors.gold.DEFAULT }]}>
-            {title}
-          </Text>
-        )}
+        {renderContent(colors.gold.DEFAULT)}
       </View>
     </Pressable>
   );
@@ -142,7 +164,7 @@ const LoadingSpinner = ({ color }: { color: string }) => (
   <ActivityIndicator size="small" color={color} />
 );
 
-const styles = StyleSheet.create({
+const createStyles = (colors: AppColors) => StyleSheet.create({
   buttonBase: {
     borderRadius: 12,
     alignItems: 'center',
@@ -155,6 +177,18 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  content: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    alignSelf: 'center',
+  },
+  leftIcon: {
+    marginRight: 8,
+  },
+  rightIcon: {
+    marginLeft: 8,
+  },
   buttonText: {
     fontFamily: 'Inter_600SemiBold',
     fontSize: 16,
@@ -166,7 +200,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     backgroundColor: 'transparent',
     borderWidth: 1.5,
-    borderColor: Colors.gold.DEFAULT,
+    borderColor: colors.gold.DEFAULT,
     borderRadius: 12,
   },
   disabled: {
@@ -176,7 +210,7 @@ const styles = StyleSheet.create({
     width: '100%',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: Colors.gold.DEFAULT,
+    backgroundColor: colors.gold.DEFAULT,
     borderRadius: 12,
   },
 });

@@ -1,6 +1,6 @@
-import React, { useCallback, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { ArrowRight } from 'lucide-react-native';
-import { CATEGORIES, Colors, formatCurrency, Shadows } from '@/constants';
+import { CATEGORIES, formatCurrency, Shadows } from '@/constants';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { ProductCarousel, ProductGrid, SectionSkeleton } from '@/components';
@@ -18,12 +18,16 @@ import {
   RefreshControl,
 } from 'react-native';
 import TrustBanner from '@/components/TrustBanner';
+import { useTheme } from '@/hooks/useTheme';
+import type { AppColors } from '@/constants/themes';
 
 const { height } = Dimensions.get('window');
 const HERO_HEIGHT = height * 0.5;
 
 export default function HomeScreen() {
   const router = useRouter();
+  const { colors } = useTheme();
+  const styles = createStyles(colors);
 
   const {
     products: featuredProducts,
@@ -86,8 +90,8 @@ export default function HomeScreen() {
           <RefreshControl
             refreshing={refreshing}
             onRefresh={onRefresh}
-            tintColor={Colors.gold.DEFAULT}
-            colors={[Colors.gold.DEFAULT]}
+            tintColor={colors.gold.DEFAULT}
+            colors={[colors.gold.DEFAULT]}
           />
         }
       >
@@ -99,7 +103,7 @@ export default function HomeScreen() {
             contentFit="cover"
           />
           <LinearGradient
-            colors={['transparent', Colors.primary + 'CC', Colors.primary]}
+            colors={['transparent', colors.primary + 'CC', colors.primary]}
             locations={[0.3, 0.7, 1]}
             style={styles.heroGradient}
           />
@@ -115,7 +119,7 @@ export default function HomeScreen() {
               onPress={() => router.push('/shop')}
             >
               <Text style={styles.heroCtaText}>Explore Collection</Text>
-              <ArrowRight size={22} color={Colors.primary} />
+              <ArrowRight size={22} color={colors.primary} />
             </Pressable>
           </View>
         </View>
@@ -190,7 +194,7 @@ export default function HomeScreen() {
         {/* Promo Banner */}
         <View style={styles.promoBanner}>
           <LinearGradient
-            colors={Colors.gold.gradient}
+            colors={colors.gold.gradient}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 0 }}
             style={styles.promoGradient}
@@ -230,10 +234,10 @@ export default function HomeScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: AppColors) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.primary,
+    backgroundColor: colors.primary,
   },
   scrollView: {
     flex: 1,
@@ -264,7 +268,7 @@ const styles = StyleSheet.create({
   heroTagline: {
     fontFamily: 'Inter_500Medium',
     fontSize: 14,
-    color: Colors.gold.light,
+    color: colors.gold.light,
     letterSpacing: 2,
     textTransform: 'uppercase',
     marginBottom: 8,
@@ -272,20 +276,20 @@ const styles = StyleSheet.create({
   heroTitle: {
     fontFamily: 'CormorantGaramond_700Bold',
     fontSize: 48,
-    color: Colors.text.primary,
+    color: colors.text.primary,
     letterSpacing: 1,
     marginBottom: 8,
   },
   heroSubtitle: {
     fontFamily: 'Inter_400Regular',
     fontSize: 16,
-    color: Colors.text.secondary,
+    color: colors.text.secondary,
     marginBottom: 20,
   },
   heroCta: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Colors.gold.DEFAULT,
+    backgroundColor: colors.gold.DEFAULT,
     paddingVertical: 14,
     paddingHorizontal: 24,
     borderRadius: 30,
@@ -295,7 +299,7 @@ const styles = StyleSheet.create({
   heroCtaText: {
     fontFamily: 'Inter_600SemiBold',
     fontSize: 16,
-    color: Colors.primary,
+    color: colors.primary,
   },
   categoriesSection: {
     marginTop: 8,
@@ -304,7 +308,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontFamily: 'CormorantGaramond_700Bold',
     fontSize: 24,
-    color: Colors.text.primary,
+    color: colors.text.primary,
     paddingHorizontal: 16,
     marginBottom: 16,
   },
@@ -312,25 +316,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     gap: 12,
   },
-
-  categoryIconContainer: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    backgroundColor: Colors.surface,
-    borderWidth: 1,
-    borderColor: Colors.border.gold,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 8,
-  },
   categoryCard: {
     width: 120,
     height: 160,
     borderRadius: 20,
     overflow: 'hidden',
     marginRight: 12,
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
   },
 
   categoryImage: {
@@ -348,8 +340,6 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   promoBanner: {
-    padding: 16,
-    paddingBottom: 25,
     marginHorizontal: 16,
     marginVertical: 24,
     borderRadius: 16,
@@ -363,24 +353,22 @@ const styles = StyleSheet.create({
     paddingVertical: 24,
     paddingHorizontal: 24,
     alignItems: 'center',
-
-    borderRadius: 14,
   },
   promoTitle: {
     fontFamily: 'CormorantGaramond_700Bold',
     fontSize: 24,
-    color: Colors.primary,
+    color: colors.primary,
     marginBottom: 4,
   },
   promoText: {
     fontFamily: 'Inter_500Medium',
     fontSize: 14,
-    color: Colors.primary,
+    color: colors.primary,
   },
   promoCta: {
     fontFamily: 'Inter_600SemiBold',
     fontSize: 14,
-    color: Colors.primary,
+    color: colors.primary,
     marginTop: 10,
     textDecorationLine: 'underline',
   },

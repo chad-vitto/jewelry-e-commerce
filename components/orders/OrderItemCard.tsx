@@ -1,101 +1,284 @@
-import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
 import { Colors, formatCurrency } from '@/constants';
-import { Image } from 'expo-image';
+import { useTheme } from '@/hooks/useTheme';
+import type { AppColors } from '@/constants/themes';
+import { Crown, Scale } from 'lucide-react-native';
 import { CustomerOrderItem } from '@/types';
+import { Image } from 'expo-image';
+import { StyleSheet, Text, View } from 'react-native';
 
 interface OrderItemCardProps {
   item: CustomerOrderItem;
 }
 
 export function OrderItemCard({ item }: OrderItemCardProps) {
+  const { colors } = useTheme();
+  const styles = createStyles(colors);
   const imageUri =
-    item.products?.product_images?.[0]?.image_url ||
+    item.products?.product_images?.[0]?.image_url ??
     'https://images.pexels.com/photos/269228/pexels-photo-269228.jpeg';
 
-  const subtotal = item.price_php * item.quantity;
+  const unitPrice = item.price_php;
+  const subtotal = unitPrice * item.quantity;
 
   return (
     <View style={styles.card}>
-      {/* IMAGE */}
-      <View style={styles.imageWrapper}>
-        <Image source={{ uri: imageUri }} style={styles.itemImage} contentFit="cover" />
+      {/* ---------- PRODUCT ---------- */}
+      <View style={styles.productRow}>
+        <Image
+          source={{ uri: imageUri }}
+          style={styles.productImage}
+          contentFit="cover"
+        />
+
+        <View style={styles.productInfo}>
+          <View style={styles.topRow}>
+            <View style={styles.infoColumn}>
+              <Text
+                numberOfLines={1}
+                style={styles.productName}
+              >
+                {item.product_name}
+              </Text>
+
+              <View style={styles.specRow}>
+                {!!item.products?.gold_purity && (
+                  <View style={styles.specItem}>
+                    <Crown
+                      size={13}
+                      color={colors.gold.DEFAULT}
+                    />
+                    <Text style={styles.specText}>
+                      {item.products.gold_purity}
+                    </Text>
+                  </View>
+                )}
+
+                {!!item.products?.gold_purity &&
+                  !!item.products?.weight_grams && (
+                    <View style={styles.specDivider} />
+                  )}
+
+                {!!item.products?.weight_grams && (
+                  <View style={styles.specItem}>
+                    <Scale
+                      size={13}
+                      color={colors.gold.DEFAULT}
+                    />
+                    <Text style={styles.specText}>
+                      {item.products.weight_grams} g
+                    </Text>
+                  </View>
+                )}
+              </View>
+            </View>
+
+            <View style={styles.priceColumn}>
+              <Text style={styles.heroPrice}>
+                {formatCurrency(subtotal)}
+              </Text>
+            </View>
+          </View>
+
+          {!!item.products?.description && (
+            <Text
+              numberOfLines={3}
+              style={styles.description}
+            >
+              {item.products.description}
+            </Text>
+          )}
+        </View>
       </View>
 
-      {/* CONTENT */}
-      <View style={styles.itemContent}>
-        {/* Title */}
-        <Text style={styles.itemName} numberOfLines={1}>
-          {item.product_name}
-        </Text>
+      <View style={styles.divider} />
 
-        {/* Specs */}
-        <Text style={styles.itemSpecs}>
-          {item.products?.gold_purity}
-        </Text>
-        {item.products?.weight_grams && (
-          <Text style={styles.itemSpecs}>{item.products.weight_grams} g</Text>
-        )}
+      {/* ---------- RECEIPT ---------- */}
+      <View style={styles.summary}>
+        <View style={styles.summaryRow}>
+          <Text style={styles.label}>
+            Quantity
+          </Text>
 
-        {/* Footer: Qty + Price */}
-        <View style={styles.itemFooter}>
-          <Text style={styles.quantity}>Qty {item.quantity}</Text>
-          <Text style={styles.itemPrice}>{formatCurrency(subtotal)}</Text>
+          <Text style={styles.value}>
+            × {item.quantity}
+          </Text>
+        </View>
+
+        <View style={styles.summaryRow}>
+          <Text style={styles.label}>
+            Unit Price
+          </Text>
+
+          <Text style={styles.value}>
+            {formatCurrency(unitPrice)}
+          </Text>
+        </View>
+
+        <View style={styles.subtotalRow}>
+          <Text style={styles.subtotalLabel}>
+            Subtotal
+          </Text>
+
+          <Text style={styles.subtotalValue}>
+            {formatCurrency(subtotal)}
+          </Text>
         </View>
       </View>
     </View>
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: AppColors) => StyleSheet.create({
   card: {
-    flexDirection: 'row',
-    backgroundColor: Colors.surface,
-    borderRadius: 12,
+    backgroundColor: colors.surface,
+    borderRadius: 14,
     borderWidth: 1,
-    borderColor: Colors.border.subtle,
-    marginBottom: 12,
-    overflow: 'hidden',
-  },
-  imageWrapper: {
-    width: 90,
-    height: 90,
-    backgroundColor: Colors.surfaceLight,
-  },
-  itemImage: {
-    width: '100%',
-    height: '100%',
-  },
-  itemContent: {
-    flex: 1,
+    borderColor: colors.border.gold,
     padding: 12,
-    justifyContent: 'center',
+    marginBottom: 12,
   },
-  itemName: {
-    fontFamily: 'CormorantGaramond_600SemiBold',
-    fontSize: 16,
-    color: Colors.text.primary,
-    marginBottom: 4,
+
+  /* ---------------- Product ---------------- */
+
+  productRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
   },
-  itemSpecs: {
-    fontFamily: 'Inter_500Medium',
-    fontSize: 12,
-    color: Colors.text.secondary,
-    marginBottom: 2,
+
+  productImage: {
+    width: 96,
+    height: 96,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: colors.border.gold,
+    marginRight: 12,
   },
-  itemFooter: {
+
+  productInfo: {
+    flex: 1,
+    justifyContent: 'space-between',
+    minHeight: 96,
+  },
+
+  topRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginTop: 8,
+    alignItems: 'flex-start',
   },
-  quantity: {
+
+  infoColumn: {
+    flex: 1,
+    paddingRight: 10,
+  },
+
+  priceColumn: {
+    alignItems: 'flex-end',
+    justifyContent: 'center',
+    minWidth: 88,
+  },
+
+  heroPrice: {
+    fontFamily: 'Inter_700Bold',
+    fontSize: 20,
+    color: colors.text.primary,
+  },
+
+  productName: {
+    fontFamily: 'CormorantGaramond_700Bold',
+    fontSize: 26,
+    color: colors.text.primary,
+    marginBottom: 2,
+  },
+
+  specRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 2,
+  },
+
+  specItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+
+  specDivider: {
+    width: 1,
+    height: 14,
+    backgroundColor: colors.border.gold,
+    opacity: 0.5,
+    marginHorizontal: 8,
+  },
+
+  specText: {
+    marginLeft: 4,
+    fontFamily: 'Inter_600SemiBold',
+    fontSize: 12,
+    color: colors.gold.DEFAULT,
+  },
+
+  description: {
+    marginTop: 6,
+    fontFamily: 'Inter_400Regular',
+    fontSize: 13,
+    lineHeight: 18,
+    color: colors.text.secondary,
+  },
+
+  /* ---------------- Divider ---------------- */
+
+  divider: {
+    borderTopWidth: 1,
+    borderTopColor: colors.border.gold,
+    opacity: 0.25,
+    marginTop: 10,
+    marginBottom: 8,
+  },
+
+  /* ---------------- Receipt ---------------- */
+
+  summary: {
+    gap: 6,
+  },
+
+  summaryRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    minHeight: 22,
+  },
+
+  label: {
     fontFamily: 'Inter_500Medium',
     fontSize: 13,
-    color: Colors.text.secondary,
+    color: colors.text.secondary,
   },
-  itemPrice: {
+
+  value: {
+    fontFamily: 'Inter_600SemiBold',
+    fontSize: 13,
+    color: colors.text.primary,
+  },
+
+  subtotalRow: {
+    marginTop: 2,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 8,
+    backgroundColor: 'rgba(212,175,55,0.08)',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+
+  subtotalLabel: {
     fontFamily: 'Inter_700Bold',
     fontSize: 15,
-    color: Colors.text.primary,
+    color: colors.gold.DEFAULT,
+  },
+
+  subtotalValue: {
+    fontFamily: 'Inter_700Bold',
+    fontSize: 22,
+    color: colors.gold.DEFAULT,
   },
 });

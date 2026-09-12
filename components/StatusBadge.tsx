@@ -1,6 +1,6 @@
-import { Colors } from '@/constants';
 import { InquiryStatus, OrderStatus, PaymentStatus } from '@/types';
 import { StyleSheet, Text, View } from 'react-native';
+import { useTheme } from '@/hooks/useTheme';
 
 interface BadgeProps {
   label: string;
@@ -9,13 +9,14 @@ interface BadgeProps {
 }
 
 export function Badge({ label, variant = 'default', size = 'md' }: BadgeProps) {
-  const colors = {
-    default: { bg: Colors.surfaceLight, text: Colors.text.secondary },
-    gold: { bg: Colors.border.gold, text: Colors.gold.DEFAULT },
-    success: { bg: 'rgba(76, 175, 80, 0.15)', text: Colors.status.success },
-    warning: { bg: 'rgba(255, 193, 7, 0.15)', text: Colors.status.warning },
-    error: { bg: 'rgba(244, 67, 54, 0.15)', text: Colors.status.error },
-    info: { bg: 'rgba(33, 150, 243, 0.15)', text: Colors.status.info },
+  const { colors } = useTheme();
+  const variantColors = {
+    default: { bg: colors.surfaceLight, text: colors.text.secondary },
+    gold: { bg: colors.border.gold, text: colors.gold.DEFAULT },
+    success: { bg: 'rgba(76, 175, 80, 0.15)', text: colors.status.success },
+    warning: { bg: 'rgba(255, 193, 7, 0.15)', text: colors.status.warning },
+    error: { bg: 'rgba(244, 67, 54, 0.15)', text: colors.status.error },
+    info: { bg: 'rgba(33, 150, 243, 0.15)', text: colors.status.info },
   };
 
   const sizeStyles = {
@@ -23,7 +24,7 @@ export function Badge({ label, variant = 'default', size = 'md' }: BadgeProps) {
     md: { paddingHorizontal: 12, paddingVertical: 6, fontSize: 12 },
   };
 
-  const { bg, text } = colors[variant];
+  const { bg, text } = variantColors[variant];
   const { paddingHorizontal, paddingVertical, fontSize } = sizeStyles[size];
 
   return (

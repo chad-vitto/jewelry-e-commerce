@@ -1,7 +1,7 @@
 import React, { useCallback, useState } from 'react';
 import { ArrowLeft, Heart, Trash2 } from 'lucide-react-native';
 import { CartItem } from '@/types';
-import { Colors, formatCurrency, Shadows } from '@/constants';
+import { formatCurrency, Shadows } from '@/constants';
 import { EmptyCart } from '@/components/EmptyState';
 import { GoldButton } from '@/components/GoldGradient';
 import { Image } from 'expo-image';
@@ -9,6 +9,8 @@ import { QuantitySelector } from '@/components';
 import { scheduleOnUI } from 'react-native-worklets';
 import { Stack, useRouter } from 'expo-router';
 import { useAuth, useCart } from '@/hooks';
+import { useTheme } from '@/hooks/useTheme';
+import type { AppColors } from '@/constants/themes';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, {
   FadeInUp,
@@ -33,6 +35,8 @@ import {
 
 export default function CartScreen() {
   const router = useRouter();
+  const { colors } = useTheme();
+  const styles = createStyles(colors);
   const insets = useSafeAreaInsets();
   const {
     items,
@@ -134,7 +138,7 @@ export default function CartScreen() {
             }
             style={styles.backButton}
           >
-            <ArrowLeft size={24} color={Colors.text.primary} />
+            <ArrowLeft size={24} color={colors.text.primary} />
           </Pressable>
 
           <View style={styles.titleContainer}>
@@ -253,6 +257,8 @@ const CartItemCard = React.memo(function CartItemCard({
   onUpdateQuantity,
   onRemove,
 }: CartItemCardProps) {
+  const { colors } = useTheme();
+  const styles = createStyles(colors);
   const { product, quantity, size } = item;
   const unitPrice = product.price_php;
   const subtotal = unitPrice * quantity;
@@ -382,10 +388,10 @@ const CartItemCard = React.memo(function CartItemCard({
   );
 });
 
-const styles = StyleSheet.create({
+const createStyles = (colors: AppColors) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.primary,
+    backgroundColor: colors.primary,
   },
   header: {
     flexDirection: 'row',
@@ -403,15 +409,15 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontFamily: 'CormorantGaramond_700Bold',
     fontSize: 24,
-    color: Colors.text.primary,
+    color: colors.text.primary,
   },
   headerSubtitle: {
     fontFamily: 'Inter_400Regular',
     fontSize: 13,
-    color: Colors.gold.DEFAULT,
+    color: colors.gold.DEFAULT,
   },
   freeShippingBanner: {
-    backgroundColor: Colors.gold.DEFAULT,
+    backgroundColor: colors.gold.DEFAULT,
     paddingVertical: 12,
     alignItems: 'center',
     ...Shadows.lg,
@@ -419,33 +425,33 @@ const styles = StyleSheet.create({
   freeShippingText: {
     fontFamily: 'Inter_600SemiBold',
     fontSize: 14,
-    color: Colors.primary,
+    color: colors.primary,
   },
   priceContainer: {
     alignItems: 'flex-end',
   },
   progressContainer: {
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     paddingHorizontal: 16,
     paddingVertical: 12,
   },
   progressText: {
     fontFamily: 'Inter_500Medium',
     fontSize: 13,
-    color: Colors.text.secondary,
+    color: colors.text.secondary,
     textAlign: 'center',
     marginBottom: 8,
   },
   progressBar: {
     height: 4,
-    backgroundColor: Colors.border.DEFAULT,
+    backgroundColor: colors.border.DEFAULT,
     borderRadius: 2,
     overflow: 'hidden',
     ...Shadows.sm,
   },
   progressFill: {
     height: '100%',
-    backgroundColor: Colors.gold.DEFAULT,
+    backgroundColor: colors.gold.DEFAULT,
     borderRadius: 2,
   },
   productArea: {
@@ -454,7 +460,7 @@ const styles = StyleSheet.create({
   },
   cartItem: {
     flexDirection: 'row',
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: 16,
     padding: 10,
     zIndex: 1,
@@ -480,20 +486,17 @@ const styles = StyleSheet.create({
   itemName: {
     fontFamily: 'CormorantGaramond_600SemiBold',
     fontSize: 16,
-    color: Colors.text.primary,
+    color: colors.text.primary,
     marginBottom: 2,
   },
   itemPurity: {
     fontFamily: 'Inter_500Medium',
     fontSize: 12,
-    color: Colors.gold.DEFAULT,
+    color: colors.gold.DEFAULT,
   },
   imageWrapper: {
     borderRadius: 12,
     overflow: 'hidden',
-  },
-  removeButton: {
-    padding: 8,
   },
   itemFooter: {
     flexDirection: 'row',
@@ -503,7 +506,7 @@ const styles = StyleSheet.create({
   itemPrice: {
     fontFamily: 'Inter_700Bold',
     fontSize: 16,
-    color: Colors.text.primary,
+    color: colors.text.primary,
   },
   summary: {
     position: 'absolute',
@@ -513,7 +516,7 @@ const styles = StyleSheet.create({
     flexDirection: 'column',
     alignItems: 'stretch',
 
-    backgroundColor: Colors.surfaceLight,
+    backgroundColor: colors.surfaceLight,
     borderRadius: 16,
 
     paddingHorizontal: 18,
@@ -529,7 +532,7 @@ const styles = StyleSheet.create({
   summaryTitle: {
     fontFamily: 'CormorantGaramond_700Bold',
     fontSize: 20,
-    color: Colors.text.primary,
+    color: colors.text.primary,
     marginBottom: 12,
     alignSelf: 'flex-start',
   },
@@ -539,7 +542,7 @@ const styles = StyleSheet.create({
   },
   divider: {
     height: 1,
-    backgroundColor: Colors.border.DEFAULT,
+    backgroundColor: colors.border.DEFAULT,
     marginVertical: 10,
   },
   secureText: {
@@ -547,7 +550,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontFamily: 'Inter_500Medium',
     fontSize: 11,
-    color: Colors.text.muted,
+    color: colors.text.muted,
   },
   summaryRow: {
     flexDirection: 'row',
@@ -558,12 +561,12 @@ const styles = StyleSheet.create({
   summaryLabel: {
     fontFamily: 'Inter_400Regular',
     fontSize: 15,
-    color: Colors.text.secondary,
+    color: colors.text.secondary,
   },
   summaryValue: {
     fontFamily: 'Inter_600SemiBold',
     fontSize: 15,
-    color: Colors.text.primary,
+    color: colors.text.primary,
     ...Shadows.lg,
   },
   totalRow: {
@@ -576,15 +579,15 @@ const styles = StyleSheet.create({
   totalLabel: {
     fontFamily: 'Inter_700Bold',
     fontSize: 18,
-    color: Colors.text.primary,
+    color: colors.text.primary,
   },
   totalValue: {
     fontFamily: 'Inter_700Bold',
     fontSize: 20,
-    color: Colors.gold.DEFAULT,
+    color: colors.gold.DEFAULT,
   },
   clearText: {
-    color: Colors.status.error,
+    color: colors.status.error,
     fontFamily: 'Inter_600SemiBold',
     fontSize: 14,
   },
@@ -595,7 +598,7 @@ const styles = StyleSheet.create({
   unitPrice: {
     fontFamily: 'Inter_400Regular',
     fontSize: 12,
-    color: Colors.text.muted,
+    color: colors.text.muted,
     marginBottom: 2,
   },
   headerLeft: {
@@ -611,13 +614,9 @@ const styles = StyleSheet.create({
     height: 40,
     borderRadius: 20,
     elevation: 2,
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  rightActions: {
-    flexDirection: 'row',
-    marginBottom: 12,
   },
 
   actionButton: {
@@ -629,12 +628,12 @@ const styles = StyleSheet.create({
   },
 
   similarButton: {
-    backgroundColor: Colors.gold.DEFAULT,
+    backgroundColor: colors.gold.DEFAULT,
     borderRadius: 16,
   },
 
   deleteButton: {
-    backgroundColor: Colors.status.error,
+    backgroundColor: colors.status.error,
     borderTopRightRadius: 16,
     borderBottomRightRadius: 16,
   },

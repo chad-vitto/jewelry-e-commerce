@@ -1,4 +1,6 @@
 import { Colors } from '@/constants';
+import { useTheme } from '@/hooks/useTheme';
+import type { AppColors } from '@/constants/themes';
 import { PaymentProof, PaymentProofStatus } from '@/types';
 import { ReceiptPreview } from './ReceiptPreview';
 import { usePaymentProofImage } from '@/hooks/usePaymentProofImage';
@@ -27,6 +29,8 @@ export function PaymentProofCard({
   loading = false,
   onReplace,
 }: PaymentProofCardProps) {
+  const { colors } = useTheme();
+  const styles = createStyles(colors);
   const { signedUrl } = usePaymentProofImage(paymentProof?.storage_path);
 
   if (!paymentProof) {
@@ -42,7 +46,7 @@ export function PaymentProofCard({
       {loading && (
         <ActivityIndicator
           size="small"
-          color={Colors.gold.DEFAULT}
+          color={colors.gold.DEFAULT}
           style={{ marginVertical: 8 }}
         />
       )}
@@ -90,27 +94,27 @@ export function PaymentProofCard({
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: AppColors) => StyleSheet.create({
   card: {
     borderWidth: 1,
-    borderColor: Colors.border.subtle,
+    borderColor: colors.border.subtle,
     borderRadius: 12,
     padding: 16,
     marginVertical: 12,
-    backgroundColor: Colors.surfaceLight,
+    backgroundColor: colors.surfaceLight,
   },
   title: {
     fontSize: 16,
     fontWeight: '600',
     marginBottom: 12,
-    color: Colors.text.primary,
+    color: colors.text.primary,
   },
   section: {
     marginTop: 8,
   },
   text: {
     fontSize: 14,
-    color: Colors.text.primary,
+    color: colors.text.primary,
     marginBottom: 4,
   },
   details: {
@@ -125,66 +129,30 @@ const styles = StyleSheet.create({
   },
   detailLabel: {
     fontSize: 12,
-    color: Colors.text.secondary,
+    color: colors.text.secondary,
     marginBottom: 2,
-  },
-  detailValue: {
-    fontSize: 14,
-    color: Colors.text.primary,
-    fontWeight: '500',
   },
   referenceValue: {
     fontSize: 16,
     fontWeight: '700',
-    color: Colors.gold.DEFAULT,
-  },
-  rejectedLabel: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: Colors.status.error,
-    marginTop: 8,
+    color: colors.gold.DEFAULT,
   },
   rejectionReason: {
     fontSize: 13,
-    color: Colors.status.error,
+    color: colors.status.error,
     marginTop: 8,
     fontStyle: 'italic',
   },
   button: {
     marginTop: 22,
-    backgroundColor: Colors.gold.DEFAULT,
+    backgroundColor: colors.gold.DEFAULT,
     paddingVertical: 8,
     paddingHorizontal: 14,
     borderRadius: 6,
     alignSelf: 'flex-start',
   },
   buttonText: {
-    color: Colors.surface,
+    color: colors.surface,
     fontWeight: '600',
-  },
-  thumbnail: {
-    width: 120,
-    height: 120,
-    borderRadius: 8,
-    marginBottom: 8,
-    backgroundColor: Colors.border.subtle,
-  },
-  fullImage: {
-    width: '100%',
-    height: '100%',
-    borderRadius: 8,
-  },
-  closeButton: {
-    position: 'absolute',
-    top: 12,
-    right: 12,
-    backgroundColor: 'rgba(255,255,255,0.8)',
-    borderRadius: 20,
-    padding: 6,
-  },
-  closeText: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: Colors.text.primary,
   },
 });

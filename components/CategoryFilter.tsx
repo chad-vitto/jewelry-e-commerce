@@ -1,14 +1,9 @@
-import React, { useEffect, useMemo, useRef } from 'react';
-import {
-  Text,
-  StyleSheet,
-  Pressable,
-  ScrollView,
-  View,
-  Dimensions,
-} from 'react-native';
+import { useEffect, useMemo, useRef } from 'react';
+import { Text, StyleSheet, Pressable, ScrollView, View, Dimensions, } from 'react-native';
 import { Category, ProductCategory } from '@/types';
-import { CATEGORIES, Colors } from '@/constants';
+import { CATEGORIES } from '@/constants';
+import { useTheme } from '@/hooks/useTheme';
+import type { AppColors } from '@/constants/themes';
 import { Image } from 'expo-image';
 
 interface CategoryFilterProps {
@@ -17,6 +12,9 @@ interface CategoryFilterProps {
 }
 
 export function CategoryFilter({ selected, onSelect }: CategoryFilterProps) {
+  const { colors } = useTheme();
+  const styles = createStyles(colors);
+
   const allCategories = useMemo(
     () => [{ id: 'all', name: 'All', slug: 'all' }, ...CATEGORIES],
     [],
@@ -106,7 +104,7 @@ export function CategoryFilter({ selected, onSelect }: CategoryFilterProps) {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: AppColors) => StyleSheet.create({
   container: {
     paddingHorizontal: 16,
     paddingVertical: 12,
@@ -120,19 +118,19 @@ const styles = StyleSheet.create({
 
   allText: {
     fontFamily: 'Inter_600SemiBold',
-    color: Colors.gold.DEFAULT,
+    color: colors.gold.DEFAULT,
   },
 
   categoryName: {
     marginTop: 8,
     fontSize: 12,
     textAlign: 'center',
-    color: Colors.text.secondary,
+    color: colors.text.secondary,
     fontFamily: 'Inter_500Medium',
   },
 
   categoryNameActive: {
-    color: Colors.gold.DEFAULT,
+    color: colors.gold.DEFAULT,
     fontFamily: 'Inter_600SemiBold',
   },
 
@@ -146,7 +144,7 @@ const styles = StyleSheet.create({
 
   imageWrapperActive: {
     borderWidth: 3,
-    borderColor: Colors.gold.DEFAULT,
+    borderColor: colors.gold.DEFAULT,
     borderRadius: 38, // explicitly repeat
   },
 

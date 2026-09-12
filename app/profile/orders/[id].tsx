@@ -1,13 +1,8 @@
 import * as ImagePicker from 'expo-image-picker';
-import {
-  ArrowLeft,
-  CreditCard,
-  MapPin,
-  MessageCircle,
-  Package,
-  Receipt
-  } from 'lucide-react-native';
+import { ArrowLeft, CreditCard, MessageCircle, Package, Receipt } from 'lucide-react-native';
 import { Colors, formatCurrency, PAYMENT_METHODS } from '@/constants';
+import { useTheme } from '@/hooks/useTheme';
+import type { AppColors } from '@/constants/themes';
 import { OrderHeroCard } from '@/components/orders/OrderHeroCard';
 import { OrderItemCard } from '@/components/orders/OrderItemCard';
 import { OrderTimeline } from '@/components/orders/OrderTimeline';
@@ -17,23 +12,19 @@ import { PaymentReferenceInput } from '@/components/orders/PaymentReferenceInput
 import { PaymentStatusBadge } from '@/components';
 import { PaymentStatusCard } from '@/components/orders/PaymentStatusCard';
 import { SectionCard } from '@/components/orders/SectionCard';
+import { ShippingAddressCard } from '@/components/orders/ShippingAddressCard';
+import { ShippingInfoCard } from '@/components/orders/ShippingInfoCard';
 import { UploadProofButton } from '@/components/orders/UploadProofButton';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useOrder } from '@/hooks/useOrders';
 import { usePaymentProof } from '@/hooks/usePaymentProof';
 import { useState } from 'react';
-
-import { 
-  Text,
-  ScrollView,
-  StyleSheet,
-  TouchableOpacity,
-  View,
-  Pressable,
-} from 'react-native';
+import { Text, ScrollView, StyleSheet, TouchableOpacity, View, Pressable } from 'react-native';
 
 
 export default function OrderDetailScreen() {
+  const { colors } = useTheme();
+  const styles = createStyles(colors);
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
   const { order, isLoading, error } = useOrder(id);
@@ -96,16 +87,20 @@ export default function OrderDetailScreen() {
       </View>
     );
   }
+
   const orderId = order.id;
   const shippingAddress = order.shipping_address;
   const paymentMethod = PAYMENT_METHODS.find((m) => m.id === order.payment_method);
+  const handleOpenMap = () => {
+    // TODO: Open Google Maps / Apple Maps
+  };
 
   return (
     <View style={styles.container}>
       {/* Floating Back Button */}
       <View style={styles.header}>
         <Pressable style={styles.headerButton} onPress={() => router.back()}>
-          <ArrowLeft size={24} color={Colors.text.primary} />
+          <ArrowLeft size={24} color={colors.text.primary} />
         </Pressable>
       </View>
 
@@ -120,12 +115,20 @@ export default function OrderDetailScreen() {
         {/* Timeline */}
         <OrderTimeline
           orderStatus={order.order_status}
-          paymentStatus={paymentProof?.status ?? PaymentProofStatus.Pending} />
+          paymentStatus={paymentProof?.status ?? PaymentProofStatus.Pending}
+          timestamps={{
+            pending: order.created_at,
+            confirmed: paymentProof?.verified_at ?? undefined,
+            processing: order.processing_at ?? undefined,
+            shipped: order.shipped_at ?? undefined,
+            delivered: order.delivered_at ?? undefined,
+          }}
+        />
 
         {/* Items */}
         <SectionCard
           title={`Items (${order.itemCount})`}
-          icon={<Package size={18} color={Colors.gold.DEFAULT} />}
+          icon={<Package size={18} color={colors.gold.DEFAULT} />}
         >
           {order.order_items?.map((item) => (
             <OrderItemCard key={item.id} item={item} />
@@ -133,32 +136,17 @@ export default function OrderDetailScreen() {
         </SectionCard>
 
         {/* Shipping Address */}
-        <SectionCard
-          title="Shipping Address"
-          icon={<MapPin size={18} color={Colors.gold.DEFAULT} />}
-        >
-          {shippingAddress ? (
-            <>
-              <Text style={styles.text}>{shippingAddress.full_name}</Text>
-              <Text style={styles.text}>{shippingAddress.phone_number}</Text>
-              <Text style={styles.text}>{shippingAddress.address_line1}</Text>
-              {shippingAddress.address_line2 && (
-                <Text style={styles.text}>{shippingAddress.address_line2}</Text>
-              )}
-              <Text style={styles.text}>
-                {shippingAddress.city}, {shippingAddress.province}
-              </Text>
-              <Text style={styles.text}>{shippingAddress.postal_code}</Text>
-            </>
-          ) : (
-            <Text style={styles.text}>No shipping address found</Text>
-          )}
-        </SectionCard>
+        <ShippingAddressCard
+          address={shippingAddress}
+          onPressMap={handleOpenMap}
+          style={{
+            backgroundColor: ''
+          }} />
 
         {/* Payment */}
         <SectionCard
           title="Payment"
-          icon={<CreditCard size={18} color={Colors.gold.DEFAULT} />}
+          icon={<CreditCard size={18} color={colors.gold.DEFAULT} />}
         >
           <PaymentStatusBadge
             status={order.payment_status}
@@ -203,10 +191,17 @@ export default function OrderDetailScreen() {
           )}
         </SectionCard>
 
+        {/* Shipping Info Card */}
+        <SectionCard
+          title='Shipping'
+          icon={<Package size={18} color={colors.gold.DEFAULT} />}>
+          <ShippingInfoCard order={order} />
+        </SectionCard>
+
         {/* Summary */}
         <SectionCard
           title="Summary"
-          icon={<Receipt size={18} color={Colors.gold.DEFAULT} />}
+          icon={<Receipt size={18} color={colors.gold.DEFAULT} />}
         >
           <View style={styles.summaryRow}>
             <Text style={styles.text}>Subtotal</Text>
@@ -225,7 +220,7 @@ export default function OrderDetailScreen() {
         {/* Support */}
         <SectionCard
           title="Need Help?"
-          icon={<MessageCircle size={18} color={Colors.status.info} />}
+          icon={<MessageCircle size={18} color={colors.status.info} />}
         >
           <TouchableOpacity style={styles.supportRow}>
             <Text style={styles.supportLink}>Contact Support</Text>
@@ -236,8 +231,8 @@ export default function OrderDetailScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Colors.surface },
+const createStyles = (colors: AppColors) => StyleSheet.create({
+  container: { flex: 1, backgroundColor: colors.surface },
   scroll: { flex: 1 },
   content: { padding: 12, paddingBottom: 24 },
 
@@ -256,18 +251,18 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
 
-  text: { fontSize: 14, color: Colors.text.primary, marginBottom: 2 },
+  text: { fontSize: 14, color: colors.text.primary, marginBottom: 2 },
   summaryRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     marginVertical: 2,
   },
-  totalLabel: { fontSize: 16, fontWeight: '700', color: Colors.text.primary },
-  totalValue: { fontSize: 16, fontWeight: '700', color: Colors.gold.DEFAULT },
+  totalLabel: { fontSize: 16, fontWeight: '700', color: colors.text.primary },
+  totalValue: { fontSize: 16, fontWeight: '700', color: colors.gold.DEFAULT },
   supportRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   supportLink: {
     fontSize: 14,
-    color: Colors.status.info,
+    color: colors.status.info,
     fontWeight: '600',
     marginLeft: 4,
   },

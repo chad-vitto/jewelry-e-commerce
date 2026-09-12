@@ -11,8 +11,12 @@ import { Stack, router } from 'expo-router';
 import { useOrders } from '@/hooks/useOrders';
 import { OrderCard } from '@/components/profile/OrderCard';
 import { Colors } from '@/constants';
+import { useTheme } from '@/hooks/useTheme';
+import type { AppColors } from '@/constants/themes';
 
 export default function OrdersScreen() {
+  const { colors } = useTheme();
+  const styles = createStyles(colors);
   const {
     orders,
     isLoading,
@@ -24,7 +28,7 @@ export default function OrdersScreen() {
       <View style={styles.center}>
         <ActivityIndicator
           size="large"
-          color={Colors.gold.DEFAULT}
+          color={colors.gold.DEFAULT}
         />
       </View>
     );
@@ -71,7 +75,7 @@ export default function OrdersScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: AppColors) => StyleSheet.create({
   content: {
     padding: 16,
   },

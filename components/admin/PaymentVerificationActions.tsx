@@ -1,6 +1,8 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, ActivityIndicator, StyleSheet } from 'react-native';
 import { Colors } from '@/constants';
+import { useTheme } from '@/hooks/useTheme';
+import type { AppColors } from '@/constants/themes';
 import type { PaymentProofStatus } from '@/types';
 
 interface PaymentVerificationActionsProps {
@@ -16,6 +18,9 @@ export const PaymentVerificationActions: React.FC<PaymentVerificationActionsProp
   onVerify,
   onReject,
 }) => {
+  const { colors } = useTheme();
+  const styles = createStyles(colors);
+
   return (
     <View style={styles.card}>
       {paymentStatus === 'submitted' && (
@@ -33,7 +38,7 @@ export const PaymentVerificationActions: React.FC<PaymentVerificationActionsProp
             disabled={loading}
           >
             {loading ? (
-              <ActivityIndicator size="small" color={Colors.text.primary} />
+              <ActivityIndicator size="small" color={colors.text.primary} />
             ) : (
               <Text style={styles.buttonText}>✓ Verify Payment</Text>
             )}
@@ -45,7 +50,7 @@ export const PaymentVerificationActions: React.FC<PaymentVerificationActionsProp
             disabled={loading}
           >
             {loading ? (
-              <ActivityIndicator size="small" color={Colors.text.primary} />
+              <ActivityIndicator size="small" color={colors.text.primary} />
             ) : (
               <Text style={styles.buttonText}>✕ Reject Payment</Text>
             )}
@@ -70,21 +75,21 @@ export const PaymentVerificationActions: React.FC<PaymentVerificationActionsProp
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (colors: AppColors) => StyleSheet.create({
   card: {
     width: '100%',
     maxWidth: 400,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: Colors.border.DEFAULT,
-    backgroundColor: Colors.surface,
+    borderColor: colors.border.DEFAULT,
+    backgroundColor: colors.surface,
     padding: 16,
     alignItems: 'center',
   },
   title: {
     fontSize: 16,
     fontWeight: '600',
-    color: Colors.gold.light,
+    color: colors.gold.light,
     marginBottom: 16,
   },
   button: {
@@ -95,15 +100,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   verifyButton: {
-    backgroundColor: Colors.status.success,
+    backgroundColor: colors.status.success,
   },
   rejectButton: {
-    backgroundColor: Colors.status.error,
+    backgroundColor: colors.status.error,
   },
   buttonText: {
     fontSize: 14,
     fontWeight: '600',
-    color: Colors.text.primary,
+    color: colors.text.primary,
   },
   disabled: {
     opacity: 0.6,
@@ -116,17 +121,17 @@ const styles = StyleSheet.create({
   successText: {
     fontSize: 16,
     fontWeight: '600',
-    color: Colors.status.success,
+    color: colors.status.success,
     marginBottom: 8,
   },
   errorText: {
     fontSize: 16,
     fontWeight: '600',
-    color: Colors.status.error,
+    color: colors.status.error,
     marginBottom: 8,
   },
   hint: {
     fontSize: 14,
-    color: Colors.text.secondary,
+    color: colors.text.secondary,
   },
 });

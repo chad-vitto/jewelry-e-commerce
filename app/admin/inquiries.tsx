@@ -1,10 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, FlatList, Pressable } from 'react-native';
 import { useRouter, Stack } from 'expo-router';
 import { useAdminInquiries } from '@/hooks';
 import { InquiryStatusBadge } from '@/components';
 import { Colors } from '@/constants';
-import { ArrowLeft, Inbox, Mail, Clock } from 'lucide-react-native';
+import { useTheme } from '@/hooks/useTheme';
+import type { AppColors } from '@/constants/themes';
+import { ArrowLeft, Inbox, Clock } from 'lucide-react-native';
 import { Inquiry, InquiryStatus } from '@/types';
 
 const STATUS_FILTERS: { value: InquiryStatus | 'all'; label: string }[] = [
@@ -15,6 +17,8 @@ const STATUS_FILTERS: { value: InquiryStatus | 'all'; label: string }[] = [
 ];
 
 export default function AdminInquiriesScreen() {
+  const { colors } = useTheme();
+  const styles = createStyles(colors);
   const router = useRouter();
   const { inquiries, isLoading, fetchInquiries } = useAdminInquiries();
   const [selectedStatus, setSelectedStatus] = useState<InquiryStatus | 'all'>(
@@ -66,7 +70,7 @@ export default function AdminInquiriesScreen() {
 
       <View style={styles.inquiryFooter}>
         <View style={styles.dateContainer}>
-          <Clock size={14} color={Colors.text.muted} />
+          <Clock size={14} color={colors.text.muted} />
           <Text style={styles.dateText}>
             {new Date(item.created_at).toLocaleDateString('en-PH', {
               month: 'short',
@@ -88,7 +92,7 @@ export default function AdminInquiriesScreen() {
       {/* Header */}
       <View style={styles.header}>
         <Pressable style={styles.backButton} onPress={() => router.back()}>
-          <ArrowLeft size={24} color={Colors.text.primary} />
+          <ArrowLeft size={24} color={colors.text.primary} />
         </Pressable>
         <Text style={styles.headerTitle}>Inquiries</Text>
         <View style={{ width: 44 }} />
@@ -150,7 +154,7 @@ export default function AdminInquiriesScreen() {
         showsVerticalScrollIndicator={false}
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
-            <Inbox size={48} color={Colors.text.muted} />
+            <Inbox size={48} color={colors.text.muted} />
             <Text style={styles.emptyText}>No inquiries found</Text>
           </View>
         }
@@ -159,10 +163,10 @@ export default function AdminInquiriesScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: AppColors) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.primary,
+    backgroundColor: colors.primary,
   },
   header: {
     flexDirection: 'row',
@@ -176,14 +180,14 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     alignItems: 'center',
     justifyContent: 'center',
   },
   headerTitle: {
     fontFamily: 'CormorantGaramond_700Bold',
     fontSize: 24,
-    color: Colors.text.primary,
+    color: colors.text.primary,
   },
   filterContainer: {
     paddingHorizontal: 12,
@@ -196,52 +200,52 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     paddingHorizontal: 14,
     borderRadius: 20,
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderWidth: 1,
-    borderColor: Colors.border.DEFAULT,
+    borderColor: colors.border.DEFAULT,
     gap: 6,
   },
   filterPillActive: {
-    backgroundColor: Colors.gold.DEFAULT,
-    borderColor: Colors.gold.DEFAULT,
+    backgroundColor: colors.gold.DEFAULT,
+    borderColor: colors.gold.DEFAULT,
   },
   filterText: {
     fontFamily: 'Inter_500Medium',
     fontSize: 13,
-    color: Colors.text.secondary,
+    color: colors.text.secondary,
   },
   filterTextActive: {
-    color: Colors.primary,
+    color: colors.primary,
   },
   filterBadge: {
-    backgroundColor: Colors.border.DEFAULT,
+    backgroundColor: colors.border.DEFAULT,
     borderRadius: 10,
     paddingHorizontal: 8,
     paddingVertical: 2,
   },
   filterBadgeActive: {
-    backgroundColor: Colors.primary + '40',
+    backgroundColor: colors.primary + '40',
   },
   filterBadgeText: {
     fontFamily: 'Inter_700Bold',
     fontSize: 11,
-    color: Colors.text.secondary,
+    color: colors.text.secondary,
   },
   filterBadgeTextActive: {
-    color: Colors.primary,
+    color: colors.primary,
   },
   listContent: {
     padding: 16,
   },
   inquiryCard: {
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: 12,
     padding: 16,
     marginBottom: 12,
   },
   newInquiryCard: {
     borderWidth: 2,
-    borderColor: Colors.gold.DEFAULT,
+    borderColor: colors.gold.DEFAULT,
   },
   inquiryHeader: {
     flexDirection: 'row',
@@ -252,7 +256,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: Colors.gold.DEFAULT,
+    backgroundColor: colors.gold.DEFAULT,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 12,
@@ -260,7 +264,7 @@ const styles = StyleSheet.create({
   avatarText: {
     fontFamily: 'Inter_700Bold',
     fontSize: 16,
-    color: Colors.primary,
+    color: colors.primary,
   },
   inquiryInfo: {
     flex: 1,
@@ -268,18 +272,18 @@ const styles = StyleSheet.create({
   customerName: {
     fontFamily: 'Inter_600SemiBold',
     fontSize: 15,
-    color: Colors.text.primary,
+    color: colors.text.primary,
     marginBottom: 2,
   },
   subjectLine: {
     fontFamily: 'Inter_400Regular',
     fontSize: 13,
-    color: Colors.text.secondary,
+    color: colors.text.secondary,
   },
   messagePreview: {
     fontFamily: 'Inter_400Regular',
     fontSize: 14,
-    color: Colors.text.secondary,
+    color: colors.text.secondary,
     lineHeight: 20,
     marginBottom: 12,
   },
@@ -296,12 +300,12 @@ const styles = StyleSheet.create({
   dateText: {
     fontFamily: 'Inter_400Regular',
     fontSize: 12,
-    color: Colors.text.muted,
+    color: colors.text.muted,
   },
   productRef: {
     fontFamily: 'Inter_500Medium',
     fontSize: 12,
-    color: Colors.gold.DEFAULT,
+    color: colors.gold.DEFAULT,
   },
   emptyContainer: {
     alignItems: 'center',
@@ -310,7 +314,7 @@ const styles = StyleSheet.create({
   emptyText: {
     fontFamily: 'Inter_500Medium',
     fontSize: 16,
-    color: Colors.text.muted,
+    color: colors.text.muted,
     marginTop: 12,
   },
 });

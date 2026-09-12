@@ -1,4 +1,6 @@
 import { Colors } from '@/constants';
+import { useTheme } from '@/hooks/useTheme';
+import type { AppColors } from '@/constants/themes';
 import { formatDateTime } from '@/utils/format';
 import { PaymentProofStatus } from '@/hooks/usePaymentProofs';
 import { StyleSheet, Text, View } from 'react-native';
@@ -27,13 +29,6 @@ const STATUS_ICONS = {
   [PaymentProofStatus.Submitted]: Clock3,
   [PaymentProofStatus.Verified]: BadgeCheck,
   [PaymentProofStatus.Rejected]: CircleX,
-};
-
-const STATUS_COLORS = {
-  [PaymentProofStatus.Pending]: Colors.status.warning,
-  [PaymentProofStatus.Submitted]: Colors.status.info,
-  [PaymentProofStatus.Verified]: Colors.status.success,
-  [PaymentProofStatus.Rejected]: Colors.status.error,
 };
 
 const STATUS_CONFIG = {
@@ -70,10 +65,18 @@ export function PaymentStatusCard({
   verifiedAt,
   rejectionReason,
 }: PaymentStatusCardProps) {
+  const { colors } = useTheme();
+  const styles = createStyles(colors);
+  const statusColors = {
+    [PaymentProofStatus.Pending]: colors.status.warning,
+    [PaymentProofStatus.Submitted]: colors.status.info,
+    [PaymentProofStatus.Verified]: colors.status.success,
+    [PaymentProofStatus.Rejected]: colors.status.error,
+  };
 
   const config = STATUS_CONFIG[status];
   const Icon = STATUS_ICONS[status];
-  const iconColor = STATUS_COLORS[status]
+  const iconColor = statusColors[status]
 
   return (
     <View style={styles.card}>
@@ -135,20 +138,20 @@ export function PaymentStatusCard({
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: AppColors) => StyleSheet.create({
   card: {
     borderWidth: 1,
-    borderColor: Colors.border.subtle,
+    borderColor: colors.border.subtle,
     borderRadius: 12,
     padding: 16,
     marginVertical: 12,
-    backgroundColor: Colors.surfaceLight,
+    backgroundColor: colors.surfaceLight,
   },
   title: {
     fontSize: 16,
     fontWeight: '600',
     marginBottom: 8,
-    color: Colors.text.primary,
+    color: colors.text.primary,
   },
   statusHeader: {
     flexDirection: 'row',
@@ -159,30 +162,25 @@ const styles = StyleSheet.create({
   statusTitle: {
     fontSize: 18,
     fontWeight: '700',
-    color: Colors.text.primary,
+    color: colors.text.primary,
   },
   message: {
     fontSize: 15,
     lineHeight: 22,
-    color: Colors.text.primary,
+    color: colors.text.primary,
     marginTop: 10,
   },
   subMessage: {
     fontSize: 13,
     lineHeight: 20,
-    color: Colors.gold.DEFAULT,
+    color: colors.gold.DEFAULT,
     marginTop: 4,
   },
   rejectionReason: {
     fontSize: 13,
-    color: Colors.status.error,
+    color: colors.status.error,
     marginTop: 8,
     fontStyle: 'italic',
-  },
-  date: {
-    fontSize: 12,
-    color: Colors.text.secondary,
-    marginTop: 6,
   },
   details: {
     marginTop: 20,
@@ -196,17 +194,17 @@ const styles = StyleSheet.create({
   },
   detailLabel: {
     fontSize: 12,
-    color: Colors.text.secondary,
+    color: colors.text.secondary,
     marginBottom: 2,
   },
   detailValue: {
     fontSize: 14,
-    color: Colors.text.primary,
+    color: colors.text.primary,
     fontWeight: '500',
   },
   referenceValue: {
   fontSize: 15,
   fontWeight: '700',
-  color: Colors.gold.DEFAULT,
+  color: colors.gold.DEFAULT,
 }
 });

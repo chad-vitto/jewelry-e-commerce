@@ -1,7 +1,9 @@
 import * as Clipboard from 'expo-clipboard';
 import React from 'react';
 import { Colors } from '@/constants';
-import { Copy } from 'lucide-react-native';
+import { useTheme } from '@/hooks/useTheme';
+import type { AppColors } from '@/constants/themes';
+import { Copy, CalendarDays, Wallet, } from 'lucide-react-native';
 import { CustomerOrderCard } from '@/hooks/useOrders';
 import { OrderStatusBadge } from '@/components';
 import {
@@ -17,6 +19,8 @@ interface OrderHeroCardProps {
 }
 
 export function OrderHeroCard({ order }: OrderHeroCardProps) {
+    const { colors } = useTheme();
+    const styles = createStyles(colors);
     const handleCopy = async () => {
         await Clipboard.setStringAsync(order.shortId);
 
@@ -33,10 +37,10 @@ export function OrderHeroCard({ order }: OrderHeroCardProps) {
         <View style={styles.card}>
 
             <Text style={styles.label}>
-                Order Number
+                ORDER NUMBER
             </Text>
 
-            <View style={styles.row}>
+            <View style={styles.orderRow}>
                 <Text style={styles.orderId}>
                     #{order.shortId}
                 </Text>
@@ -44,10 +48,11 @@ export function OrderHeroCard({ order }: OrderHeroCardProps) {
                 <TouchableOpacity
                     onPress={handleCopy}
                     style={styles.copyButton}
+                    activeOpacity={0.8}
                 >
                     <Copy
-                        size={15}
-                        color={Colors.text.secondary}
+                        size={14}
+                        color={colors.gold.DEFAULT}
                     />
 
                     <Text style={styles.copyText}>
@@ -56,31 +61,66 @@ export function OrderHeroCard({ order }: OrderHeroCardProps) {
                 </TouchableOpacity>
             </View>
 
-
-            <OrderStatusBadge status={badgeStatus} />
-
+            <View style={styles.badgeContainer}>
+                <OrderStatusBadge status={badgeStatus} />
+            </View>
 
             <View style={styles.divider} />
 
+            <View style={styles.infoRow}>
 
-            <Text style={styles.date}>
-                Placed {order.formattedDate}
-            </Text>
+                <View style={styles.infoColumn}>
 
+                    <View style={styles.infoHeader}>
+                        <CalendarDays
+                            size={14}
+                            color={colors.gold.DEFAULT}
+                        />
 
-            <Text style={styles.total}>
-                {order.formattedTotal}
-            </Text>
+                        <Text style={styles.infoLabel}>
+                            Placed On
+                        </Text>
+                    </View>
+
+                    <Text style={styles.dateValue}>
+                        {order.formattedDate}
+                    </Text>
+
+                </View>
+
+                <View style={styles.verticalDivider} />
+
+                <View style={styles.infoColumn}>
+
+                    <View style={styles.infoHeader}>
+                        <Wallet
+                            size={14}
+                            color={colors.gold.DEFAULT}
+                        />
+
+                        <Text style={styles.infoLabel}>
+                            Total Amount
+                        </Text>
+                    </View>
+
+                    <Text style={styles.amountValue}>
+                        {order.formattedTotal}
+                    </Text>
+
+                </View>
+
+            </View>
 
         </View>
     );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: AppColors) => StyleSheet.create({
     card: {
-        backgroundColor: Colors.surfaceLight,
+        backgroundColor: colors.surfaceLight,
         borderRadius: 20,
-        padding: 20,
+        paddingHorizontal: 16,
+        paddingVertical: 12,
         marginBottom: 16,
         alignItems: 'center',
 
@@ -96,56 +136,101 @@ const styles = StyleSheet.create({
 
     label: {
         fontFamily: 'Inter_500Medium',
-        fontSize: 13,
-        color: Colors.text.secondary,
-        marginBottom: 6,
+        fontSize: 11,
+        letterSpacing: 1.6,
+        textTransform: 'uppercase',
+        color: colors.gold.DEFAULT,
+        marginBottom: 2,
     },
 
-    row: {
+    orderRow: {
         flexDirection: 'row',
         alignItems: 'center',
-        marginBottom: 14,
+        justifyContent: 'center',
+        marginBottom: 8,
     },
 
     orderId: {
         fontFamily: 'Inter_700Bold',
-        fontSize: 22,
-        color: Colors.text.primary,
+        fontSize: 28,
+        color: colors.text.primary,
         marginRight: 10,
     },
 
     copyButton: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: Colors.border.DEFAULT,
-        paddingHorizontal: 10,
-        paddingVertical: 5,
-        borderRadius: 20,
+
+        paddingHorizontal: 8,
+        paddingVertical: 4,
+
+        borderRadius: 14,
+
+        backgroundColor: 'rgba(212,175,55,0.08)',
     },
 
     copyText: {
         marginLeft: 4,
-        fontSize: 13,
-        color: Colors.text.secondary,
         fontFamily: 'Inter_500Medium',
+        fontSize: 12,
+        color: colors.gold.DEFAULT,
+    },
+
+    badgeContainer: {
+        marginBottom: 6,
     },
 
     divider: {
         width: '100%',
         height: 1,
-        backgroundColor: Colors.border.DEFAULT,
-        marginVertical: 14,
+        backgroundColor: colors.border.gold,
+        opacity: 0.2,
+        marginVertical: 8,
+        marginTop: 4,
+        marginBottom: 10,
     },
 
-    date: {
-        fontSize: 13,
-        color: Colors.text.secondary,
+    infoRow: {
+        flexDirection: 'row',
+        alignItems: 'stretch',
+        width: '100%',
     },
 
-    total: {
-        marginTop: 6,
+    infoColumn: {
+        flex: 1,
+        alignItems: 'center',
+    },
+    infoHeader: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginBottom: 2,
+    },
+
+    verticalDivider: {
+        width: 1,
+        backgroundColor: colors.border.gold,
+        opacity: 0.2,
+        marginHorizontal: 16,
+    },
+
+    infoLabel: {
+        marginLeft: 5,
+        fontFamily: 'Inter_600SemiBold',
+        fontSize: 14,
+        color: colors.gold.DEFAULT,
+    },
+
+    dateValue: {
+        fontFamily: 'Inter_600SemiBold',
+        fontSize: 14,
+        color: colors.text.primary,
+        textAlign: 'center',
+    },
+
+    amountValue: {
         fontFamily: 'Inter_700Bold',
-        fontSize: 20,
-        color: Colors.text.primary,
+        fontSize: 21,
+        color: colors.text.primary,
+        marginTop: -1,
     },
 });

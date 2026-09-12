@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import {
   View,
   ScrollView,
@@ -9,6 +9,8 @@ import {
   Alert,
 } from 'react-native';
 import { Colors } from '@/constants';
+import { useTheme } from '@/hooks/useTheme';
+import type { AppColors } from '@/constants/themes';
 import { ImageUploader } from './ImageUploader';
 import { GoldButton } from './GoldGradient';
 import { CategoryFilter } from './CategoryFilter';
@@ -70,6 +72,8 @@ export const ProductForm = ({
   isLoading = false,
   title,
 }: ProductFormProps) => {
+  const { colors } = useTheme();
+  const styles = createStyles(colors);
   const [formData, setFormData] = useState<ProductFormData>({
     name: initialData?.name ?? '',
     description: initialData?.description ?? '',
@@ -168,7 +172,7 @@ export const ProductForm = ({
             <TextInput
               style={[styles.input, errors.name && styles.inputError]}
               placeholder="Enter product name"
-              placeholderTextColor={Colors.text.muted}
+              placeholderTextColor={colors.text.muted}
               value={formData.name}
               onChangeText={(text) => setFormData({ ...formData, name: text })}
               editable={!isLoading}
@@ -184,7 +188,7 @@ export const ProductForm = ({
                 errors.description && styles.inputError,
               ]}
               placeholder="Enter product description"
-              placeholderTextColor={Colors.text.muted}
+              placeholderTextColor={colors.text.muted}
               value={formData.description}
               onChangeText={(text) =>
                 setFormData({ ...formData, description: text })
@@ -215,7 +219,7 @@ export const ProductForm = ({
               <TextInput
                 style={styles.input}
                 placeholder="e.g., 18K, 24K"
-                placeholderTextColor={Colors.text.muted}
+                placeholderTextColor={colors.text.muted}
                 value={formData.gold_purity}
                 onChangeText={(text) =>
                   setFormData({ ...formData, gold_purity: text })
@@ -234,7 +238,7 @@ export const ProductForm = ({
               <TextInput
                 style={[styles.input, errors.price_php && styles.inputError]}
                 placeholder="0.00"
-                placeholderTextColor={Colors.text.muted}
+                placeholderTextColor={colors.text.muted}
                 value={formData.price_php}
                 onChangeText={(text) =>
                   setFormData({ ...formData, price_php: text })
@@ -254,7 +258,7 @@ export const ProductForm = ({
                   errors.stock_quantity && styles.inputError,
                 ]}
                 placeholder="0"
-                placeholderTextColor={Colors.text.muted}
+                placeholderTextColor={colors.text.muted}
                 value={formData.stock_quantity}
                 onChangeText={(text) =>
                   setFormData({ ...formData, stock_quantity: text })
@@ -273,7 +277,7 @@ export const ProductForm = ({
               <TextInput
                 style={[styles.input, errors.weight_grams && styles.inputError]}
                 placeholder="0.00"
-                placeholderTextColor={Colors.text.muted}
+                placeholderTextColor={colors.text.muted}
                 value={formData.weight_grams}
                 onChangeText={(text) =>
                   setFormData({ ...formData, weight_grams: text })
@@ -290,7 +294,7 @@ export const ProductForm = ({
               <TextInput
                 style={styles.input}
                 placeholder="e.g., 6, 7, 8"
-                placeholderTextColor={Colors.text.muted}
+                placeholderTextColor={colors.text.muted}
                 value={formData.available_sizes}
                 onChangeText={(text) =>
                   setFormData({ ...formData, available_sizes: text })
@@ -369,10 +373,10 @@ export const ProductForm = ({
     </ScrollView>
   );
 };
-const styles = StyleSheet.create({
+const createStyles = (colors: AppColors) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.primary,
+    backgroundColor: colors.primary,
   },
   content: {
     padding: 16,
@@ -380,7 +384,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 24,
     fontFamily: 'CormorantGaramond_700Bold',
-    color: Colors.text.primary,
+    color: colors.text.primary,
     marginBottom: 24,
   },
   section: {
@@ -389,7 +393,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 14,
     fontFamily: 'Inter_600SemiBold',
-    color: Colors.text.secondary,
+    color: colors.text.secondary,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
     marginBottom: 16,
@@ -400,22 +404,22 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 14,
     fontFamily: 'Inter_600SemiBold',
-    color: Colors.text.primary,
+    color: colors.text.primary,
     marginBottom: 8,
   },
   input: {
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: 8,
     paddingHorizontal: 14,
     paddingVertical: 12,
     fontFamily: 'Inter_400Regular',
     fontSize: 14,
-    color: Colors.text.primary,
+    color: colors.text.primary,
     borderWidth: 1,
-    borderColor: Colors.border.DEFAULT,
+    borderColor: colors.border.DEFAULT,
   },
   inputError: {
-    borderColor: Colors.status.error,
+    borderColor: colors.status.error,
   },
   textArea: {
     textAlignVertical: 'top',
@@ -424,7 +428,7 @@ const styles = StyleSheet.create({
   errorText: {
     fontSize: 12,
     fontFamily: 'Inter_500Medium',
-    color: Colors.status.error,
+    color: colors.status.error,
     marginTop: 4,
   },
   row: {
@@ -434,56 +438,40 @@ const styles = StyleSheet.create({
   flex: {
     flex: 1,
   },
-  selectContainer: {
-    backgroundColor: Colors.surface,
-    borderRadius: 8,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: Colors.border.DEFAULT,
-  },
-  selectText: {
-    fontSize: 14,
-    fontFamily: 'Inter_400Regular',
-    color: Colors.text.primary,
-  },
   toggleRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: Colors.border.DEFAULT,
+    borderBottomColor: colors.border.DEFAULT,
   },
   toggle: {
     width: 50,
     height: 28,
     borderRadius: 14,
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     padding: 2,
     justifyContent: 'center',
   },
   toggleActive: {
-    backgroundColor: Colors.gold.DEFAULT,
+    backgroundColor: colors.gold.DEFAULT,
   },
   toggleHandle: {
     width: 24,
     height: 24,
     borderRadius: 12,
-    backgroundColor: Colors.text.muted,
+    backgroundColor: colors.text.muted,
     alignSelf: 'flex-start',
   },
   toggleHandleActive: {
-    backgroundColor: Colors.primary,
+    backgroundColor: colors.primary,
     alignSelf: 'flex-end',
   },
   toggleDescription: {
     fontSize: 12,
     fontFamily: 'Inter_400Regular',
-    color: Colors.text.muted,
+    color: colors.text.muted,
     marginTop: 2,
   },
   submitButton: {

@@ -1,20 +1,19 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import { Colors } from '@/constants';
+import { useEffect, useMemo } from 'react';
 import { EmptyWishlist } from '@/components/EmptyState';
-import {
-  FlatList, StyleSheet,
-  Text,
-  View
-} from 'react-native';
+import { FlatList, StyleSheet, Text, View } from 'react-native';
 import { Product } from '@/types';
 import { ProductCard } from '@/components/ProductCard';
 import { SectionSkeleton } from '@/components';
 import { useAuthStore, useWishlistStore } from '@/store';
 import { useProducts } from '@/hooks';
 import { useRouter } from 'expo-router';
+import { useTheme } from '@/hooks/useTheme';
+import type { AppColors } from '@/constants/themes';
 
 export default function WishlistScreen() {
   const router = useRouter();
+  const { colors } = useTheme();
+  const styles = createStyles(colors);
   const {
     productIds,
     toggleItem,
@@ -23,13 +22,11 @@ export default function WishlistScreen() {
   } = useWishlistStore();
   const { user } = useAuthStore();
   const { products: allProducts, isLoading: productsLoading } = useProducts();
-  const [isInitialLoad, setIsInitialLoad] = useState(true);
 
   useEffect(() => {
     if (user) {
-      fetchWishlist(user.id);
+      void fetchWishlist(user.id);
     }
-    setIsInitialLoad(false);
   }, [user, fetchWishlist]);
 
   const wishlistProducts = useMemo(() => {
@@ -56,7 +53,7 @@ export default function WishlistScreen() {
     />
   );
 
-  if (isInitialLoad || productsLoading) {
+  if (productsLoading || wishlistLoading) {
     return (
       <View style={styles.container}>
         <View style={styles.header}>
@@ -82,7 +79,7 @@ export default function WishlistScreen() {
     <View style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.title}>Wishlist</Text>
-        <Text style={styles.count}>{wishlistProducts.length} items</Text>
+        <Text style={styles.count}>{wishlistProducts.length}</Text>
       </View>
 
       <FlatList
@@ -98,10 +95,10 @@ export default function WishlistScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: AppColors) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.primary,
+    backgroundColor: colors.primary,
   },
   header: {
     paddingHorizontal: 16,
@@ -114,13 +111,13 @@ const styles = StyleSheet.create({
   title: {
     fontFamily: 'CormorantGaramond_700Bold',
     fontSize: 32,
-    color: Colors.text.primary,
+    color: colors.text.primary,
     letterSpacing: 0.5,
   },
   count: {
     fontFamily: 'Inter_500Medium',
     fontSize: 14,
-    color: Colors.text.muted,
+    color: colors.text.muted,
   },
   gridContent: {
     padding: 16,

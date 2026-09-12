@@ -17,6 +17,10 @@ export interface CustomerOrderCard extends CustomerOrder {
   firstProductName: string;
   firstProductImage: string | null;
 
+  firstProductKarat: string | null;
+  firstProductWeight: number | null;
+  firstProductDescription: string | null;
+
   itemCount: number;
   totalQuantity: number;
 
@@ -40,16 +44,16 @@ export function useOrders(customerId?: string): UseOrdersReturn {
       let query = supabase
         .from('orders')
         .select(`
-  *,
-  shipping_address:shipping_addresses!orders_shipping_address_id_fkey (*),
-  order_items (
-    *,
-    products (
-      *,
-      product_images (*)
-    )
-  )
-`)
+            *,
+            shipping_address:shipping_addresses!orders_shipping_address_id_fkey (*),
+            order_items (
+              *,
+              products (
+                *,
+                product_images (*)
+              )
+            )
+          `)
         .order('created_at', { ascending: false });
 
       if (queryCustomerId) {
@@ -91,6 +95,33 @@ export function useOrders(customerId?: string): UseOrdersReturn {
       isCancelled = true;
     };
   }, [fetchOrders]);
+
+  // Realtime refresh 
+  useEffect(() => {
+    const queryCustomerId = customerId || userId;
+
+    if (!queryCustomerId) return;
+
+    const channel = supabase
+      .channel(`orders:${queryCustomerId}:${Date.now()}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'orders',
+          filter: `customer_id=eq.${queryCustomerId}`,
+        },
+        () => {
+          void fetchOrders();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      void supabase.removeChannel(channel);
+    };
+  }, [customerId, userId, fetchOrders]);
 
   return { orders, isLoading, error, refetch: fetchOrders };
 }

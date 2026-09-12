@@ -6,7 +6,7 @@ export const CATEGORIES: Category[] = [
     name: 'Rings',
     slug: 'rings',
     icon: 'Gem',
-    image: 'https://vgqlqzjpwnckwvpubrvb.supabase.co/storage/v1/object/public/categories/rings.jpg',
+    image: 'https://vgqlqzjpwnckwvpubrvb.supabase.co/storage/v1/object/public/categories/rings.png',
     description: 'Elegant gold rings for every occasion',
   },
   {
@@ -14,7 +14,7 @@ export const CATEGORIES: Category[] = [
     name: 'Earrings',
     slug: 'earrings',
     icon: 'Sparkles',
-    image: 'https://vgqlqzjpwnckwvpubrvb.supabase.co/storage/v1/object/public/categories/earrings.jpg',
+    image: 'https://vgqlqzjpwnckwvpubrvb.supabase.co/storage/v1/object/public/categories/earrings.png',
     description: 'Beautiful earrings to complement your style',
   },
   {
@@ -22,7 +22,7 @@ export const CATEGORIES: Category[] = [
     name: 'Necklaces',
     slug: 'necklaces',
     icon: 'Crown',
-    image: 'https://vgqlqzjpwnckwvpubrvb.supabase.co/storage/v1/object/public/categories/necklaces.jpg',
+    image: 'https://vgqlqzjpwnckwvpubrvb.supabase.co/storage/v1/object/public/categories/necklaces.png',
     description: 'Stunning necklaces and chains',
   },
   {
@@ -31,7 +31,7 @@ export const CATEGORIES: Category[] = [
     slug: 'pendants',
     icon: 'Gem',
     image:
-      'https://vgqlqzjpwnckwvpubrvb.supabase.co/storage/v1/object/public/categories/pendants.jpg',
+      'https://vgqlqzjpwnckwvpubrvb.supabase.co/storage/v1/object/public/categories/pendants.png',
     description: 'Elegant pendants and charms',
   },
   {
@@ -40,7 +40,7 @@ export const CATEGORIES: Category[] = [
     slug: 'bracelets',
     icon: 'Watch',
     image:
-      'https://vgqlqzjpwnckwvpubrvb.supabase.co/storage/v1/object/public/categories/bracelets.jpg',
+      'https://vgqlqzjpwnckwvpubrvb.supabase.co/storage/v1/object/public/categories/bracelets.png',
     description: 'Exquisite bracelets and bangles',
   },
   {
@@ -49,7 +49,7 @@ export const CATEGORIES: Category[] = [
     slug: 'wedding_sets',
     icon: 'Heart',
     image:
-      'https://vgqlqzjpwnckwvpubrvb.supabase.co/storage/v1/object/public/categories/wedding_sets.jpg',
+      'https://vgqlqzjpwnckwvpubrvb.supabase.co/storage/v1/object/public/categories/wedding_sets.png',
     description: 'Complete wedding jewelry sets',
   },
 ];

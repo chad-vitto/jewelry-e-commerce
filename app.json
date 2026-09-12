@@ -4,7 +4,7 @@
     "slug": "reloved-gold-collections",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/rings.png",
+    "icon": "./assets/images/icon-rings.png",
     "scheme": "aurumgold",
     "userInterfaceStyle": "dark",
     "ios": {

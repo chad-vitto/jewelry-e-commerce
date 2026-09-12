@@ -7,6 +7,7 @@ interface AuthStore extends AuthState {
   signUp: (email: string, password: string, fullName: string, phone?: string) => Promise<{ error: string | null }>;
   signOut: () => Promise<void>;
   resetPassword: (email: string) => Promise<{ error: string | null }>;
+  updatePassword: (currentPassword: string, newPassword: string) => Promise<{ error: string | null }>;
   fetchProfile: () => Promise<void>;
   setLoading: (loading: boolean) => void;
   canAccessDashboard: boolean;
@@ -155,6 +156,50 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
       return { error: 'An unexpected error occurred' };
     }
   },
+
+  updatePassword: async (currentPassword: string, newPassword: string,) => {
+    try {
+      const { data: { user }, } = await supabase.auth.getUser();
+      if (!user?.email) {
+        return {
+          error: 'Unable to verify your account.'
+        }
+      }
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: user.email,
+        password: currentPassword,
+      });
+
+      if (signInError) {
+        return {
+          error: signInError.message === 'Invalid login credentials'
+            ? 'Current password is incorrect.'
+            : signInError.message,
+        };
+      }
+
+      const { error } = await supabase.auth.updateUser({
+        password: newPassword,
+      });
+
+      if (error) {
+        return {
+          error: error.message,
+        };
+      }
+
+      return {
+        error: null,
+      };
+    } catch (err) {
+      console.error('Update Password Error:', err);
+
+      return {
+        error: 'Unable to update password.',
+      };
+    }
+  },
+
 }));
 
 // Subscribe to auth changes
@@ -167,6 +212,7 @@ supabase.auth.onAuthStateChange((event) => {
       isAuthenticated: false,
       isAdmin: false,
       canAccessDashboard: false,
+      isLoading: false,
     });
   }
 });

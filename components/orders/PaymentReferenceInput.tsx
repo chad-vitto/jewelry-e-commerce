@@ -1,6 +1,8 @@
 import * as Clipboard from 'expo-clipboard';
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Colors } from '@/constants';
+import { useTheme } from '@/hooks/useTheme';
+import type { AppColors } from '@/constants/themes';
 import {
   View,
   Text,
@@ -24,6 +26,8 @@ export function PaymentReferenceInput({
   onChangeText,
   editable = true,
 }: PaymentReferenceInputProps) {
+  const { colors } = useTheme();
+  const styles = createStyles(colors);
   const [copied, setCopied] = useState(false);
 
   const handleCopy = async () => {
@@ -46,7 +50,7 @@ export function PaymentReferenceInput({
           autoCorrect={false}
           autoCapitalize="none"
           placeholder="GCash / Maya / Bank reference"
-          placeholderTextColor={Colors.text.muted}
+          placeholderTextColor={colors.text.muted}
           maxLength={30}
         />
         {value ? (
@@ -57,12 +61,12 @@ export function PaymentReferenceInput({
             {copied ? (
               <Check
                 size={16}
-                color={Colors.surface}
+                color={colors.surface}
               />
             ) : (
               <Copy
                 size={16}
-                color={Colors.surface}
+                color={colors.surface}
               />
             )}
           </TouchableOpacity>
@@ -80,7 +84,7 @@ export function PaymentReferenceInput({
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: AppColors) => StyleSheet.create({
   container: {
     marginVertical: 12,
     gap: 6,
@@ -88,49 +92,44 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 16,
     fontWeight: '600',
-    color: Colors.text.primary,
+    color: colors.text.primary,
     marginBottom: 6,
   },
   inputWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: Colors.border.subtle,
+    borderColor: colors.border.subtle,
     borderRadius: 8,
     paddingHorizontal: 12,
-    backgroundColor: Colors.surfaceLight,
+    backgroundColor: colors.surfaceLight,
   },
   input: {
     flex: 1,
     fontSize: 14,
     paddingVertical: 8,
-    color: Colors.text.primary,
+    color: colors.text.primary,
   },
   copyButton: {
     marginLeft: 8,
     paddingVertical: 4,
     paddingHorizontal: 8,
-    backgroundColor: Colors.gold.DEFAULT,
+    backgroundColor: colors.gold.DEFAULT,
     borderRadius: 6,
-  },
-  copyText: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: Colors.surface,
   },
   successText: {
     fontSize: 12,
-    color: Colors.status.success,
+    color: colors.status.success,
     marginTop: 4,
   },
   optional: {
     fontSize: 12,
-    color: Colors.text.secondary,
+    color: colors.text.secondary,
     marginTop: 4,
   },
   hint: {
     fontSize: 12,
-    color: Colors.text.muted,
+    color: colors.text.muted,
     marginTop: 2,
   },
 });
