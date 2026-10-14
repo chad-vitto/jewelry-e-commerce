@@ -1,21 +1,20 @@
 import { useState } from 'react';
 import {
-  View,
-  Text,
-  StyleSheet,
-  Pressable,
-  TextInput,
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView
+    View,
+    Text,
+    StyleSheet,
+    Pressable,
+    TextInput,
+    KeyboardAvoidingView,
+    Platform,
+    ScrollView
 } from 'react-native';
 import { useRouter, Stack } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useAuth } from '@/hooks';
-import { Colors } from '@/constants';
 import { useTheme } from '@/hooks/useTheme';
 import type { AppColors } from '@/constants/themes';
-import { ArrowLeft, Mail } from 'lucide-react-native';
+import { ChevronLeft, Mail } from 'lucide-react-native';
 
 export default function ForgotPasswordScreen() {
   const { colors } = useTheme();
@@ -101,7 +100,7 @@ export default function ForgotPasswordScreen() {
           {/* Header */}
           <View style={styles.header}>
             <Pressable style={styles.backButton} onPress={() => router.back()}>
-              <ArrowLeft size={24} color={colors.text.primary} />
+              <ChevronLeft size={24} color={colors.text.primary} />
             </Pressable>
           </View>
 

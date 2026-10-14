@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-require-imports */
 import { useState, useCallback, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { Product, Order, AdminOrder, Inquiry } from '@/types';
@@ -156,6 +155,7 @@ interface UseAdminOrdersReturn {
   fetchOrders: () => Promise<void>;
   updateOrderStatus: (id: string, status: Order['order_status'], trackingNumber?: string) => Promise<{ error: string | null }>;
   updatePaymentStatus: (id: string, status: Order['payment_status']) => Promise<{ error: string | null }>;
+  refundOrder: (id: string) => Promise<{ error: string | null }>;
 }
 
 export function useAdminOrders(): UseAdminOrdersReturn {
@@ -174,7 +174,13 @@ export function useAdminOrders(): UseAdminOrdersReturn {
         .select(`
   *,
   shipping_address:shipping_addresses!orders_shipping_address_id_fkey (*),
-  order_items (*)
+  order_items (
+    *,
+    products (
+      *,
+      product_images (*)
+    )
+  )
 `)
         .order('created_at', { ascending: false });
 
@@ -247,6 +253,25 @@ export function useAdminOrders(): UseAdminOrdersReturn {
     }
   };
 
+
+  const refundOrder = async (id: string) => {
+    try {
+      const { error: refundError } = await supabase.rpc('refund_order', {
+        p_order_id: id,
+      });
+
+      if (refundError) {
+        return { error: refundError.message };
+      }
+
+      await fetchOrders();
+      return { error: null };
+    } catch (err) {
+      console.error('Error refunding order:', err);
+      return { error: 'An unexpected error occurred' };
+    }
+  };
+
   return {
     orders,
     isLoading,
@@ -254,6 +279,7 @@ export function useAdminOrders(): UseAdminOrdersReturn {
     fetchOrders,
     updateOrderStatus,
     updatePaymentStatus,
+    refundOrder,
   };
 }
 
@@ -284,6 +310,7 @@ export function useAdminInquiries(): UseAdminInquiriesReturn {
         .order('created_at', { ascending: false });
 
       if (fetchError) {
+        // eslint-disable-next-line @typescript-eslint/no-require-imports
         const { MOCK_INQUIRIES } = require('@/mock');
         setInquiries(MOCK_INQUIRIES);
         return;
@@ -292,6 +319,7 @@ export function useAdminInquiries(): UseAdminInquiriesReturn {
       setInquiries((data as Inquiry[]) || []);
     } catch (err) {
       console.error('Error fetching admin inquiries:', err);
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
       const { MOCK_INQUIRIES } = require('@/mock');
       setInquiries(MOCK_INQUIRIES);
     } finally {

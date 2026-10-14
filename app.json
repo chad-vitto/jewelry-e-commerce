@@ -5,8 +5,8 @@
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon-rings.png",
-    "scheme": "aurumgold",
-    "userInterfaceStyle": "dark",
+    "scheme": "relovedgold",
+    "userInterfaceStyle": "automatic",
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.reloved.gold"
@@ -22,10 +22,24 @@
       "expo-web-browser",
       "expo-image",
       "expo-status-bar",
-      "expo-splash-screen"
+      "expo-splash-screen",
+      "expo-notifications",
+      "@react-native-community/datetimepicker"
     ],
     "experiments": {
       "typedRoutes": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "6b329c25-4294-4b51-afa4-cbb3cb5febb7"
+      }
+    },
+    "owner": "chadvitto",
+    "android": {
+      "package": "com.reloved.gold",
+      "googleServicesFile": "./google-services.json",
+      "userInterfaceStyle": "automatic"
     }
   }
 }

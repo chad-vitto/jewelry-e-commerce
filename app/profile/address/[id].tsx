@@ -3,18 +3,19 @@ import { View, Text, StyleSheet, ScrollView, Switch, Alert, Pressable } from 're
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useAuth } from '@/hooks';
 import { useAddresses } from '@/hooks/useAddresses';
-import { Colors } from '@/constants';
 import { useTheme } from '@/hooks/useTheme';
 import type { AppColors } from '@/constants/themes';
 import { GoldButton } from '@/components';
 import { AddressForm } from '@/components/address/AddressForm';
 import { AddressLabelPicker } from '@/components/address/AddressLabelPicker';
 import { ShippingAddressForm } from '@/types';
-import { ArrowLeft, Check, Trash2 } from 'lucide-react-native';
+import { ChevronLeft, Check, Trash2 } from 'lucide-react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function EditAddressScreen() {
   const { colors } = useTheme();
   const styles = createStyles(colors);
+  const insets = useSafeAreaInsets();
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
   const { user } = useAuth();
@@ -147,12 +148,15 @@ export default function EditAddressScreen() {
   };
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+    <ScrollView
+      style={styles.container}
+      contentContainerStyle={[styles.content, { paddingTop: insets.top + 20, paddingBottom: insets.bottom + 24 }]}
+    >
 
       {/* Header */}
       <View style={styles.header}>
         <Pressable style={styles.iconButton} onPress={() => router.back()}>
-          <ArrowLeft size={20} color={colors.gold.DEFAULT} />
+          <ChevronLeft size={20} color={colors.gold.DEFAULT} />
         </Pressable>
         <Text style={styles.title}>Edit Address</Text>
         <Text style={styles.subtitle}>Update your shipping address</Text>

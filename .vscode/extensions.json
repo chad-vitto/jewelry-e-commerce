@@ -1,5 +1,5 @@
 {
-    "recommendations": [
-        "diemasmichiels.emulate"
-    ]
+  "recommendations": [
+    "denoland.vscode-deno"
+  ]
 }

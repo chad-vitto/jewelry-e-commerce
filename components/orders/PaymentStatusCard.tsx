@@ -1,14 +1,13 @@
-import { Colors } from '@/constants';
 import { useTheme } from '@/hooks/useTheme';
 import type { AppColors } from '@/constants/themes';
 import { formatDateTime } from '@/utils/format';
 import { PaymentProofStatus } from '@/hooks/usePaymentProofs';
 import { StyleSheet, Text, View } from 'react-native';
 import {
-  AlertCircle,
-  Clock3,
-  BadgeCheck,
-  CircleX,
+    AlertCircle,
+    Clock3,
+    BadgeCheck,
+    CircleX,
 } from 'lucide-react-native';
 
 interface PaymentStatusCardProps {

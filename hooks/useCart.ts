@@ -1,5 +1,7 @@
 import { FREE_SHIPPING_THRESHOLD_PHP, SHIPPING_FEE_PHP } from '@/constants';
 import { useCartStore } from '@/store';
+import { usePromotions } from './usePromotions';
+import { useEffect } from 'react';
 
 export function useCart() {
   const {
@@ -10,10 +12,31 @@ export function useCart() {
     clearCart,
     getItemCount,
     getSubtotal,
+    selectedPromotionId,
   } = useCartStore();
 
   const subtotal = getSubtotal();
   const itemCount = getItemCount();
+  const setSelectedPromotionId = useCartStore((state) => state.setSelectedPromotionId);
+  const { promotions, isLoading } = usePromotions();
+  const activePromotion = promotions.find((promotion) => promotion.id === selectedPromotionId) ?? null;
+
+  useEffect(() => {
+    if (
+      !isLoading &&
+      selectedPromotionId !== null &&
+      !promotions.some(
+        (promotion) => promotion.id === selectedPromotionId
+      )
+    ) {
+      setSelectedPromotionId(null);
+    }
+  }, [
+    isLoading,
+    selectedPromotionId,
+    promotions,
+    setSelectedPromotionId,
+  ]);
 
   // Calculate shipping based on subtotal
   const qualifyForFreeShipping = subtotal >= FREE_SHIPPING_THRESHOLD_PHP;
@@ -30,13 +53,25 @@ export function useCart() {
 
   const shippingFee = qualifyForFreeShipping ? 0 : SHIPPING_FEE_PHP;
 
-  const total = subtotal + shippingFee;
+  const discountAmount =
+    activePromotion?.discount_type === 'percentage'
+      ? Math.round(
+        subtotal * ((activePromotion.discount_value ?? 0) / 100) * 100
+      ) / 100
+      : activePromotion?.discount_type === 'fixed'
+        ? Math.min(activePromotion.discount_value ?? 0, subtotal)
+        : 0;
+
+
+  const total = subtotal - discountAmount + shippingFee;
 
   return {
     items,
     itemCount,
     subtotal,
     shippingFee,
+    discountAmount,
+    activePromotion,
     total,
 
     qualifyForFreeShipping,
@@ -47,5 +82,9 @@ export function useCart() {
     removeItem,
     updateQuantity,
     clearCart,
+
+    promotions,
+    selectedPromotionId,
+    setSelectedPromotionId,
   };
 }

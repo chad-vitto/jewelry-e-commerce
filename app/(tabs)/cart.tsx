@@ -1,37 +1,20 @@
 import React, { useCallback, useState } from 'react';
-import { ArrowLeft, Heart, Trash2 } from 'lucide-react-native';
 import { CartItem } from '@/types';
-import { formatCurrency, Shadows } from '@/constants';
+import { ChevronLeft, Heart, TicketPercent, Trash2 } from 'lucide-react-native';
 import { EmptyCart } from '@/components/EmptyState';
+import { formatCurrency, Shadows } from '@/constants';
 import { GoldButton } from '@/components/GoldGradient';
 import { Image } from 'expo-image';
 import { QuantitySelector } from '@/components';
 import { scheduleOnUI } from 'react-native-worklets';
 import { Stack, useRouter } from 'expo-router';
 import { useAuth, useCart } from '@/hooks';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '@/hooks/useTheme';
 import type { AppColors } from '@/constants/themes';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import Animated, {
-  FadeInUp,
-  FadeOutDown,
-  useAnimatedStyle,
-  useSharedValue,
-  withSpring,
-} from 'react-native-reanimated';
-import {
-  Gesture,
-  GestureDetector,
-  RectButton,
-} from 'react-native-gesture-handler';
-import {
-  Alert,
-  FlatList,
-  Pressable,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import Animated, { FadeInUp, FadeOutDown, useAnimatedStyle, useSharedValue, withSpring, } from 'react-native-reanimated';
+import { Gesture, GestureDetector, RectButton, } from 'react-native-gesture-handler';
+import { Alert, FlatList, Pressable, StyleSheet, Text, View, } from 'react-native';
 
 export default function CartScreen() {
   const router = useRouter();
@@ -43,6 +26,8 @@ export default function CartScreen() {
     itemCount,
     subtotal,
     shippingFee,
+    discountAmount,
+    activePromotion,
     total,
     qualifyForFreeShipping,
     remainingForFreeShipping,
@@ -50,9 +35,15 @@ export default function CartScreen() {
     updateQuantity,
     removeItem,
     clearCart,
+    promotions,
   } = useCart();
+
   const { isAuthenticated } = useAuth();
   const [summaryHeight, setSummaryHeight] = useState(0);
+
+  const handleOpenPromotions = useCallback(() => {
+    router.push('/promotions');
+  }, [router]);
 
   const handleCheckout = useCallback(() => {
     if (!isAuthenticated) {
@@ -91,10 +82,8 @@ export default function CartScreen() {
     ({ item }: { item: CartItem }) => (
       <CartItemCard
         item={item}
-        onUpdateQuantity={(qty) =>
-          updateQuantity(item.product.id, qty, item.size)
-        }
-        onRemove={() => handleRemoveItem(item.product.id, item.size)}
+        onUpdateQuantity={updateQuantity}
+        onRemove={handleRemoveItem}
       />
     ),
     [updateQuantity, handleRemoveItem],
@@ -138,7 +127,7 @@ export default function CartScreen() {
             }
             style={styles.backButton}
           >
-            <ArrowLeft size={24} color={colors.text.primary} />
+            <ChevronLeft size={24} color={colors.text.primary} />
           </Pressable>
 
           <View style={styles.titleContainer}>
@@ -186,61 +175,103 @@ export default function CartScreen() {
         keyExtractor={(item) => `${item.product.id}-${item.size || 'no-size'}`}
         renderItem={renderItem}
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={[
-          styles.cartListContent,
-          { paddingBottom: summaryHeight + insets.bottom + 28 },
-        ]}
+        contentContainerStyle={[styles.cartListContent, { paddingBottom: summaryHeight + insets.bottom + 28 },]}
         removeClippedSubviews={false}
         initialNumToRender={5}
         windowSize={5}
+        ListHeaderComponent={null}
       />
 
-      {/* Order Summary */}
+      {/* Promotion Banner + Order Summary */}
       {items.length > 0 && (
-        <Animated.View
-          entering={FadeInUp.duration(300)}
-          exiting={FadeOutDown.duration(200)}
+        <View
           onLayout={(e) => setSummaryHeight(e.nativeEvent.layout.height)}
-          style={[styles.summary, { bottom: insets.bottom + 12 }]}
+          style={[
+            styles.bottomSection,
+            { bottom: insets.bottom + 4 },
+          ]}
         >
-          <Text style={styles.summaryTitle}>Order Summary</Text>
+          {promotions.length > 0 && (
+            <Pressable
+              onPress={handleOpenPromotions}
+              style={styles.promotionSummary}
+            >
+              <View style={styles.promotionIconContainer}>
+                <TicketPercent size={20} color={colors.gold.DEFAULT} />
+              </View>
 
-          <View style={styles.summaryContent}>
-            <View style={styles.summaryRow}>
-              <Text style={styles.summaryLabel}>
-                Subtotal ({itemCount} {itemCount === 1 ? 'item' : 'items'})
-              </Text>
+              <View style={styles.promotionSummaryContent}>
+                <Text style={styles.promotionSummaryTitle}>
+                  {activePromotion ? activePromotion.title : 'Discounts & offers'}
+                </Text>
 
-              <Text style={styles.summaryValue}>
-                {formatCurrency(subtotal)}
+                <Text style={styles.promotionSummarySubtitle}>
+                  {activePromotion
+                    ? `You're saving ${formatCurrency(discountAmount)}`
+                    : `${promotions.length} ${promotions.length === 1 ? 'offer' : 'offers'} available`}
+                </Text>
+              </View>
+
+              <Text style={styles.promotionChangeText}>
+                {activePromotion ? 'Change' : 'View'}
               </Text>
+            </Pressable>
+          )}
+          <Animated.View
+            entering={FadeInUp.duration(300)}
+            exiting={FadeOutDown.duration(200)}
+            style={styles.summary}
+          >
+            <Text style={styles.summaryTitle}>Order Summary</Text>
+
+            <View style={styles.summaryContent}>
+              <View style={styles.summaryRow}>
+                <Text style={styles.summaryLabel}>
+                  Subtotal ({itemCount} {itemCount === 1 ? 'item' : 'items'})
+                </Text>
+
+                <Text style={styles.summaryValue}>
+                  {formatCurrency(subtotal)}
+                </Text>
+              </View>
+
+              {activePromotion && discountAmount > 0 && (
+                <View style={styles.summaryRow}>
+                  <Text style={styles.summaryLabel}>
+                    {activePromotion.title}
+                  </Text>
+                  <Text style={styles.discountValue}>
+                    -{formatCurrency(discountAmount)}
+                  </Text>
+                </View>
+              )}
+
+              <View style={styles.summaryRow}>
+                <Text style={styles.summaryLabel}>Shipping</Text>
+
+                <Text style={styles.summaryValue}>
+                  {qualifyForFreeShipping ? 'FREE' : formatCurrency(shippingFee)}
+                </Text>
+              </View>
+
+              <View style={styles.divider} />
+
+              <View style={styles.totalRow}>
+                <Text style={styles.totalLabel}>Total</Text>
+
+                <Text style={styles.totalValue}>{formatCurrency(total)}</Text>
+              </View>
             </View>
 
-            <View style={styles.summaryRow}>
-              <Text style={styles.summaryLabel}>Shipping</Text>
+            <GoldButton
+              title="Proceed to Checkout"
+              onPress={handleCheckout}
+              size="lg"
+            />
 
-              <Text style={styles.summaryValue}>
-                {qualifyForFreeShipping ? 'FREE' : formatCurrency(shippingFee)}
-              </Text>
-            </View>
-
-            <View style={styles.divider} />
-
-            <View style={styles.totalRow}>
-              <Text style={styles.totalLabel}>Total</Text>
-
-              <Text style={styles.totalValue}>{formatCurrency(total)}</Text>
-            </View>
-          </View>
-
-          <GoldButton
-            title="Proceed to Checkout"
-            onPress={handleCheckout}
-            size="lg"
-          />
-
-          <Text style={styles.secureText}>🔒 Secure Checkout</Text>
-        </Animated.View>
+            <Text style={styles.secureText}>🔒 Secure Checkout</Text>
+          </Animated.View>
+        </View>
       )}
     </View>
   );
@@ -248,8 +279,8 @@ export default function CartScreen() {
 
 interface CartItemCardProps {
   item: CartItem;
-  onUpdateQuantity: (quantity: number) => void;
-  onRemove: () => void;
+  onUpdateQuantity: (productId: string, quantity: number, size?: string) => void;
+  onRemove: (productId: string, size?: string) => void;
 }
 
 const CartItemCard = React.memo(function CartItemCard({
@@ -320,7 +351,7 @@ const CartItemCard = React.memo(function CartItemCard({
 
         <RectButton
           style={[styles.actionButton, styles.deleteButton]}
-          onPress={onRemove}
+          onPress={() => onRemove(product.id, size)}
         >
           <Trash2 size={20} color="white" />
           <Text style={styles.actionText}>Delete</Text>
@@ -361,8 +392,8 @@ const CartItemCard = React.memo(function CartItemCard({
                 <View style={styles.itemFooter}>
                   <QuantitySelector
                     quantity={quantity}
-                    onIncrease={() => onUpdateQuantity(quantity + 1)}
-                    onDecrease={() => onUpdateQuantity(quantity - 1)}
+                    onIncrease={() => onUpdateQuantity(product.id, quantity + 1, size)}
+                    onDecrease={() => onUpdateQuantity(product.id, quantity - 1, size)}
                     min={1}
                     max={product.stock_quantity}
                     size="sm"
@@ -508,45 +539,42 @@ const createStyles = (colors: AppColors) => StyleSheet.create({
     fontSize: 16,
     color: colors.text.primary,
   },
-  summary: {
+  bottomSection: {
     position: 'absolute',
     left: 16,
     right: 16,
-
-    flexDirection: 'column',
-    alignItems: 'stretch',
-
+    gap: 6,
+  },
+  summary: {
+    position: 'relative',
     backgroundColor: colors.surfaceLight,
     borderRadius: 16,
-
-    paddingHorizontal: 18,
-    paddingVertical: 14,
-
+    paddingHorizontal: 16,
+    paddingVertical: 10,
     shadowColor: '#000',
     shadowOpacity: 0.12,
     shadowRadius: 10,
     shadowOffset: { width: 0, height: -2 },
-
     ...Shadows.lg,
   },
   summaryTitle: {
     fontFamily: 'CormorantGaramond_700Bold',
     fontSize: 20,
     color: colors.text.primary,
-    marginBottom: 12,
+    marginBottom: 8,
     alignSelf: 'flex-start',
   },
   summaryContent: {
     width: '100%',
-    marginBottom: 20,
+    marginBottom: 10,
   },
   divider: {
     height: 1,
     backgroundColor: colors.border.DEFAULT,
-    marginVertical: 10,
+    marginVertical: 6,
   },
   secureText: {
-    marginTop: 8,
+    marginTop: 6,
     textAlign: 'center',
     fontFamily: 'Inter_500Medium',
     fontSize: 11,
@@ -556,7 +584,7 @@ const createStyles = (colors: AppColors) => StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: 6,
+    paddingVertical: 3,
   },
   summaryLabel: {
     fontFamily: 'Inter_400Regular',
@@ -569,12 +597,17 @@ const createStyles = (colors: AppColors) => StyleSheet.create({
     color: colors.text.primary,
     ...Shadows.lg,
   },
+  discountValue: {
+    fontFamily: 'Inter_600SemiBold',
+    fontSize: 14,
+    color: colors.gold.DEFAULT,
+  },
   totalRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingTop: 4,
-    marginBottom: 14,
+    paddingTop: 2,
+    marginBottom: 8,
   },
   totalLabel: {
     fontFamily: 'Inter_700Bold',
@@ -594,6 +627,120 @@ const createStyles = (colors: AppColors) => StyleSheet.create({
   cartListContent: {
     paddingHorizontal: 16,
     paddingTop: 8,
+  },
+  promotionSummary: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 10,
+    marginBottom: 0,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: colors.border.DEFAULT,
+    backgroundColor: colors.surface,
+  },
+  promotionIconContainer: {
+    width: 38,
+    height: 38,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.surfaceLight,
+    marginRight: 10,
+  },
+  promotionSummaryContent: {
+    flex: 1,
+    marginRight: 8,
+  },
+  promotionSummaryTitle: {
+    fontFamily: 'Inter_600SemiBold',
+    fontSize: 14,
+    color: colors.text.primary,
+  },
+  promotionSummarySubtitle: {
+    fontFamily: 'Inter_400Regular',
+    fontSize: 12,
+    color: colors.gold.muted,
+    marginTop: 4,
+  },
+  promotionChangeText: {
+    fontFamily: 'Inter_600SemiBold',
+    fontSize: 12,
+    color: colors.gold.DEFAULT,
+  },
+  promotionSection: {
+    marginBottom: 16,
+  },
+  promotionTitle: {
+    fontFamily: 'CormorantGaramond_700Bold',
+    fontSize: 22,
+    color: colors.text.primary,
+    marginBottom: 2,
+  },
+  promotionSubtitle: {
+    fontFamily: 'Inter_400Regular',
+    fontSize: 12,
+    color: colors.text.secondary,
+    marginBottom: 10,
+  },
+  promotionOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 12,
+    marginBottom: 8,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: colors.border.DEFAULT,
+    backgroundColor: colors.surface,
+  },
+  promotionOptionSelected: {
+    borderColor: colors.gold.DEFAULT,
+    backgroundColor: colors.gold.muted,
+  },
+  promotionOptionContent: {
+    flex: 1,
+    marginRight: 12,
+  },
+  promotionOptionTitle: {
+    fontFamily: 'Inter_600SemiBold',
+    fontSize: 14,
+    color: colors.text.primary,
+  },
+  promotionOptionMessage: {
+    fontFamily: 'Inter_400Regular',
+    fontSize: 12,
+    color: colors.text.secondary,
+    marginTop: 3,
+  },
+  promotionDiscountText: {
+    fontFamily: 'Inter_600SemiBold',
+    fontSize: 12,
+    color: colors.gold.DEFAULT,
+    marginTop: 5,
+  },
+  promotionRadio: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    borderWidth: 1.5,
+    borderColor: colors.border.DEFAULT,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  promotionRadioSelected: {
+    borderColor: colors.gold.DEFAULT,
+  },
+  promotionRadioDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: colors.gold.DEFAULT,
+  },
+  promotionEmptyText: {
+    fontFamily: 'Inter_400Regular',
+    fontSize: 13,
+    color: colors.text.secondary,
+    paddingVertical: 12,
   },
   unitPrice: {
     fontFamily: 'Inter_400Regular',

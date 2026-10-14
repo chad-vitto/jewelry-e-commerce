@@ -1,6 +1,5 @@
 import * as Clipboard from 'expo-clipboard';
 import React from 'react';
-import { Colors } from '@/constants';
 import { useTheme } from '@/hooks/useTheme';
 import type { AppColors } from '@/constants/themes';
 import { Copy, CalendarDays, Wallet, } from 'lucide-react-native';

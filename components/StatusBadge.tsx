@@ -5,7 +5,7 @@ import { useTheme } from '@/hooks/useTheme';
 interface BadgeProps {
   label: string;
   variant?: 'default' | 'gold' | 'success' | 'warning' | 'error' | 'info';
-  size?: 'sm' | 'md';
+  size?: 'xs' | 'sm' | 'md';
 }
 
 export function Badge({ label, variant = 'default', size = 'md' }: BadgeProps) {
@@ -20,6 +20,7 @@ export function Badge({ label, variant = 'default', size = 'md' }: BadgeProps) {
   };
 
   const sizeStyles = {
+    xs: { paddingHorizontal: 6, paddingVertical: 3, fontSize: 10 },
     sm: { paddingHorizontal: 8, paddingVertical: 4, fontSize: 11 },
     md: { paddingHorizontal: 12, paddingVertical: 6, fontSize: 12 },
   };
@@ -57,11 +58,15 @@ export const orderStatusVariants: Record<OrderStatus, BadgeProps['variant']> = {
   refunded: 'success'
 };
 
-export function OrderStatusBadge({ status }: { status: OrderStatus }) {
+export function OrderStatusBadge({
+  status,
+  size = 'md',
+}: { status: OrderStatus; size?: BadgeProps['size'] }) {
   return (
     <Badge
       label={orderStatusLabels[status]}
       variant={orderStatusVariants[status]}
+      size={size}
     />
   );
 }
@@ -71,19 +76,25 @@ const paymentStatusLabels: Record<PaymentStatus, string> = {
   pending: 'Payment Pending',
   paid: 'Paid',
   failed: 'Payment Failed',
+  refunded: 'Refunded',
 };
 
 const paymentStatusVariants: Record<PaymentStatus, BadgeProps['variant']> = {
   pending: 'warning',
   paid: 'success',
   failed: 'error',
+  refunded: 'info',
 };
 
-export function PaymentStatusBadge({ status }: { status: PaymentStatus }) {
+export function PaymentStatusBadge({
+  status,
+  size = 'md',
+}: { status: PaymentStatus; size?: BadgeProps['size'] }) {
   return (
     <Badge
       label={paymentStatusLabels[status]}
       variant={paymentStatusVariants[status]}
+      size={size}
     />
   );
 }

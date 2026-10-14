@@ -1,11 +1,11 @@
 import { useColorScheme } from 'react-native';
-
 import { useThemeStore } from '@/store/themeStore';
 import { DarkColors, LightColors, type AppColors, } from '@/constants/themes';
 
 export function useAppTheme() {
     const systemScheme = useColorScheme();
     const mode = useThemeStore((state) => state.mode);
+
 
     const resolvedMode =
         mode === 'system'

@@ -8,4 +8,4 @@ export * from './StatusBadge';
 export * from './SearchBar';
 export * from './CategoryFilter';
 export * from './QuantitySelector';
-export * from './feedback/ProductFlyToCartOverlay'
+export * from './feedback/ProductFlyToCartOverlay';

@@ -2,21 +2,28 @@ import { useCallback } from 'react';
 import { View, Text, Pressable, StyleSheet, FlatList, ActivityIndicator } from 'react-native';
 import { useAuth } from '@/hooks';
 import { useAddresses } from '@/hooks/useAddresses';
-import { Colors } from '@/constants';
 import { useTheme } from '@/hooks/useTheme';
 import type { AppColors } from '@/constants/themes';
 import { AddressCard } from '@/components/address/AddressCard';
-import { ArrowLeft, Plus, Lock, Sparkles } from 'lucide-react-native';
+import { ChevronLeft, Plus, Lock, Sparkles } from 'lucide-react-native';
 import { Stack, useRouter, useFocusEffect } from 'expo-router';
 import { GoldButton } from '@/components';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function AddressesScreen() {
     const { colors } = useTheme();
     const styles = createStyles(colors);
+    const insets = useSafeAreaInsets();
     const { user } = useAuth();
     const router = useRouter();
 
     const { addresses, loadAddresses, isLoading } = useAddresses(user?.id);
+    const handleAddressPress = useCallback((address: (typeof addresses)[number]) => {
+        router.push(`/profile/address/${address.id}`);
+    }, [router]);
+    const renderAddress = useCallback(({ item }: { item: (typeof addresses)[number] }) => (
+        <AddressCard address={item} onPress={handleAddressPress} />
+    ), [handleAddressPress]);
 
     useFocusEffect(
         useCallback(() => {
@@ -29,9 +36,15 @@ export default function AddressesScreen() {
             <Stack.Screen options={{ headerShown: false }} />
 
             {/* Header */}
-            <View style={styles.header}>
-                <Pressable style={styles.iconButton} onPress={() => router.back()}>
-                    <ArrowLeft size={20} color={colors.gold.DEFAULT} />
+            <View style={[styles.header, { paddingTop: insets.top + 8 }]}>
+                <Pressable
+                    style={styles.iconButton}
+                    onPress={() => router.back()}
+                    accessibilityRole="button"
+                    accessibilityLabel="Go back"
+                    hitSlop={4}
+                >
+                    <ChevronLeft size={20} color={colors.gold.DEFAULT} />
                 </Pressable>
 
                 <View style={styles.headerContent}>
@@ -59,13 +72,7 @@ export default function AddressesScreen() {
             <FlatList
                 data={addresses}
                 keyExtractor={(item) => item.id}
-                renderItem={({ item }) =>
-                    <AddressCard
-                        address={item}
-                        onPress={() =>
-                            router.push(`/profile/address/${item.id}`)
-                        }
-                    />}
+                renderItem={renderAddress}
                 ListEmptyComponent={
                     isLoading
                         ? null
@@ -91,7 +98,7 @@ export default function AddressesScreen() {
                     <Text style={styles.loadingText}>Loading addresses...</Text>
                 </View>
             )}
-            <View style={styles.footer}>
+            <View style={[styles.footer, { bottom: insets.bottom + 12 }]}>
                 <GoldButton
                     title="Add New Address"
                     variant="gradient"

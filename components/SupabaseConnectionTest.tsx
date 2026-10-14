@@ -13,11 +13,7 @@ export default function SupabaseConnectionTest() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    runTest();
-  }, []);
-
-  const runTest = async () => {
+  async function runTest() {
     setLoading(true);
     setError(null);
     try {
@@ -28,7 +24,11 @@ export default function SupabaseConnectionTest() {
     } finally {
       setLoading(false);
     }
-  };
+  }
+
+  useEffect(() => {
+    void runTest();
+  }, []);
 
   if (loading) {
     return (

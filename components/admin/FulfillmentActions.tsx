@@ -1,34 +1,22 @@
 import React, { useCallback, useState } from 'react';
-import { Colors } from '@/constants';
 import { useTheme } from '@/hooks/useTheme';
 import type { AppColors } from '@/constants/themes';
 import { OrderStatus } from '@/types';
 import { ShippingFormModal } from '@/components/admin/ShippingFormModal';
 import { useOrderFulfillment } from '@/hooks/useOrderFulfillment';
 import {
-  View,
-  Text,
-  TouchableOpacity,
-  StyleSheet,
-  ActivityIndicator,
+    View,
+    Text,
+    TouchableOpacity,
+    StyleSheet,
+    ActivityIndicator,
 } from 'react-native';
 
 
 interface FulfillmentActionsProps {
   orderId: string;
   currentStatus: OrderStatus;
-
-  /**
-   * Called after a successful fulfillment update.
-   * Parent should refetch the order and handle any UI feedback
-   * (Toast, Snackbar, Analytics, etc.)
-   */
   onStatusChanged?: (status: OrderStatus) => void;
-
-  /**
-   * Optional error callback.
-   * Parent decides how to present errors.
-   */
   onError?: (error: Error) => void;
 }
 
@@ -49,10 +37,6 @@ export const FulfillmentActions: React.FC<FulfillmentActionsProps> = ({
 
   const [shippingModalVisible, setShippingModalVisible] = useState(false);
 
-  /**
-   * Shared executor for all fulfillment actions.
-   * Keeps success/error handling consistent.
-   */
   const executeAction = useCallback(
     async (
       action: () => Promise<unknown>,
@@ -73,73 +57,87 @@ export const FulfillmentActions: React.FC<FulfillmentActionsProps> = ({
   );
 
   const renderAction = () => {
-  switch (currentStatus) {
-    case 'confirmed':
-      return (
-        <PrimaryButton
-          loading={loading}
-          title="Start Processing"
-          onPress={() =>
-            executeAction(startProcessing, 'processing')
-          }
-        />
-      );
-
-    case 'processing':
-      return (
-        <>
+    switch (currentStatus) {
+      case 'confirmed':
+        return (
           <PrimaryButton
             loading={loading}
-            title="Ship Order"
-            onPress={() => setShippingModalVisible(true)}
+            title="Start Processing"
+            onPress={() =>
+              executeAction(startProcessing, 'processing')
+            }
           />
+        );
 
-          <ShippingFormModal
-            visible={shippingModalVisible}
+      case 'processing':
+        return (
+          <>
+            <PrimaryButton
+              loading={loading}
+              title="Ship Order"
+              onPress={() => setShippingModalVisible(true)}
+            />
+
+            <ShippingFormModal
+              visible={shippingModalVisible}
+              loading={loading}
+              onCancel={() => setShippingModalVisible(false)}
+              onConfirm={async (carrier, trackingNumber) => {
+                await executeAction(
+                  () =>
+                    shipOrder({
+                      shippingCarrier: carrier,
+                      trackingNumber,
+                    }),
+                  'shipped'
+                );
+
+                setShippingModalVisible(false);
+              }}
+            />
+          </>
+        );
+
+      case 'shipped':
+        return (
+          <PrimaryButton
             loading={loading}
-            onCancel={() => setShippingModalVisible(false)}
-            onConfirm={async (carrier, trackingNumber) => {
-              await executeAction(
-                () =>
-                  shipOrder({
-                    shippingCarrier: carrier,
-                    trackingNumber,
-                  }),
-                'shipped'
-              );
-
-              setShippingModalVisible(false);
-            }}
+            title="Mark Delivered"
+            onPress={() =>
+              executeAction(markDelivered, 'delivered')
+            }
           />
-        </>
-      );
+        );
 
-    case 'shipped':
-      return (
-        <PrimaryButton
-          loading={loading}
-          title="Mark Delivered"
-          onPress={() =>
-            executeAction(markDelivered, 'delivered')
-          }
-        />
-      );
+      case 'delivered':
+        return (
+          <Text style={styles.completedText}>
+            ✓ Order Delivered
+          </Text>
+        );
 
-    case 'delivered':
-      return (
-        <Text style={styles.completedText}>
-          ✓ Order Delivered
-        </Text>
-      );
+      case 'cancelled':
+        return (
+          <View style={styles.cancelledBox}>
+            <Text style={styles.cancelledTitle}>
+              Order Cancelled
+            </Text>
 
-    default:
-      return (
-        <Text style={styles.infoText}>
-          Fulfillment becomes available after payment verification.
-        </Text>
-      );
-  }
-};
+            <Text style={styles.cancelledText}>
+              This order was cancelled by the customer.
+              Fulfillment is no longer available for this order.
+            </Text>
+          </View>
+        );
+
+      default:
+        return (
+          <Text style={styles.infoText}>
+            Fulfillment becomes available after payment verification.
+          </Text>
+        );
+    }
+  };
 
   return (
     <View style={styles.card}>
@@ -192,14 +190,12 @@ const createStyles = (colors: AppColors) => StyleSheet.create({
     borderColor: colors.border.DEFAULT,
     backgroundColor: colors.surface,
   },
-
   title: {
     marginBottom: 12,
     fontSize: 16,
     fontWeight: '600',
     color: colors.gold.light,
   },
-
   button: {
     marginTop: 8,
     paddingVertical: 12,
@@ -208,24 +204,38 @@ const createStyles = (colors: AppColors) => StyleSheet.create({
     justifyContent: 'center',
     backgroundColor: colors.status.info,
   },
-
   buttonText: {
     fontSize: 14,
     fontWeight: '600',
     color: colors.text.primary,
   },
-
   disabled: {
     opacity: 0.6,
   },
-
   completedText: {
     textAlign: 'center',
     fontSize: 14,
     fontWeight: '600',
     color: colors.status.success,
   },
+  cancelledBox: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 12,
+  },
+  cancelledTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: colors.status.error,
+    marginBottom: 6,
+  },
 
+  cancelledText: {
+    textAlign: 'center',
+    fontSize: 13,
+    lineHeight: 19,
+    color: colors.text.secondary,
+  },
   infoText: {
     textAlign: 'center',
     fontSize: 13,

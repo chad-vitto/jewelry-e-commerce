@@ -1,5 +1,4 @@
-import { ArrowLeft, Eye, EyeOff } from 'lucide-react-native';
-import { Colors } from '@/constants';
+import { ChevronLeft, Eye, EyeClosed } from 'lucide-react-native';
 import { useTheme } from '@/hooks/useTheme';
 import type { AppColors } from '@/constants/themes';
 import { GoldButton, GoldInput } from '@/components';
@@ -7,12 +6,17 @@ import { useCallback, useMemo, useState } from 'react';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { Text, StyleSheet, Pressable, Alert, KeyboardAvoidingView, Platform, ScrollView, View, } from 'react-native';
 import { useAuthStore } from '@/store';
+import { useTranslation } from '@/hooks/useTranslation';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
 
 export default function ChangePasswordScreen() {
-  const { colors } = useTheme();
-  const styles = createStyles(colors);
+    const { colors } = useTheme();
+    const styles = createStyles(colors);
+    const insets = useSafeAreaInsets();
     const router = useRouter();
     const { updatePassword, } = useAuthStore();
+    const { t } = useTranslation();
 
     const [currentPassword, setCurrentPassword] = useState('');
     const [newPassword, setNewPassword] = useState('');
@@ -29,22 +33,22 @@ export default function ChangePasswordScreen() {
     const errors = useMemo(() => {
         const errs: Record<string, string> = {};
         if (!currentPassword.trim()) {
-            errs.currentPassword = 'Current password is required';
+            errs.currentPassword = t.changePassword.currentPasswordRequired;
         }
         if (!newPassword.trim()) {
-            errs.newPassword = 'New password is required';
+            errs.newPassword = t.changePassword.newPasswordRequired;
         } else if (newPassword.length < 8) {
-            errs.newPassword = 'Password must be at least 8 characters';
+            errs.newPassword = t.changePassword.passwordMinLength;
         } else if (newPassword === currentPassword) {
-            errs.newPassword = 'New password must be different from current password';
+            errs.newPassword = t.changePassword.newPasswordDifferent;
         }
         if (!confirmPassword.trim()) {
-            errs.confirmPassword = 'Please confirm your new password';
+            errs.confirmPassword = t.changePassword.confirmPasswordRequired;
         } else if (confirmPassword !== newPassword) {
-            errs.confirmPassword = 'Passwords do not match';
+            errs.confirmPassword = t.changePassword.passwordsDoNotMatch;
         }
         return errs;
-    }, [currentPassword, newPassword, confirmPassword]);
+    }, [currentPassword, newPassword, confirmPassword, t.changePassword.currentPasswordRequired, t.changePassword.newPasswordRequired, t.changePassword.passwordMinLength, t.changePassword.newPasswordDifferent, t.changePassword.confirmPasswordRequired, t.changePassword.passwordsDoNotMatch]);
 
     const formValid = Object.keys(errors).length === 0;
 
@@ -76,18 +80,18 @@ export default function ChangePasswordScreen() {
             const { error } = await updatePassword(currentPassword, newPassword);
 
             if (error) {
-                Alert.alert('Error', error)
+                Alert.alert(t.changePassword.error, error);
                 return;
             }
 
-            Alert.alert('Success', 'Password updated successfully.', [
-                { text: 'OK', onPress: () => { resetForm(); router.back() } },
+            Alert.alert(t.changePassword.success, t.changePassword.passwordUpdated, [
+                { text: t.changePassword.ok, onPress: () => { resetForm(); router.back() } },
             ]);
 
         } catch (err) {
-            console.error('Change Password Error:', err);
+            console.error(t.changePassword.error, err);
 
-            Alert.alert('Error', 'Unable to update password.');
+            Alert.alert(t.changePassword.error, t.changePassword.passwordUpdateFailed);
         } finally {
             setIsSaving(false);
         }
@@ -112,7 +116,7 @@ export default function ChangePasswordScreen() {
             {visible ? (
                 <Eye size={20} color={colors.text.secondary} />
             ) : (
-                <EyeOff size={20} color={colors.text.secondary} />
+                <EyeClosed  size={20} color={colors.text.secondary} />
             )}
         </Pressable>
     );
@@ -123,26 +127,26 @@ export default function ChangePasswordScreen() {
             behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         >
             <ScrollView
-                contentContainerStyle={styles.content}
+                contentContainerStyle={[styles.content, { paddingTop: insets.top + 20, paddingBottom: insets.bottom + 24 }]}
                 keyboardShouldPersistTaps="handled"
                 showsVerticalScrollIndicator={false}
             >
                 {/* Header */}
                 <View style={styles.header}>
                     <Pressable style={styles.iconButton} onPress={() => router.back()}>
-                        <ArrowLeft size={20} color={colors.gold.DEFAULT} />
+                        <ChevronLeft size={20} color={colors.gold.DEFAULT} />
                     </Pressable>
-                    <Text style={styles.title}>Change Password</Text>
-                    <Text style={styles.subtitle}>Keep your account secure.</Text>
+                    <Text style={styles.title}>{t.changePassword.title}</Text>
+                    <Text style={styles.subtitle}>{t.changePassword.description}</Text>
                 </View>
 
                 {/* Current Password */}
                 <GoldInput
-                    label="Current Password"
+                    label={t.changePassword.currentPassword}
                     value={currentPassword}
                     onChangeText={setCurrentPassword}
                     secureTextEntry={!showCurrent}
-                    placeholder="Enter current password"
+                    placeholder={t.changePassword.currentPasswordPlaceholder}
                     rightIcon={renderToggle(showCurrent, () => setShowCurrent(!showCurrent),
                     )}
                 />
@@ -152,11 +156,11 @@ export default function ChangePasswordScreen() {
 
                 {/* New Password */}
                 <GoldInput
-                    label="New Password"
+                    label={t.changePassword.newPassword}
                     value={newPassword}
                     onChangeText={setNewPassword}
                     secureTextEntry={!showNew}
-                    placeholder="Enter new password"
+                    placeholder={t.changePassword.newPasswordPlaceholder}
                     rightIcon={renderToggle(showNew, () => setShowNew(!showNew),
                     )}
                 />
@@ -165,16 +169,23 @@ export default function ChangePasswordScreen() {
                 )}
 
                 {passwordStrength ? (
-                    <Text style={styles.strength}>Strength: {passwordStrength}</Text>
+                    <Text style={styles.strength}>
+                        {t.changePassword.strength}:{' '}
+                        {passwordStrength === 'Weak'
+                            ? t.changePassword.weak
+                            : passwordStrength === 'Medium'
+                                ? t.changePassword.medium
+                                : t.changePassword.strong}
+                    </Text>
                 ) : null}
 
                 {/* Confirm Password */}
                 <GoldInput
-                    label="Confirm Password"
+                    label={t.changePassword.confirmPassword}
                     value={confirmPassword}
                     onChangeText={setConfirmPassword}
                     secureTextEntry={!showConfirm}
-                    placeholder="Confirm new password"
+                    placeholder={t.changePassword.confirmPasswordPlaceholder}
                     rightIcon={renderToggle(showConfirm, () => setShowConfirm(!showConfirm),
                     )}
                 />
@@ -185,7 +196,7 @@ export default function ChangePasswordScreen() {
 
                 {/* Update Button */}
                 <GoldButton
-                    title={isSaving ? 'Updating...' : 'Update Password'}
+                    title={isSaving ? t.changePassword.updating : t.changePassword.updatePassword}
                     variant="gradient"
                     size="lg"
                     onPress={handleUpdate}
@@ -200,11 +211,6 @@ const createStyles = (colors: AppColors) => StyleSheet.create({
     content: {
         padding: 20,
         paddingBottom: 100,
-    },
-    header: {
-        alignItems: 'center',
-        marginBottom: 28,
-        position: 'relative',
     },
     iconButton: {
         position: 'absolute',
@@ -222,19 +228,22 @@ const createStyles = (colors: AppColors) => StyleSheet.create({
         borderWidth: 1,
         borderColor: colors.border.gold,
     },
+    header: {
+        alignItems: 'center',
+        marginBottom: 28,
+        position: 'relative',
+    },
     title: {
-        fontSize: 32,
         fontFamily: 'CormorantGaramond_700Bold',
+        fontSize: 28,
         color: colors.text.primary,
-        textAlign: 'center',
-        marginTop: 10,
+        marginBottom: 4,
     },
     subtitle: {
-        marginTop: 6,
-        fontSize: 15,
-        fontFamily: 'Inter_500Medium',
+        fontFamily: 'Inter_400Regular',
+        fontSize: 14,
         color: colors.text.secondary,
-        textAlign: 'center',
+        marginBottom: 20,
     },
     error: {
         fontSize: 12,

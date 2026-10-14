@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Product, ProductCategory, ProductFilters } from '@/types';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useProducts } from '@/hooks';
@@ -6,21 +6,22 @@ import { useWishlistStore } from '@/store';
 import { useTheme } from '@/hooks/useTheme';
 import type { AppColors } from '@/constants/themes';
 import {
-  View,
-  StyleSheet,
-  FlatList,
-  ActivityIndicator,
-  Pressable,
-  Text,
+    View,
+    StyleSheet,
+    FlatList,
+    ActivityIndicator,
+    Pressable,
+    Text,
 } from 'react-native';
 import {
-  SearchBar,
-  CategoryFilter,
-  ProductCard,
-  SectionSkeleton,
-  EmptySearch,
-  EmptyCategory,
+    SearchBar,
+    CategoryFilter,
+    ProductCard,
+    SectionSkeleton,
+    EmptySearch,
+    EmptyCategory,
 } from '@/components';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const ITEMS_PER_PAGE = 10;
 
@@ -31,8 +32,9 @@ export default function ShopScreen() {
 
   const { colors } = useTheme();
   const styles = createStyles(colors);
+  const insets = useSafeAreaInsets();
 
-  const params = useLocalSearchParams<{ category?: string }>();
+  const params = useLocalSearchParams<{ category?: string; resetCategory?: string }>();
 
   const { productIds: wishlistIds, toggleItem: toggleWishlist } =
     useWishlistStore();
@@ -43,14 +45,13 @@ export default function ShopScreen() {
   const [page, setPage] = useState(1);
 
   useEffect(() => {
-    if (!params.category) {
-      setSelectedCategory('all');
-      return;
-    }
-
-    setSelectedCategory(params.category as ProductCategory);
+    setSelectedCategory(
+      params.category && params.category !== 'all'
+        ? params.category as ProductCategory
+        : 'all',
+    );
     setPage(1);
-  }, [params.category]);
+  }, [params.category, params.resetCategory]);
 
   const [sortBy, setSortBy] = useState<ProductFilters['sortBy']>('newest');
 
@@ -75,16 +76,16 @@ export default function ShopScreen() {
     setPage(1);
   };
 
-  const handleWishlistToggle = (productId: string) => {
+  const handleWishlistToggle = useCallback((productId: string) => {
     toggleWishlist(productId);
-  };
+  }, [toggleWishlist]);
 
-  const handleProductPress = (product: Product) => {
+  const handleProductPress = useCallback((product: Product) => {
     router.push({
       pathname: "/products/[id]" as any,
       params: { id: product.id },
     });
-  };
+  }, [router]);
 
   const paginatedProducts = products.slice(0, page * ITEMS_PER_PAGE);
   const hasMore = products.length > paginatedProducts.length;
@@ -95,14 +96,14 @@ export default function ShopScreen() {
     }
   };
 
-  const renderProduct = ({ item }: { item: Product }) => (
+  const renderProduct = useCallback(({ item }: { item: Product }) => (
     <ProductCard
       product={item}
-      onPress={() => handleProductPress(item)}
+      onPress={handleProductPress}
       isWishlisted={wishlistIds.includes(item.id)}
-      onWishlistToggle={() => handleWishlistToggle(item.id)}
+      onWishlistToggle={handleWishlistToggle}
     />
-  );
+  ), [wishlistIds, handleProductPress, handleWishlistToggle]);
 
   const renderFooter = () => {
     if (!hasMore) return null;
@@ -116,7 +117,7 @@ export default function ShopScreen() {
   return (
     <View style={styles.container}>
       {/* Header */}
-      <View style={styles.header}>
+      <View style={[styles.header, { paddingTop: insets.top + 8 }]}>
         <SearchBar
           value={search}
           onChangeText={handleSearch}

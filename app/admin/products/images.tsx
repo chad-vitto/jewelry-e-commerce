@@ -1,31 +1,31 @@
 import React, { useState, useEffect } from 'react';
 import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  Pressable,
-  ActivityIndicator,
-  Alert,
-  RefreshControl,
-  FlatList,
-  Dimensions,
+    View,
+    Text,
+    StyleSheet,
+    ScrollView,
+    Pressable,
+    ActivityIndicator,
+    Alert,
+    RefreshControl,
+    FlatList,
+    Dimensions,
 } from 'react-native';
 import { Image } from 'expo-image';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import { useProductImages } from '@/hooks';
-import { Colors } from '@/constants';
 import { useTheme } from '@/hooks/useTheme';
 import type { AppColors } from '@/constants/themes';
 import {
-  ArrowLeft,
-  Upload,
-  Trash2,
-  ChevronUp,
-  ChevronDown,
-  ImageIcon,
+    ChevronLeft,
+    Upload,
+    Trash2,
+    ChevronUp,
+    ChevronDown,
+    ImageIcon,
 } from 'lucide-react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const { width } = Dimensions.get('window');
 const IMAGE_SIZE = (width - 48) / 2;
@@ -33,6 +33,7 @@ const IMAGE_SIZE = (width - 48) / 2;
 export default function ProductImagesScreen() {
   const { colors } = useTheme();
   const styles = createStyles(colors);
+  const insets = useSafeAreaInsets();
   const { id: productId } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const {
@@ -69,13 +70,8 @@ export default function ProductImagesScreen() {
       if (!result.canceled && result.assets[0]) {
         setUploading(true);
         const newOrder = images.length;
-        const uploadResult = await uploadImage(result.assets[0].uri, newOrder);
-        // Show warning if file is large
-        {
-        }
-        {
-          Alert.alert('Success', 'Image uploaded successfully');
-        }
+        await uploadImage(result.assets[0].uri, newOrder);
+        Alert.alert('Success', 'Image uploaded successfully');
       }
     } catch (error) {
       Alert.alert(
@@ -88,7 +84,7 @@ export default function ProductImagesScreen() {
     }
   };
 
-  const handleDeleteImage = (imageId: string, imageUrl: string) => {
+  const handleDeleteImage = React.useCallback((imageId: string, imageUrl: string) => {
     Alert.alert('Delete Image', 'Are you sure you want to delete this image?', [
       {
         text: 'Cancel',
@@ -102,7 +98,7 @@ export default function ProductImagesScreen() {
             setUploading(true);
             await deleteImage(imageId, imageUrl);
             Alert.alert('Success', 'Image deleted successfully');
-          } catch (error) {
+          } catch {
             Alert.alert('Error', 'Failed to delete image');
           } finally {
             setUploading(false);
@@ -111,81 +107,41 @@ export default function ProductImagesScreen() {
         style: 'destructive',
       },
     ]);
-  };
+  }, [deleteImage]);
 
-  const handleMoveUp = async (image: any, index: number) => {
+  const handleMoveUp = React.useCallback(async (image: any, index: number) => {
     if (index === 0) return;
     const prevImage = images[index - 1];
     await updateImageOrder(image.id, prevImage.display_order);
     await updateImageOrder(prevImage.id, image.display_order);
-  };
+  }, [images, updateImageOrder]);
 
-  const handleMoveDown = async (image: any, index: number) => {
+  const handleMoveDown = React.useCallback(async (image: any, index: number) => {
     if (index === images.length - 1) return;
     const nextImage = images[index + 1];
     await updateImageOrder(image.id, nextImage.display_order);
     await updateImageOrder(nextImage.id, image.display_order);
-  };
+  }, [images, updateImageOrder]);
 
-  const renderImageItem = ({ item, index }: any) => (
-    <View style={styles.imageWrapper}>
-      <Image
-        source={{ uri: item.image_url }}
-        style={styles.productImage}
-        contentFit="cover"
-      />
-
-      <View style={styles.imageOverlay}>
-        <View style={styles.orderBadge}>
-          <Text style={styles.orderText}>{index + 1}</Text>
-        </View>
-      </View>
-
-      <View style={styles.imageControls}>
-        <Pressable
-          style={styles.controlButton}
-          onPress={() => handleMoveUp(item, index)}
-          disabled={index === 0}
-        >
-          <ChevronUp
-            size={18}
-            color={index === 0 ? colors.text.muted : colors.gold.DEFAULT}
-          />
-        </Pressable>
-
-        <Pressable
-          style={styles.controlButton}
-          onPress={() => handleMoveDown(item, index)}
-          disabled={index === images.length - 1}
-        >
-          <ChevronDown
-            size={18}
-            color={
-              index === images.length - 1
-                ? colors.text.muted
-                : colors.gold.DEFAULT
-            }
-          />
-        </Pressable>
-
-        <Pressable
-          style={styles.deleteButton}
-          onPress={() => handleDeleteImage(item.id, item.image_url)}
-        >
-          <Trash2 size={18} color={colors.status.error} />
-        </Pressable>
-      </View>
-    </View>
-  );
+  const renderImageItem = React.useCallback(({ item, index }: any) => (
+    <ProductImageGridItem
+      image={item}
+      index={index}
+      imageCount={images.length}
+      onMoveUp={handleMoveUp}
+      onMoveDown={handleMoveDown}
+      onDelete={handleDeleteImage}
+    />
+  ), [handleDeleteImage, handleMoveDown, handleMoveUp, images.length]);
 
   return (
     <View style={styles.container}>
       <Stack.Screen options={{ headerShown: false }} />
 
       {/* Header */}
-      <View style={styles.header}>
+      <View style={[styles.header, { paddingTop: insets.top + 8 }]}>
         <Pressable style={styles.backButton} onPress={() => router.back()}>
-          <ArrowLeft size={24} color={colors.text.primary} />
+          <ChevronLeft size={24} color={colors.text.primary} />
         </Pressable>
         <View style={styles.headerTitle}>
           <ImageIcon size={28} color={colors.gold.DEFAULT} />
@@ -207,6 +163,7 @@ export default function ProductImagesScreen() {
       ) : (
         <ScrollView
           style={styles.scrollView}
+          contentContainerStyle={{ paddingBottom: insets.bottom + 16 }}
           refreshControl={
             <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
           }
@@ -259,6 +216,49 @@ export default function ProductImagesScreen() {
     </View>
   );
 }
+
+const ProductImageGridItem = React.memo(function ProductImageGridItem({
+  image,
+  index,
+  imageCount,
+  onMoveUp,
+  onMoveDown,
+  onDelete,
+}: {
+  image: { id: string; image_url: string };
+  index: number;
+  imageCount: number;
+  onMoveUp: (image: any, index: number) => void;
+  onMoveDown: (image: any, index: number) => void;
+  onDelete: (imageId: string, imageUrl: string) => void;
+}) {
+  const { colors } = useTheme();
+  const styles = createStyles(colors);
+  const isFirst = index === 0;
+  const isLast = index === imageCount - 1;
+
+  return (
+    <View style={styles.imageWrapper}>
+      <Image source={{ uri: image.image_url }} style={styles.productImage} contentFit="cover" />
+      <View style={styles.imageOverlay}>
+        <View style={styles.orderBadge}>
+          <Text style={styles.orderText}>{index + 1}</Text>
+        </View>
+      </View>
+      <View style={styles.imageControls}>
+        <Pressable style={styles.controlButton} onPress={() => onMoveUp(image, index)} disabled={isFirst}>
+          <ChevronUp size={18} color={isFirst ? colors.text.muted : colors.gold.DEFAULT} />
+        </Pressable>
+        <Pressable style={styles.controlButton} onPress={() => onMoveDown(image, index)} disabled={isLast}>
+          <ChevronDown size={18} color={isLast ? colors.text.muted : colors.gold.DEFAULT} />
+        </Pressable>
+        <Pressable style={styles.deleteButton} onPress={() => onDelete(image.id, image.image_url)}>
+          <Trash2 size={18} color={colors.status.error} />
+        </Pressable>
+      </View>
+    </View>
+  );
+});
 
 const createStyles = (colors: AppColors) => StyleSheet.create({
   container: {

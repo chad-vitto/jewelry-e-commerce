@@ -4,23 +4,16 @@ import { useRouter, Stack } from 'expo-router';
 import { useAuthStore } from '@/store';
 import { useAdminOrders, useAdminProducts, useAdminInquiries } from '@/hooks';
 import { OrderStatusBadge, InquiryStatusBadge } from '@/components';
-import { Colors, formatCurrency } from '@/constants';
+import { formatCurrency } from '@/constants';
 import { useTheme } from '@/hooks/useTheme';
 import type { AppColors } from '@/constants/themes';
-import {
-  PackageOpen,
-  ShoppingBag,
-  AlertCircle,
-  Inbox,
-  TrendingUp,
-  ChevronRight,
-  Settings,
-  Users,
-} from 'lucide-react-native';
+import { PackageOpen, ShoppingBag, AlertCircle, Inbox, TrendingUp, ChevronRight, Settings, Users, Tag, } from 'lucide-react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function AdminDashboardScreen() {
   const { colors } = useTheme();
   const styles = createStyles(colors);
+  const insets = useSafeAreaInsets();
   const router = useRouter();
   const { user } = useAuthStore();
   const { orders, fetchOrders } = useAdminOrders();
@@ -31,7 +24,7 @@ export default function AdminDashboardScreen() {
     fetchOrders();
     fetchProducts();
     fetchInquiries();
-  }, []);
+  }, [fetchInquiries, fetchOrders, fetchProducts]);
 
   const totalSales = orders
     .filter((o) => o.payment_status === 'paid')
@@ -49,7 +42,7 @@ export default function AdminDashboardScreen() {
       <Stack.Screen options={{ headerShown: false }} />
 
       {/* Header */}
-      <View style={styles.header}>
+      <View style={[styles.header, { paddingTop: insets.top + 8 }]}>
         <View style={styles.headerLeft}>
           <Text style={styles.greeting}>Welcome back,</Text>
           <Text style={styles.userName}>{user?.full_name}</Text>
@@ -61,6 +54,7 @@ export default function AdminDashboardScreen() {
 
       <ScrollView
         style={styles.scrollView}
+        contentContainerStyle={{ paddingBottom: insets.bottom + 16 }}
         showsVerticalScrollIndicator={false}
       >
         {/* Stats Cards */}
@@ -108,6 +102,15 @@ export default function AdminDashboardScreen() {
             >
               <PackageOpen size={28} color={colors.gold.DEFAULT} />
               <Text style={styles.actionText}>Manage Products</Text>
+              <ChevronRight size={20} color={colors.text.muted} />
+            </Pressable>
+
+            <Pressable
+              style={styles.actionCard}
+              onPress={() => router.push('/admin/promotions')}
+            >
+              <Tag size={28} color={colors.gold.DEFAULT} />
+              <Text style={styles.actionText}>Manage Promotions</Text>
               <ChevronRight size={20} color={colors.text.muted} />
             </Pressable>
 

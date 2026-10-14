@@ -1,18 +1,17 @@
 import { useState } from 'react';
 import {
-  View,
-  ScrollView,
-  TouchableOpacity,
-  Alert,
-  ActivityIndicator,
-  StyleSheet,
-  Text,
-  Dimensions,
+    View,
+    ScrollView,
+    TouchableOpacity,
+    Alert,
+    ActivityIndicator,
+    StyleSheet,
+    Text,
+    Dimensions,
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { X, Upload, ChevronLeft, ChevronRight } from 'lucide-react-native';
 import { useImageUpload } from '@/hooks/useImageUpload';
-import { Colors } from '@/constants';
 import { useTheme } from '@/hooks/useTheme';
 import type { AppColors } from '@/constants/themes';
 import { Image } from 'expo-image';

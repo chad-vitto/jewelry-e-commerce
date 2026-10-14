@@ -1,7 +1,6 @@
 // components/customer/CustomerShippingCard.tsx
 import React from 'react';
 import { View, Text, StyleSheet, Linking, TouchableOpacity } from 'react-native';
-import { Colors } from '@/constants';
 import { useTheme } from '@/hooks/useTheme';
 import type { AppColors } from '@/constants/themes';
 import { Truck, ExternalLink } from 'lucide-react-native';

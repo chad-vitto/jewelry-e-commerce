@@ -1,7 +1,7 @@
 import Toast from 'react-native-toast-message';
 import { AdminPaymentCard } from '@/components/admin/AdminPaymentCard';
 import { AdminReceiptViewer } from '@/components/admin/AdminReceiptViewer';
-import { Colors, formatCurrency, PAYMENT_METHODS } from '@/constants';
+import { formatCurrency, PAYMENT_METHODS } from '@/constants';
 import { FulfillmentActions } from '@/components/admin/FulfillmentActions';
 import { OrderHeroCard } from '@/components/orders/OrderHeroCard';
 import { OrderItemCard } from '@/components/orders/OrderItemCard';
@@ -15,43 +15,31 @@ import { useEffect, useState } from 'react';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useOrder } from '@/hooks/useOrders';
 import { usePaymentProofImage } from '@/hooks/usePaymentProofImage';
-import {
-    ArrowLeft,
-    CreditCard, Package,
-    Receipt,
-    Truck
-} from 'lucide-react-native';
-import {
-    Text,
-    ScrollView,
-    StyleSheet,
-    Pressable,
-    View,
-    ActivityIndicator
-} from 'react-native';
+import { ChevronLeft, CreditCard, Package, Receipt, Truck } from 'lucide-react-native';
+import { Text, ScrollView, StyleSheet, Pressable, View, ActivityIndicator, Alert } from 'react-native';
 import { OrderStatus, PaymentProofStatus, type PaymentProof } from '@/types';
 import { ShippingAddressCard } from '@/components/orders/ShippingAddressCard';
 import { useTheme } from '@/hooks/useTheme';
 import type { AppColors } from '@/constants/themes';
+import { useAdminOrders } from '@/hooks';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function AdminOrderDetailScreen() {
     const { colors } = useTheme();
     const styles = createStyles(colors);
+    const insets = useSafeAreaInsets();
     const router = useRouter();
     const { id } = useLocalSearchParams<{ id: string }>();
 
     const [paymentProof, setPaymentProof] = useState<PaymentProof | null>(null);
     const [receiptVisible, setReceiptVisible] = useState(false);
     const [rejectModalVisible, setRejectModalVisible] = useState(false);
+    const [isRefunding, setIsRefunding] = useState(false);
 
     const { order, isLoading, error, refetch: refetchOrder } = useOrder(id);
-    const {
-        getPaymentProof,
-        verifyPayment,
-        rejectPayment,
-        loading: paymentLoading,
-        error: paymentError,
-    } = useAdminPayments();
+    const { refundOrder } = useAdminOrders();
+    const { getPaymentProof, verifyPayment, rejectPayment, loading: paymentLoading, error: paymentError, } = useAdminPayments();
+
     const { signedUrl: receiptUrl } = usePaymentProofImage(paymentProof?.storage_path)
 
 
@@ -124,6 +112,61 @@ export default function AdminOrderDetailScreen() {
         });
     };
 
+    const confirmRefund = () => {
+        if (!order) return;
+
+        Alert.alert(
+            'Refund Payment?',
+            'This will mark the payment as refunded. This action cannot be undone.',
+            [
+                {
+                    text: 'Cancel',
+                    style: 'cancel',
+                },
+                {
+                    text: 'Refund Payment',
+                    style: 'destructive',
+                    onPress: handleRefund,
+                },
+            ],
+            {
+                cancelable: true,
+            }
+        );
+    };
+
+    const handleRefund = async () => {
+        if (!order) return;
+
+        try {
+            setIsRefunding(true);
+
+            const { error: refundError } = await refundOrder(order.id);
+
+            if (refundError) {
+                throw new Error(refundError);
+            }
+
+            await refreshOrderData();
+
+            Toast.show({
+                type: 'success',
+                text1: 'Refund Completed',
+                text2: 'The order payment has been marked as refunded.',
+                position: 'bottom',
+            });
+        } catch (err) {
+            Toast.show({
+                type: 'error',
+                text1: 'Refund Failed',
+                text2: err instanceof Error ? err.message : 'Unable to refund order.',
+                position: 'bottom',
+            });
+        } finally {
+            setIsRefunding(false);
+        }
+    };
+
     const handleOpenMap = () => {
         // TODO: Open Google Maps / Apple Maps
     };
@@ -152,15 +195,15 @@ export default function AdminOrderDetailScreen() {
     return (
         <View style={styles.container}>
             {/* Floating Back Button */}
-            <View style={styles.header}>
+            <View style={[styles.header, { top: insets.top + 8 }]}>
                 <Pressable style={styles.headerButton} onPress={() => router.back()}>
-                    <ArrowLeft size={24} color={colors.text.primary} />
+                    <ChevronLeft size={24} color={colors.text.primary} />
                 </Pressable>
             </View>
 
             <ScrollView
                 style={styles.scroll}
-                contentContainerStyle={styles.content}
+                contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 24 }]}
                 showsVerticalScrollIndicator={false}
             >
                 {/* Hero */}
@@ -170,12 +213,17 @@ export default function AdminOrderDetailScreen() {
                 <OrderTimeline
                     orderStatus={order.order_status}
                     paymentStatus={paymentProof?.status ?? PaymentProofStatus.Pending}
+                    orderPaymentStatus={order.payment_status}
                     timestamps={{
                         pending: order.created_at,
                         confirmed: paymentProof?.verified_at ?? undefined,
                         processing: order.processing_at ?? undefined,
                         shipped: order.shipped_at ?? undefined,
                         delivered: order.delivered_at ?? undefined,
+                        refunded:
+                            order.payment_status === 'refunded'
+                                ? order.updated_at
+                                : undefined,
                     }}
                 />
 
@@ -221,9 +269,32 @@ export default function AdminOrderDetailScreen() {
                             <PaymentVerificationActions
                                 paymentStatus={paymentProof.status}
                                 loading={paymentLoading}
+                                canAct={order.order_status !== 'cancelled'}
                                 onVerify={handleVerify}
                                 onReject={() => setRejectModalVisible(true)}
                             />
+
+                            {/* Refund Button */}
+                            {order.order_status === 'cancelled' &&
+                                order.payment_status === 'paid' && (
+                                    <Pressable
+                                        style={styles.refundButton}
+                                        onPress={confirmRefund}
+                                        disabled={isRefunding}
+                                    >
+                                        {isRefunding ? (
+                                            <ActivityIndicator
+                                                size="small"
+                                                color={colors.surface}
+                                            />
+                                        ) : (
+                                            <Text style={styles.refundButtonText}>
+                                                Refund Payment
+                                            </Text>
+                                        )}
+                                    </Pressable>
+                                )}
+
                         </>
                     ) : (
                         <Text style={styles.text}>No payment proof uploaded.</Text>
@@ -264,20 +335,34 @@ export default function AdminOrderDetailScreen() {
                         </Text>
                     </View>
 
+                    {order.discount_amount_php > 0 && (
+                        <View style={styles.summaryRow}>
+                            <Text style={styles.text}>
+                                {order.promotion_title ?? 'Discount'}
+                            </Text>
+                            <Text style={styles.discountValue}>
+                                -{formatCurrency(order.discount_amount_php)}
+                            </Text>
+                        </View>
+                    )}
+
                     <View style={styles.summaryRow}>
                         <Text style={styles.text}>Shipping</Text>
                         <Text style={styles.text}>
-                            {formatCurrency(order.shipping_fee_php)}
+                            {order.shipping_fee_php === 0
+                                ? 'FREE'
+                                : formatCurrency(order.shipping_fee_php)}
                         </Text>
                     </View>
 
-                    <View style={styles.summaryRow}>
+                    <View style={[styles.summaryRow, styles.totalRow]}>
                         <Text style={styles.totalLabel}>Total</Text>
                         <Text style={styles.totalValue}>
                             {formatCurrency(order.total_amount_php)}
                         </Text>
                     </View>
                 </SectionCard>
+
             </ScrollView>
 
             {/* Hidden Components */}
@@ -317,25 +402,46 @@ const createStyles = (colors: AppColors) => StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'center',
     },
+    discountValue: {
+        fontSize: 14,
+        fontWeight: '600',
+        color: colors.gold.DEFAULT,
+    },
+    totalRow: {
+        borderTopWidth: 2,
+        borderTopColor: colors.gold.muted,
+        marginTop: 16,
+        paddingTop: 16,
+    },
     summaryRow: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
         marginBottom: 8,
     },
-
     totalLabel: {
         fontSize: 16,
         fontWeight: '600',
         color: colors.text.primary,
     },
-
     totalValue: {
         fontSize: 18,
         fontWeight: '700',
         color: colors.gold.DEFAULT,
     },
-
+    refundButton: {
+        marginTop: 12,
+        minHeight: 48,
+        borderRadius: 12,
+        backgroundColor: colors.status.error,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    refundButtonText: {
+        fontFamily: 'Inter_700Bold',
+        fontSize: 14,
+        color: colors.surface,
+    },
     text: {
         fontSize: 14,
         color: colors.text.primary,

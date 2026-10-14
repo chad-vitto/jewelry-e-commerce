@@ -13,9 +13,9 @@ const CARD_WIDTH = (width - 48) / 2;
 
 interface ProductCardProps {
   product: Product;
-  onPress?: () => void;
+  onPress?: (product: Product) => void;
   isWishlisted?: boolean;
-  onWishlistToggle?: () => void;
+  onWishlistToggle?: (productId: string) => void;
 }
 
 function ProductCardComponent({
@@ -32,7 +32,7 @@ function ProductCardComponent({
 
   const handlePress = () => {
     if (onPress) {
-      onPress();
+      onPress(product);
     } else {
       router.push({
         pathname: "/products/[id]" as any,
@@ -55,7 +55,7 @@ function ProductCardComponent({
         <Image source={imageUrl} style={styles.image} contentFit="cover" />
         <Pressable
           style={styles.wishlistButton}
-          onPress={onWishlistToggle}
+          onPress={() => onWishlistToggle?.(product.id)}
           accessibilityLabel={
             isWishlisted ? 'Remove from wishlist' : 'Add to wishlist'
           }

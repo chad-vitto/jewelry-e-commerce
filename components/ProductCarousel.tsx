@@ -1,11 +1,13 @@
-import { View, Text, StyleSheet, FlatList, Dimensions } from 'react-native';
+import { useCallback } from 'react';
+import { View, Text, StyleSheet, FlatList } from 'react-native';
 import { Product } from '@/types';
 import { ProductCard } from './ProductCard';
 import { useRouter } from 'expo-router';
 import { useTheme } from '@/hooks/useTheme';
 import type { AppColors } from '@/constants/themes';
 
-const { width } = Dimensions.get('window');
+const EMPTY_WISHLIST_IDS: string[] = [];
+
 
 interface ProductCarouselProps {
   title: string;
@@ -21,19 +23,28 @@ export function ProductCarousel({
   products,
   showSeeAll = false,
   onSeeAll,
-  wishlistIds = [],
+  wishlistIds = EMPTY_WISHLIST_IDS,
   onWishlistToggle,
 }: ProductCarouselProps) {
   const router = useRouter();
   const { colors } = useTheme();
   const styles = createStyles(colors);
 
-  const handleProductPress = (product: Product) => {
+  const handleProductPress = useCallback((product: Product) => {
     router.push({
       pathname: "/products/[id]" as any,
       params: { id: product.id },
     });
-  };
+  }, [router]);
+
+  const renderProduct = useCallback(({ item }: { item: Product }) => (
+    <ProductCard
+      product={item}
+      onPress={handleProductPress}
+      isWishlisted={wishlistIds.includes(item.id)}
+      onWishlistToggle={onWishlistToggle}
+    />
+  ), [handleProductPress, onWishlistToggle, wishlistIds]);
 
   if (products.length === 0) return null;
 
@@ -58,14 +69,7 @@ export function ProductCarousel({
         windowSize={5}
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.listContent}
-        renderItem={({ item }) => (
-          <ProductCard
-            product={item}
-            onPress={() => handleProductPress(item)}
-            isWishlisted={wishlistIds.includes(item.id)}
-            onWishlistToggle={() => onWishlistToggle?.(item.id)}
-          />
-        )}
+        renderItem={renderProduct}
       />
     </View>
   );

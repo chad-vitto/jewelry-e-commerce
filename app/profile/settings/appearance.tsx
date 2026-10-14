@@ -1,39 +1,28 @@
-import {
-    ScrollView,
-    Text,
-    StyleSheet,
-    Pressable,
-    View,
-} from 'react-native';
+import { ScrollView, Text, StyleSheet, Pressable, View, } from 'react-native';
 import { useRouter } from 'expo-router';
-import { ArrowLeft, Moon, Sun, Smartphone } from 'lucide-react-native';
-
+import { ChevronLeft, Moon, Sun, Smartphone } from 'lucide-react-native';
 import { useTheme } from '@/hooks/useTheme';
 import { useThemeStore } from '@/store/themeStore';
 import type { ThemeMode } from '@/store/themeStore';
+import { AppColors } from '@/constants/themes';
+import { useTranslation } from '@/hooks/useTranslation';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
 
 const APPEARANCE_OPTIONS: {
     value: ThemeMode;
-    title: string;
-    subtitle: string;
     icon: typeof Moon;
 }[] = [
         {
             value: 'system',
-            title: 'System',
-            subtitle: 'Follow your device appearance',
             icon: Smartphone,
         },
         {
             value: 'light',
-            title: 'Light',
-            subtitle: 'Use a light appearance',
             icon: Sun,
         },
         {
             value: 'dark',
-            title: 'Dark',
-            subtitle: 'Use the premium dark appearance',
             icon: Moon,
         },
     ];
@@ -42,9 +31,12 @@ export default function AppearanceScreen() {
     const router = useRouter();
 
     const { colors } = useTheme();
-
     const mode = useThemeStore((state) => state.mode);
     const setMode = useThemeStore((state) => state.setMode);
+    const styles = createStyles(colors);
+    const insets = useSafeAreaInsets();
+
+    const { t } = useTranslation();
 
     return (
         <View
@@ -55,7 +47,7 @@ export default function AppearanceScreen() {
         >
             <ScrollView
                 style={styles.container}
-                contentContainerStyle={styles.content}
+                contentContainerStyle={[styles.content, { paddingTop: insets.top + 20, paddingBottom: insets.bottom + 24 }]}
                 showsVerticalScrollIndicator={false}
             >
                 {/* Header */}
@@ -70,7 +62,7 @@ export default function AppearanceScreen() {
                         ]}
                         onPress={() => router.back()}
                     >
-                        <ArrowLeft
+                        <ChevronLeft
                             size={20}
                             color={colors.gold.DEFAULT}
                         />
@@ -80,9 +72,8 @@ export default function AppearanceScreen() {
                         style={[
                             styles.title,
                             { color: colors.text.primary },
-                        ]}
-                    >
-                        Appearance
+                        ]}>
+                        {t.appearance.title}
                     </Text>
 
                     <Text
@@ -91,7 +82,7 @@ export default function AppearanceScreen() {
                             { color: colors.text.secondary },
                         ]}
                     >
-                        Choose how the app looks.
+                        {t.appearance.description}
                     </Text>
                 </View>
 
@@ -109,6 +100,16 @@ export default function AppearanceScreen() {
                         const selected = mode === option.value;
                         const Icon = option.icon;
                         const isLast = index === APPEARANCE_OPTIONS.length - 1;
+
+                        const title = t.appearance[option.value];
+
+                        const subtitleMap: Record<ThemeMode, string> = {
+                            system: t.appearance.systemDescription,
+                            light: t.appearance.lightDescription,
+                            dark: t.appearance.darkDescription,
+                        };
+
+                        const subtitle = subtitleMap[option.value];
 
                         return (
                             <Pressable
@@ -144,21 +145,13 @@ export default function AppearanceScreen() {
 
                                 <View style={styles.optionText}>
                                     <Text
-                                        style={[
-                                            styles.optionTitle,
-                                            { color: colors.text.primary },
-                                        ]}
-                                    >
-                                        {option.title}
+                                        style={[styles.optionTitle, { color: colors.text.primary },]}>
+                                        {title}
                                     </Text>
 
                                     <Text
-                                        style={[
-                                            styles.optionSubtitle,
-                                            { color: colors.text.secondary },
-                                        ]}
-                                    >
-                                        {option.subtitle}
+                                        style={[styles.optionSubtitle, { color: colors.text.secondary },]}>
+                                        {subtitle}
                                     </Text>
                                 </View>
 
@@ -193,7 +186,7 @@ export default function AppearanceScreen() {
     );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: AppColors) => StyleSheet.create({
     container: {
         flex: 1,
     },
@@ -202,13 +195,6 @@ const styles = StyleSheet.create({
         padding: 20,
         paddingBottom: 40,
     },
-
-    header: {
-        alignItems: 'center',
-        marginTop: 8,
-        marginBottom: 28,
-    },
-
     backButton: {
         width: 42,
         height: 42,
@@ -220,27 +206,28 @@ const styles = StyleSheet.create({
         left: 0,
         top: 0,
     },
-
+    header: {
+        alignItems: 'center',
+        marginBottom: 28,
+        position: 'relative',
+    },
     title: {
-        fontSize: 32,
-        fontWeight: '700',
-        textAlign: 'center',
-        marginTop: 12,
+        fontFamily: 'CormorantGaramond_700Bold',
+        fontSize: 28,
+        color: colors.text.primary,
+        marginBottom: 4,
     },
-
     subtitle: {
-        fontSize: 15,
-        textAlign: 'center',
-        marginTop: 6,
-        lineHeight: 22,
+        fontFamily: 'Inter_400Regular',
+        fontSize: 14,
+        color: colors.text.secondary,
+        marginBottom: 20,
     },
-
     optionsCard: {
         borderRadius: 18,
         borderWidth: 1,
         overflow: 'hidden',
     },
-
     option: {
         minHeight: 86,
         flexDirection: 'row',
@@ -248,7 +235,6 @@ const styles = StyleSheet.create({
         paddingHorizontal: 16,
         paddingVertical: 14,
     },
-
     iconContainer: {
         width: 42,
         height: 42,
@@ -257,22 +243,18 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         marginRight: 14,
     },
-
     optionText: {
         flex: 1,
     },
-
     optionTitle: {
         fontSize: 16,
         fontWeight: '600',
     },
-
     optionSubtitle: {
         fontSize: 13,
         marginTop: 4,
         lineHeight: 18,
     },
-
     radio: {
         width: 22,
         height: 22,
@@ -282,7 +264,6 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         marginLeft: 12,
     },
-
     radioInner: {
         width: 11,
         height: 11,

@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1009321711193",
+    "project_id": "reloved-ecommerce",
+    "storage_bucket": "reloved-ecommerce.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1009321711193:android:36b5c5fe3dafb05c46c348",
+        "android_client_info": {
+          "package_name": "com.reloved.gold"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA95V48CWXkovNd97HqHtzEhpjlmKs3slU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

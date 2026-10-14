@@ -1,18 +1,18 @@
-import { Colors } from '@/constants';
 import { useTheme } from '@/hooks/useTheme';
 import type { AppColors } from '@/constants/themes';
 import { ImagePlus } from 'lucide-react-native';
 import {
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  ActivityIndicator,
+    Text,
+    StyleSheet,
+    TouchableOpacity,
+    ActivityIndicator,
 } from 'react-native';
 
 interface UploadProofButtonProps {
   onUploadPress: () => void;   // triggers gallery/camera picker
   loading?: boolean;
   disabled?: boolean;
+  onDisabledPress?: () => void;
   label?: string;
 }
 
@@ -21,14 +21,16 @@ export function UploadProofButton({
   label = 'Upload Receipt',
   loading = false,
   disabled = false,
+  onDisabledPress,
 }: UploadProofButtonProps) {
   const { colors } = useTheme();
   const styles = createStyles(colors);
   return (
     <TouchableOpacity
       style={[styles.card, (disabled || loading) && styles.buttonDisabled]}
-      onPress={onUploadPress}
-      disabled={disabled || loading}
+      onPress={disabled ? onDisabledPress : onUploadPress}
+      disabled={loading}
+      accessibilityState={{ disabled: disabled || loading }}
     >
       {loading ? (
         <>
@@ -49,7 +51,9 @@ export function UploadProofButton({
           />
           <Text style={styles.title}>{label}</Text>
           <Text style={styles.subtitle}>Supports PNG, JPG & HEIC</Text>
-          <Text style={styles.hint}>Tap to browse</Text>
+          <Text style={styles.hint}>
+            {disabled ? 'Enter a reference number to continue' : 'Tap to browse'}
+          </Text>
         </>
       )}
     </TouchableOpacity>

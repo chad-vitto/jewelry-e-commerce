@@ -1,21 +1,21 @@
-import { Colors } from '@/constants';
 import { useTheme } from '@/hooks/useTheme';
 import type { AppColors } from '@/constants/themes';
 import { PaymentProof, PaymentProofStatus } from '@/types';
 import { ReceiptPreview } from './ReceiptPreview';
 import { usePaymentProofImage } from '@/hooks/usePaymentProofImage';
 import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  ActivityIndicator,
+    View,
+    Text,
+    StyleSheet,
+    TouchableOpacity,
+    ActivityIndicator,
 } from 'react-native';
 
 interface PaymentProofCardProps {
   paymentProof: PaymentProof | null;
   loading?: boolean;
   onReplace: () => void;
+  canReplace?: boolean;
 }
 const BUTTON_LABELS = {
   [PaymentProofStatus.Pending]: 'Replace Receipt',
@@ -28,6 +28,7 @@ export function PaymentProofCard({
   paymentProof,
   loading = false,
   onReplace,
+  canReplace = true,
 }: PaymentProofCardProps) {
   const { colors } = useTheme();
   const styles = createStyles(colors);

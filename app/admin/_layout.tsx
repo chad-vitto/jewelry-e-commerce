@@ -1,7 +1,6 @@
 import { View, StyleSheet, ActivityIndicator } from 'react-native';
 import { Stack } from 'expo-router';
 import { useAuthStore } from '@/store';
-import { Colors } from '@/constants';
 import AccessDenied from '@/components/AccessDenied';
 import { useTheme } from '@/hooks/useTheme';
 import type { AppColors } from '@/constants/themes';

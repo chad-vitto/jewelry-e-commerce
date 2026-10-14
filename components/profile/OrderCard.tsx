@@ -1,3 +1,4 @@
+import React from 'react';
 import { CustomerOrderCard } from '@/hooks/useOrders';
 import { OrderStatusBadge, PaymentStatusBadge } from '@/components';
 import { View, Text, Image, Pressable, StyleSheet } from 'react-native';
@@ -7,17 +8,17 @@ import type { AppColors } from '@/constants/themes';
 
 interface OrderCardProps {
   order: CustomerOrderCard;
-  onPress: () => void;
+  onPress: (order: CustomerOrderCard) => void;
 }
 
-export function OrderCard({ order, onPress }: OrderCardProps) {
+export const OrderCard = React.memo(function OrderCard({ order, onPress }: OrderCardProps) {
   const { colors } = useTheme();
   const styles = createStyles(colors);
 
   return (
     <Pressable
       style={styles.card}
-      onPress={onPress}
+      onPress={() => onPress(order)}
       android_ripple={{
         color: colors.border.subtle,
       }}
@@ -94,8 +95,8 @@ export function OrderCard({ order, onPress }: OrderCardProps) {
           )}
 
           <View style={styles.badgesRow}>
-            <OrderStatusBadge status={order.order_status} />
-            <PaymentStatusBadge status={order.payment_status} />
+            <OrderStatusBadge status={order.order_status} size="sm" />
+            <PaymentStatusBadge status={order.payment_status} size="sm" />
           </View>
 
           {order.itemCount > 1 && (
@@ -141,7 +142,7 @@ export function OrderCard({ order, onPress }: OrderCardProps) {
       </View>
     </Pressable>
   );
-}
+});
 
 const createStyles = (colors: AppColors) => StyleSheet.create({
   card: {
@@ -176,6 +177,7 @@ const createStyles = (colors: AppColors) => StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'flex-start',
     marginBottom: 10,
+    position: 'relative',
   },
   productImage: {
     width: 92,
@@ -239,12 +241,15 @@ const createStyles = (colors: AppColors) => StyleSheet.create({
     color: colors.text.secondary,
   },
   chevron: {
-    alignSelf: 'center',
+    position: 'absolute',
+    top: 20,
+    right: 0,
   },
   badgesRow: {
     flexDirection: 'row',
+    flexWrap: 'nowrap',
     alignItems: 'center',
-    gap: 8,
+    gap: 6,
     marginTop: 10,
   },
   divider: {

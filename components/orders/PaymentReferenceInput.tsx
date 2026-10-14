@@ -1,18 +1,17 @@
 import * as Clipboard from 'expo-clipboard';
 import { useState } from 'react';
-import { Colors } from '@/constants';
 import { useTheme } from '@/hooks/useTheme';
 import type { AppColors } from '@/constants/themes';
 import {
-  View,
-  Text,
-  TextInput,
-  StyleSheet,
-  TouchableOpacity,
+    View,
+    Text,
+    TextInput,
+    StyleSheet,
+    TouchableOpacity,
 } from 'react-native';
 import {
-  Copy,
-  Check,
+    Copy,
+    Check,
 } from 'lucide-react-native';
 
 interface PaymentReferenceInputProps {
@@ -29,6 +28,7 @@ export function PaymentReferenceInput({
   const { colors } = useTheme();
   const styles = createStyles(colors);
   const [copied, setCopied] = useState(false);
+  const [isFocused, setIsFocused] = useState(false);
 
   const handleCopy = async () => {
     if (value) {
@@ -40,18 +40,27 @@ export function PaymentReferenceInput({
 
   return (
     <View style={styles.container}>
-      <Text style={styles.label}>Reference Number</Text>
-      <View style={styles.inputWrapper}>
+      <Text style={styles.label}>Reference Number *</Text>
+      <View
+        style={[
+          styles.inputWrapper,
+          isFocused && styles.inputWrapperFocused,
+        ]}
+      >
         <TextInput
           style={styles.input}
           value={value}
           onChangeText={onChangeText}
+          onFocus={() => setIsFocused(true)}
+          onBlur={() => setIsFocused(false)}
           editable={editable}
           autoCorrect={false}
           autoCapitalize="none"
           placeholder="GCash / Maya / Bank reference"
-          placeholderTextColor={colors.text.muted}
+          placeholderTextColor={colors.text.secondary}
+          selectionColor={colors.gold.DEFAULT}
           maxLength={30}
+          accessibilityLabel="Payment reference number"
         />
         {value ? (
           <TouchableOpacity
@@ -74,9 +83,9 @@ export function PaymentReferenceInput({
       </View>
 
       {value ? (
-        <Text style={styles.successText}>✓ Looks good (optional)</Text>
+        <Text style={styles.successText}>✓ Reference number ready</Text>
       ) : (
-        <Text style={styles.optional}>Optional</Text>
+        <Text style={styles.required}>Required before uploading a receipt</Text>
       )}
 
       <Text style={styles.hint}>Used to verify your payment faster.</Text>
@@ -98,11 +107,15 @@ const createStyles = (colors: AppColors) => StyleSheet.create({
   inputWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: colors.border.subtle,
-    borderRadius: 8,
+    minHeight: 44,
+    borderWidth: 1.5,
+    borderColor: colors.border.gold,
+    borderRadius: 10,
     paddingHorizontal: 12,
-    backgroundColor: colors.surfaceLight,
+    backgroundColor: colors.surface,
+  },
+  inputWrapperFocused: {
+    borderColor: colors.gold.DEFAULT,
   },
   input: {
     flex: 1,
@@ -122,7 +135,7 @@ const createStyles = (colors: AppColors) => StyleSheet.create({
     color: colors.status.success,
     marginTop: 4,
   },
-  optional: {
+  required: {
     fontSize: 12,
     color: colors.text.secondary,
     marginTop: 4,

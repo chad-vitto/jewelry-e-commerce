@@ -1,26 +1,15 @@
 import React, { useEffect, useState } from 'react';
-import { Colors } from '@/constants';
 import { format } from 'date-fns';
 import { OrderStatus, PaymentProofStatus } from '@/types';
-import {
-  StyleSheet,
-  Text,
-  View,
-  Animated,
-} from 'react-native';
-import {
-  Package,
-  CreditCard,
-  Clock3,
-  Truck,
-  CircleCheck,
-  XCircle,
-  RotateCcw,
-} from 'lucide-react-native';
+import { useTheme } from '@/hooks/useTheme';
+import type { AppColors } from '@/constants/themes';
+import { StyleSheet, Text, View, Animated, } from 'react-native';
+import { Package, CreditCard, Clock3, Truck, CircleCheck, Check, RotateCcw, } from 'lucide-react-native';
 
 interface OrderTimelineProps {
   orderStatus: OrderStatus;
   paymentStatus: PaymentProofStatus;
+  orderPaymentStatus?: string;
   timestamps?: Partial<Record<string, string>>;
 }
 
@@ -32,12 +21,6 @@ type TimelineStep = {
   active: boolean;
   timestampKey?: string;
 };
-
-const SPECIAL_TIMELINE_STATES = {
-  cancelled: { label: 'Cancelled', icon: XCircle, color: Colors.status.error },
-  refunded: { label: 'Refunded', icon: RotateCcw, color: Colors.status.info },
-} as const;
-
 
 function buildTimeline(
   orderStatus: OrderStatus,
@@ -125,6 +108,8 @@ function TimelineIcon({
   Icon: React.ElementType;
   isActive?: boolean;
 }) {
+  const { colors } = useTheme();
+  const styles = createStyles(colors);
   const [pulseAnim] = useState(() => new Animated.Value(1));
   const [glowAnim] = useState(() => new Animated.Value(0));
 
@@ -172,13 +157,13 @@ function TimelineIcon({
 
   const borderColor =
     completed || isActive
-      ? Colors.gold.DEFAULT
-      : Colors.border.subtle;
+      ? colors.gold.DEFAULT
+      : colors.border.subtle;
 
   const iconColor =
     completed || isActive
-      ? Colors.gold.DEFAULT
-      : Colors.text.secondary;
+      ? colors.gold.DEFAULT
+      : colors.text.secondary;
 
   return (
     <Animated.View
@@ -188,7 +173,7 @@ function TimelineIcon({
           flexShrink: 0,
           borderColor,
 
-          shadowColor: Colors.gold.DEFAULT,
+          shadowColor: colors.gold.DEFAULT,
           shadowOpacity: glowAnim.interpolate({
             inputRange: [0, 1],
             outputRange: [0.08, 0.22],
@@ -219,7 +204,7 @@ function TimelineIcon({
         <View style={styles.checkBadge}>
           <CircleCheck
             size={12}
-            color={Colors.surface}
+            color={colors.surface}
           />
         </View>
       )}
@@ -227,25 +212,41 @@ function TimelineIcon({
   );
 }
 
-export function OrderTimeline({ orderStatus, paymentStatus, timestamps = {
+export function OrderTimeline({ orderStatus, paymentStatus, orderPaymentStatus, timestamps = {
 } }: OrderTimelineProps) {
+
+  const { colors } = useTheme();
+  const styles = createStyles(colors);
 
   const timeline = buildTimeline(
     orderStatus,
     paymentStatus
   );
 
+  const isRefunded =
+    orderStatus === 'cancelled' &&
+    orderPaymentStatus === 'refunded';
+
   const specialState =
     orderStatus === 'cancelled'
-      ? SPECIAL_TIMELINE_STATES.cancelled
-      : orderStatus === 'refunded'
-        ? SPECIAL_TIMELINE_STATES.refunded
-        : null;
+      ? {
+        label: 'Cancellation Completed',
+        color: colors.status.error,
+      }
+      : null;
+
+  const specialTimestamp = specialState
+    ? timestamps.pending
+    : undefined;
+
+  const refundTimestamp = isRefunded
+    ? timestamps.refunded
+    : undefined;
 
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Clock3 size={18} color={Colors.gold.DEFAULT} />
+        <Clock3 size={18} color={colors.gold.DEFAULT} />
         <Text style={styles.title}>Order Timeline</Text>
       </View>
 
@@ -264,13 +265,13 @@ export function OrderTimeline({ orderStatus, paymentStatus, timestamps = {
 
             const leftConnectorColor =
               completed || active
-                ? Colors.gold.DEFAULT
-                : Colors.border.subtle;
+                ? colors.gold.DEFAULT
+                : colors.border.subtle;
 
             const rightConnectorColor =
               nextStep?.completed || nextStep?.active
-                ? Colors.gold.DEFAULT
-                : Colors.border.subtle;
+                ? colors.gold.DEFAULT
+                : colors.border.subtle;
 
             return (
               <View
@@ -342,44 +343,120 @@ export function OrderTimeline({ orderStatus, paymentStatus, timestamps = {
       )}
 
       {specialState && (
-        <View style={styles.stepRow}>
+        <View style={styles.specialStateRow}>
+          <View style={styles.specialStateContent}>
+            {/* Cancellation */}
+            <View style={styles.specialTimelineItem}>
+              <View
+                style={[
+                  styles.specialTimelineDot,
+                  {
+                    backgroundColor: `${specialState.color}18`,
+                    borderColor: specialState.color,
+                  },
+                ]}
+              >
+                <Check
+                  size={15}
+                  color={specialState.color}
+                  strokeWidth={2.2}
+                />
+              </View>
+
+              <View style={styles.specialTimelineText}>
+                <Text
+                  style={[
+                    styles.specialStateLabel,
+                    { color: specialState.color },
+                  ]}
+                >
+                  Cancellation Completed
+                </Text>
+
+                {specialTimestamp && (
+                  <Text style={styles.specialStateTimestamp}>
+                    on {format(new Date(specialTimestamp), 'dd-MM-yyyy HH:mm')}.
+                  </Text>
+                )}
+              </View>
+            </View>
+
+            {/* Refund */}
+            {isRefunded && (
+              <>
+                <View
+                  style={[
+                    styles.specialTimelineConnector,
+                    {
+                      backgroundColor: colors.status.error,
+                    },
+                  ]}
+                />
+
+                <View style={styles.specialTimelineItem}>
+                  <View
+                    style={[
+                      styles.specialTimelineDot,
+                      styles.refundTimelineDot,
+                      {
+                        backgroundColor: `${colors.status.info}18`,
+                        borderColor: colors.status.info,
+                      },
+                    ]}
+                  >
+                    <RotateCcw
+                      size={15}
+                      color={colors.status.info}
+                      strokeWidth={2.2}
+                    />
+                  </View>
+
+                  <View style={styles.specialTimelineText}>
+                    <Text
+                      style={[
+                        styles.specialStateLabel,
+                        styles.refundStateLabel,
+                      ]}
+                    >
+                      Refund Completed
+                    </Text>
+
+                    {refundTimestamp && (
+                      <Text style={styles.specialStateTimestamp}>
+                        on {format(new Date(refundTimestamp), 'dd-MM-yyyy HH:mm')}.
+                      </Text>
+                    )}
+                  </View>
+                </View>
+              </>
+            )}
+          </View>
+
+          {/* Final completion indicator */}
           <View style={styles.iconColumn}>
             <View
               style={[
                 styles.iconCircle,
+                styles.specialStateIcon,
                 {
-                  backgroundColor: specialState.color,
+                  backgroundColor: `${isRefunded
+                    ? colors.status.info
+                    : specialState.color}18`,
+                  borderColor: isRefunded
+                    ? colors.status.info
+                    : specialState.color,
                 },
               ]}
             >
-              {(() => {
-                const Icon = specialState.icon;
-                return <Icon size={20} color={Colors.surface} />;
-              })()}
-            </View>
-          </View>
-          <View style={styles.labelColumn}>
-            <View style={styles.labelRow}>
-              {(() => {
-                const Icon = specialState.icon;
-                return (
-                  <Icon
-                    size={16}
-                    color={specialState.color}
-                  />
-                );
-              })()}
-              <Text
-                style={[
-                  styles.stepLabel,
-                  {
-                    color: specialState.color,
-                    fontWeight: '600',
-                  },
-                ]}
-              >
-                {specialState.label}
-              </Text>
+              <Check
+                size={22}
+                color={
+                  isRefunded
+                    ? colors.status.info
+                    : specialState.color
+                }
+                strokeWidth={1.8}
+              />
             </View>
           </View>
         </View>
@@ -388,9 +465,9 @@ export function OrderTimeline({ orderStatus, paymentStatus, timestamps = {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: AppColors) => StyleSheet.create({
   container: {
-    backgroundColor: Colors.surfaceLight,
+    backgroundColor: colors.surfaceLight,
     borderRadius: 20,
     marginBottom: 16,
     paddingHorizontal: 12,
@@ -410,16 +487,17 @@ const styles = StyleSheet.create({
     marginLeft: 8,
     fontFamily: 'Inter_600SemiBold',
     fontSize: 16,
-    color: Colors.text.primary,
+    color: colors.text.primary,
   },
   stepRow: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
-    marginVertical: 6
+    alignItems: 'center',
+    marginVertical: 6,
   },
   iconColumn: {
     alignItems: 'center',
-    width: 20
+    justifyContent: 'center',
+    width: 46,
   },
   iconCircle: {
     width: 46,
@@ -427,9 +505,9 @@ const styles = StyleSheet.create({
     borderRadius: 23,
 
     borderWidth: 2,
-    borderColor: Colors.gold.DEFAULT,
+    borderColor: colors.gold.DEFAULT,
 
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
 
     justifyContent: 'center',
     alignItems: 'center',
@@ -446,26 +524,26 @@ const styles = StyleSheet.create({
     width: 16,
     height: 16,
     borderRadius: 8,
-    backgroundColor: Colors.status.success,
+    backgroundColor: colors.status.success,
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 2,
-    borderColor: Colors.surfaceLight,
+    borderColor: colors.surfaceLight,
   },
   labelColumn: {
-    marginLeft: 8,
-    flex: 1
+    marginLeft: 12,
+    flex: 1,
   },
   labelRow: {
     flexDirection: 'row',
     alignItems: 'center'
   },
   completedLabel: {
-    color: Colors.status.success,
+    color: colors.status.success,
     fontWeight: '600'
   },
   pendingLabel: {
-    color: Colors.text.secondary
+    color: colors.text.secondary
   },
   timelineRow: {
     flexDirection: 'row',
@@ -488,19 +566,19 @@ const styles = StyleSheet.create({
     marginHorizontal: 0,
   },
   activeLabel: {
-    color: Colors.gold.DEFAULT,
+    color: colors.gold.DEFAULT,
     fontWeight: '700',
   },
   stepDate: {
     marginTop: 6,
     fontSize: 10,
-    color: Colors.gold.DEFAULT,
+    color: colors.gold.DEFAULT,
     fontFamily: 'Inter_500Medium',
     textAlign: 'center',
   },
   stepTime: {
     fontSize: 10,
-    color: Colors.text.secondary,
+    color: colors.text.secondary,
     fontFamily: 'Inter_400Regular',
     textAlign: 'center',
   },
@@ -509,6 +587,64 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontSize: 12,
     fontFamily: 'Inter_500Medium',
+  },
+  specialStateLabel: {
+    textAlign: 'left',
+    fontSize: 17,
+    fontWeight: '600',
+  },
+  specialStateIcon: {
+    borderWidth: 1.5,
+  },
+  specialStateRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 4,
+  },
+  specialStateContent: {
+    flex: 1,
+    paddingRight: 16,
+  },
+  specialTimelineItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+
+  specialTimelineText: {
+    flex: 1,
+    marginLeft: 10,
+  },
+
+  specialTimelineDot: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    borderWidth: 1.5,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+
+  refundTimelineDot: {
+    opacity: 0.95,
+  },
+
+  refundStateLabel: {
+    color: colors.status.info,
+  },
+
+  specialTimelineConnector: {
+    width: 2,
+    height: 18,
+    marginLeft: 14,
+    marginVertical: 2,
+    opacity: 0.65,
+  },
+  specialStateTimestamp: {
+    marginTop: 6,
+    color: colors.text.secondary,
+    fontFamily: 'Inter_400Regular',
+    fontSize: 13,
   },
 });
 

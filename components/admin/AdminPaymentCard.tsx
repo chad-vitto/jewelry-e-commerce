@@ -1,13 +1,12 @@
-import { Colors } from '@/constants';
 import { useTheme } from '@/hooks/useTheme';
 import type { AppColors } from '@/constants/themes';
 import { PaymentMethod, PaymentProof, PaymentProofStatus } from '@/types';
 import {
-  View,
-  Text,
-  TouchableOpacity,
-  StyleSheet,
-  Image,
+    View,
+    Text,
+    TouchableOpacity,
+    StyleSheet,
+    Image,
 } from 'react-native';
 
 interface AdminPaymentCardProps {

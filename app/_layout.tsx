@@ -11,6 +11,7 @@ import { CormorantGaramond_400Regular, CormorantGaramond_500Medium, CormorantGar
 import { ProductFlyToCartOverlay } from '@/components/feedback/ProductFlyToCartOverlay';
 import { ThemeProvider } from '@/components/providers/ThemeProvider';
 import { useTheme } from '@/hooks/useTheme';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -84,9 +85,11 @@ export default function RootLayout() {
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-      <ThemeProvider>
-        <RootLayoutContent />
-      </ThemeProvider>
+      <SafeAreaProvider>
+        <ThemeProvider>
+          <RootLayoutContent />
+        </ThemeProvider>
+      </SafeAreaProvider>
     </GestureHandlerRootView>
   );
 }

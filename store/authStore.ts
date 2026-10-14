@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { supabase } from '@/lib/supabase';
 import { Profile, AuthState } from '@/types';
+import { registerAndSavePushToken } from '@/services/pushNotificationService';
 
 interface AuthStore extends AuthState {
   signIn: (email: string, password: string) => Promise<{ error: string | null }>;
@@ -204,7 +205,18 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
 
 // Subscribe to auth changes
 supabase.auth.onAuthStateChange((event) => {
-  if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+  if (event === 'SIGNED_IN') {
+    useAuthStore.getState().fetchProfile();
+
+    setTimeout(() => {
+      registerAndSavePushToken().catch((error) => {
+        console.error(
+          'Push notification registration failed:',
+          error,
+        );
+      });
+    }, 0);
+  } else if (event === 'TOKEN_REFRESHED') {
     useAuthStore.getState().fetchProfile();
   } else if (event === 'SIGNED_OUT') {
     useAuthStore.setState({

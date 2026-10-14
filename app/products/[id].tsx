@@ -1,38 +1,18 @@
-import { useState, useRef } from 'react';
 import { CartSnackbar } from '@/components/feedback/CartSnackbar';
-import { Colors, formatCurrency } from '@/constants';
-import { useTheme } from '@/hooks/useTheme';
-import type { AppColors } from '@/constants/themes';
+import { formatCurrency } from '@/constants';
 import { GoldButton } from '@/components/GoldGradient';
 import { Image } from 'expo-image';
 import { useCartStore, useFlyToCartStore, useWishlistStore } from '@/store';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useProduct, useProducts } from '@/hooks';
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  Pressable,
-  Dimensions,
-  FlatList,
-  Alert,
-  NativeScrollEvent,
-  NativeSyntheticEvent,
-} from 'react-native';
-import {
-  SectionSkeleton,
-  GoldPurityBadge,
-  StockBadge,
-  ProductCarousel,
-} from '@/components';
-import {
-  ArrowLeft,
-  Heart,
-  Share2,
-  Scale,
-  MessageCircle,
-} from 'lucide-react-native';
+import { useRef, useState } from 'react';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useTheme } from '@/hooks/useTheme';
+import type { AppColors } from '@/constants/themes';
+import { View, Text, StyleSheet, ScrollView, Pressable, Dimensions, FlatList, Alert, NativeScrollEvent, NativeSyntheticEvent, } from 'react-native';
+import { SectionSkeleton, GoldPurityBadge, StockBadge, ProductCarousel } from '@/components';
+import { ChevronLeft, Heart, ShoppingCart, Scale, MessageCircle } from 'lucide-react-native';
+import ProductImagePreview from '@/components/ProductImagePreview';
 
 const { width, height } = Dimensions.get('window');
 const IMAGE_HEIGHT = height * 0.5;
@@ -40,17 +20,18 @@ const IMAGE_HEIGHT = height * 0.5;
 export default function ProductDetailScreen() {
   const { colors } = useTheme();
   const styles = createStyles(colors);
+  const insets = useSafeAreaInsets();
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const { product, isLoading } = useProduct(id as string);
-  const { productIds: wishlistIds, toggleItem: toggleWishlist } =
-    useWishlistStore();
+  const { productIds: wishlistIds, toggleItem: toggleWishlist } = useWishlistStore();
   const { items, addItem: addToCart } = useCartStore();
+  const cartItemsCount = items.reduce((total, item) => total + item.quantity, 0);
   const { products: relatedProducts } = useProducts();
 
   const imageContainerRef = useRef<View>(null);
-
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [isImagePreviewVisible, setIsImagePreviewVisible] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
   const [selectedSize, setSelectedSize] = useState<string>();
   const [showSnackbar, setShowSnackbar] = useState(false);
@@ -164,11 +145,12 @@ export default function ProductDetailScreen() {
   return (
     <View style={styles.container}>
       {/* Header */}
-      <View style={styles.header}>
+      <View style={[styles.header, { paddingTop: insets.top + 8 }]}>
         <Pressable style={styles.headerButton} onPress={() => router.back()}>
-          <ArrowLeft size={24} color={colors.text.primary} />
+          <ChevronLeft size={24} color={colors.text.primary} />
         </Pressable>
         <View style={styles.headerActions}>
+
           <Pressable style={styles.headerButton} onPress={handleWishlistToggle}>
             <Heart
               size={24}
@@ -176,14 +158,27 @@ export default function ProductDetailScreen() {
               fill={isWishlisted ? colors.gold.DEFAULT : 'transparent'}
             />
           </Pressable>
-          <Pressable style={styles.headerButton}>
-            <Share2 size={24} color={colors.text.secondary} />
+
+          <Pressable
+            style={styles.headerButton}
+            onPress={() => router.push('/cart')}
+            accessibilityRole="button"
+            accessibilityLabel={`Go to cart, ${cartItemsCount} items`}
+          >
+            <ShoppingCart size={24} color={colors.text.secondary} />
+
+            {cartItemsCount > 0 && (
+              <View style={styles.cartBadge}>
+                <Text style={styles.cartBadgeText}>{cartItemsCount > 99 ? '99+' : cartItemsCount}</Text>
+              </View>
+            )}
           </Pressable>
         </View>
       </View>
 
       <ScrollView
         style={styles.scrollView}
+        contentContainerStyle={{ paddingBottom: insets.bottom + 24 }}
         showsVerticalScrollIndicator={false}
       >
         {/* Image Gallery */}
@@ -196,9 +191,15 @@ export default function ProductDetailScreen() {
             showsHorizontalScrollIndicator={false}
             onScroll={handleImageScroll}
             renderItem={({ item, index }) => (
-              <View
+              <Pressable
                 ref={index === currentImageIndex ? imageContainerRef : null}
                 collapsable={false}
+                onPress={() => {
+                  setCurrentImageIndex(index);
+                  setIsImagePreviewVisible(true);
+                }}
+                accessibilityRole="button"
+                accessibilityLabel={`View product image ${index + 1} of ${images.length}`}
               >
                 <Image
                   source={{ uri: item }}
@@ -206,7 +207,7 @@ export default function ProductDetailScreen() {
                   contentFit="cover"
                   transition={300}
                 />
-              </View>
+              </Pressable>
             )}
           />
 
@@ -324,6 +325,12 @@ export default function ProductDetailScreen() {
             </View>
           )}
         </View>
+        <ProductImagePreview
+          images={images}
+          imageIndex={currentImageIndex}
+          visible={isImagePreviewVisible}
+          onClose={() => setIsImagePreviewVisible(false)}
+        />
       </ScrollView>
 
       {/* Floating Snackbar */}
@@ -371,6 +378,24 @@ const createStyles = (colors: AppColors) => StyleSheet.create({
   headerActions: {
     flexDirection: 'row',
     gap: 8,
+  },
+  cartBadge: {
+    position: 'absolute',
+    top: -3,
+    right: -3,
+    minWidth: 18,
+    height: 18,
+    borderRadius: 9,
+    backgroundColor: colors.gold.DEFAULT,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 4,
+    zIndex: 1,
+  },
+  cartBadgeText: {
+    color: '#000',
+    fontSize: 10,
+    fontFamily: 'Inter_700Bold',
   },
   scrollView: {
     flex: 1,

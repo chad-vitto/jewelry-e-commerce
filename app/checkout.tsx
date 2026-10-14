@@ -10,11 +10,12 @@ import { useAuth, useCart, useAddresses } from '@/hooks';
 import { useTheme } from '@/hooks/useTheme';
 import type { AppColors } from '@/constants/themes';
 import { View, Text, StyleSheet, ScrollView, Pressable, Alert } from 'react-native';
-import { ArrowLeft, Building, Check, CreditCard, Pencil, Smartphone, User, MapPin, Phone, CheckCircle2, Copy, ShieldCheck, Clock3 } from 'lucide-react-native';
+import { ChevronLeft, Building, Check, CreditCard, Pencil, Smartphone, User, MapPin, Phone, CheckCircle2, Copy, ShieldCheck, Clock3 } from 'lucide-react-native';
 import { toShippingAddressDisplay } from '@/utils/address';
 import { CheckoutOrderCard } from '@/components/orders/CheckoutOrderCard';
 import { CheckoutSummaryCard } from '@/components/orders/CheckoutSummaryCard';
 import { AddressForm } from '@/components/address/AddressForm';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 type CheckoutStep = 'address' | 'payment' | 'review' | 'confirmation';
 
@@ -22,11 +23,12 @@ export default function CheckoutScreen() {
   const router = useRouter();
   const { colors } = useTheme();
   const styles = createStyles(colors);
+  const insets = useSafeAreaInsets();
   const { user, isAuthenticated } = useAuth();
   const { address, setAddress, shippingAddressId, isLoading: isAddressLoading, loadDefaultAddress, saveAddress, currentAddress, } = useAddresses(user?.id)
   const [isPlacingOrder, setIsPlacingOrder] = useState(false);
 
-  const { items, subtotal, shippingFee, total, clearCart } = useCart();
+  const { items, subtotal, shippingFee, discountAmount, activePromotion, total, clearCart } = useCart();
 
   const [currentStep, setCurrentStep] = useState<CheckoutStep>('address');
   const [orderPlaced, setOrderPlaced] = useState<Order | null>(null);
@@ -40,8 +42,7 @@ export default function CheckoutScreen() {
 
 
   const [selectedPayment, setSelectedPayment] = useState<PaymentMethodType>('gcash');
-  const [email, setEmail] = useState(user?.email || '');
-  const [notes, setNotes] = useState('');
+  const [notes] = useState('');
   const [isEditingAddress, setIsEditingAddress] = useState(false);
 
 
@@ -119,53 +120,48 @@ export default function CheckoutScreen() {
         is_default: currentAddress?.is_default ?? true,
       });
 
-      const { data: order, error: orderError } = await supabase
-        .from('orders')
-        .insert({
-          customer_id: user.id,
-          shipping_address_id: shippingAddress?.id,
-
-          subtotal_php: subtotal,
-          shipping_fee_php: shippingFee,
-          total_amount_php: total,
-
-          payment_method: selectedPayment,
-          payment_status: 'pending',
-          payment_reference: null,
-          order_status: 'pending',
-
-          notes: notes || null,
-        })
-        .select()
-        .single();
-
-      if (orderError) {
-        console.error('Order Error:', orderError);
-        Alert.alert('Error', orderError.message);
-        return;
-      }
-
       if (!shippingAddress) {
         Alert.alert('Error', 'Unable to save shipping address.');
         return;
       }
 
-      const orderItems = items.map((item) => ({
-        order_id: order.id,
-        product_id: item.product.id,
-        product_name: item.product.name,
-        price_php: item.product.price_php,
-        quantity: item.quantity,
-        subtotal_php: item.product.price_php * item.quantity,
-      }));
+      const { data: orderId, error: orderError } = await supabase.rpc(
+        'create_order',
+        {
+          p_items: items.map((item) => ({
+            product_id: item.product.id,
+            quantity: item.quantity,
+          })),
+          p_shipping_address_id: shippingAddress.id,
+          p_payment_method: selectedPayment,
+          p_promotion_id: activePromotion?.id ?? null,
+          p_notes: notes || null,
+        },
+      );
 
-      const { error: orderItemsError } = await supabase
-        .from('order_items')
-        .insert(orderItems);
+      if (orderError) {
+        console.error('Create Order RPC Error:', orderError);
+        Alert.alert('Error', orderError.message);
+        return;
+      }
 
-      if (orderItemsError) {
-        console.error('Order Items Error:', orderItemsError);
-        Alert.alert('Order Items Error', orderItemsError.message);
+      if (!orderId) {
+        Alert.alert('Error', 'Unable to create order.');
+        return;
+      }
+
+      const { data: order, error: fetchOrderError } = await supabase
+        .from('orders')
+        .select('*')
+        .eq('id', orderId)
+        .single();
+
+      if (fetchOrderError || !order) {
+        console.error('Fetch Created Order Error:', fetchOrderError);
+        Alert.alert(
+          'Error',
+          'Order was created, but we could not load the confirmation details.',
+        );
         return;
       }
 
@@ -521,6 +517,20 @@ export default function CheckoutScreen() {
           <Text style={styles.summaryLabel}>Subtotal</Text>
           <Text style={styles.summaryValue}>{formatCurrency(subtotal)}</Text>
         </View>
+
+        {/* Active Discount */}
+        {activePromotion && discountAmount > 0 && (
+          <View style={styles.summaryRow}>
+            <Text style={styles.summaryLabel}>
+              {activePromotion.title}
+            </Text>
+            <Text style={styles.discountValue}>
+              -{formatCurrency(discountAmount)}
+            </Text>
+          </View>
+        )}
+
+        {/* Shipping Address */}
         <View style={styles.summaryRow}>
           <Text style={styles.summaryLabel}>Shipping</Text>
           <Text style={styles.summaryValue}>
@@ -624,9 +634,9 @@ export default function CheckoutScreen() {
     return (
       <View style={styles.container}>
         <Stack.Screen options={{ headerShown: false }} />
-        <View style={styles.header}>
+        <View style={[styles.header, { paddingTop: insets.top + 8 }]}>
           <Pressable style={styles.backButton} onPress={() => router.back()}>
-            <ArrowLeft size={24} color={colors.text.primary} />
+            <ChevronLeft size={24} color={colors.text.primary} />
           </Pressable>
           <Text style={styles.headerTitle}>Checkout</Text>
           <View style={{ width: 44 }} />
@@ -649,9 +659,9 @@ export default function CheckoutScreen() {
       <Stack.Screen options={{ headerShown: false }} />
 
       {/* Header */}
-      <View style={styles.header}>
+      <View style={[styles.header, { paddingTop: insets.top + 8 }]}>
         <Pressable style={styles.backButton} onPress={() => router.back()}>
-          <ArrowLeft size={24} color={colors.text.primary} />
+          <ChevronLeft size={24} color={colors.text.primary} />
         </Pressable>
         <Text style={styles.headerTitle}>Checkout</Text>
         <View style={{ width: 44 }} />
@@ -661,6 +671,7 @@ export default function CheckoutScreen() {
 
       <ScrollView
         style={styles.scrollView}
+        contentContainerStyle={{ paddingBottom: insets.bottom + 24 }}
         showsVerticalScrollIndicator={false}
       >
         {currentStep === 'address' && renderAddressStep()}
@@ -1024,6 +1035,11 @@ const createStyles = (colors: AppColors) => StyleSheet.create({
     fontSize: 15,
     color: colors.text.primary,
     ...Shadows.lg,
+  },
+  discountValue: {
+    fontFamily: 'Inter_600SemiBold',
+    fontSize: 14,
+    color: colors.gold.DEFAULT,
   },
   totalRow: {
     borderTopWidth: 2,

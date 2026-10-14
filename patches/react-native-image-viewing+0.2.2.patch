@@ -1,0 +1,89 @@
+diff --git a/node_modules/react-native-image-viewing/dist/ImageViewing.d.ts b/node_modules/react-native-image-viewing/dist/ImageViewing.d.ts
+index b279504..52cd95f 100644
+--- a/node_modules/react-native-image-viewing/dist/ImageViewing.d.ts
++++ b/node_modules/react-native-image-viewing/dist/ImageViewing.d.ts
+@@ -14,6 +14,7 @@ declare type Props = {
+     imageIndex: number;
+     visible: boolean;
+     onRequestClose: () => void;
++    onNavigate?: (navigate: (index: number) => void) => void;
+     onLongPress?: (image: ImageSource) => void;
+     onImageIndexChange?: (imageIndex: number) => void;
+     presentationStyle?: ModalProps["presentationStyle"];
+diff --git a/node_modules/react-native-image-viewing/dist/ImageViewing.js b/node_modules/react-native-image-viewing/dist/ImageViewing.js
+index 3d7641a..e9c3810 100644
+--- a/node_modules/react-native-image-viewing/dist/ImageViewing.js
++++ b/node_modules/react-native-image-viewing/dist/ImageViewing.js
+@@ -18,16 +18,42 @@ const DEFAULT_BG_COLOR = "#000";
+ const DEFAULT_DELAY_LONG_PRESS = 800;
+ const SCREEN = Dimensions.get("screen");
+ const SCREEN_WIDTH = SCREEN.width;
+-function ImageViewing({ images, keyExtractor, imageIndex, visible, onRequestClose, onLongPress = () => { }, onImageIndexChange, animationType = DEFAULT_ANIMATION_TYPE, backgroundColor = DEFAULT_BG_COLOR, presentationStyle, swipeToCloseEnabled, doubleTapToZoomEnabled, delayLongPress = DEFAULT_DELAY_LONG_PRESS, HeaderComponent, FooterComponent, }) {
++function ImageViewing({ images, keyExtractor, imageIndex, visible, onRequestClose, onNavigate, onLongPress = () => { }, onImageIndexChange, animationType = DEFAULT_ANIMATION_TYPE, backgroundColor = DEFAULT_BG_COLOR, presentationStyle, swipeToCloseEnabled, doubleTapToZoomEnabled, delayLongPress = DEFAULT_DELAY_LONG_PRESS, HeaderComponent, FooterComponent, }) {
+     const imageList = useRef(null);
++        useEffect(() => {
++  if (!visible || !onNavigate) return;
++
++  onNavigate((index) => {
++    requestAnimationFrame(() => {
++      imageList.current?.scrollToIndex({
++        index,
++        animated: true,
++      });
++    });
++  });
++}, [visible, onNavigate]);
++
++useEffect(() => {
++  if (!visible) return;
++
++  requestAnimationFrame(() => {
++    imageList.current?.scrollToIndex({
++      index: imageIndex,
++      animated: false,
++    });
++  });
++}, [visible, imageIndex]);
++
+     const [opacity, onRequestCloseEnhanced] = useRequestClose(onRequestClose);
+     const [currentImageIndex, onScroll] = useImageIndexChange(imageIndex, SCREEN);
+     const [headerTransform, footerTransform, toggleBarsVisible] = useAnimatedComponents();
++
+     useEffect(() => {
+         if (onImageIndexChange) {
+             onImageIndexChange(currentImageIndex);
+         }
+     }, [currentImageIndex]);
++
+     const onZoom = useCallback((isScaled) => {
+         var _a, _b;
+         // @ts-ignore
+@@ -82,5 +108,7 @@ const styles = StyleSheet.create({
+         bottom: 0,
+     },
+ });
+-const EnhancedImageViewing = (props) => (<ImageViewing key={props.imageIndex} {...props}/>);
++const EnhancedImageViewing = (props) => (
++  <ImageViewing {...props} />
++);
+ export default EnhancedImageViewing;
+diff --git a/node_modules/react-native-image-viewing/dist/hooks/useImageIndexChange.js b/node_modules/react-native-image-viewing/dist/hooks/useImageIndexChange.js
+index cb5f0f7..5d6ad7d 100644
+--- a/node_modules/react-native-image-viewing/dist/hooks/useImageIndexChange.js
++++ b/node_modules/react-native-image-viewing/dist/hooks/useImageIndexChange.js
+@@ -5,9 +5,14 @@
+  * LICENSE file in the root directory of this source tree.
+  *
+  */
+-import { useState } from "react";
++import { useEffect, useState } from "react";
+ const useImageIndexChange = (imageIndex, screen) => {
+     const [currentImageIndex, setImageIndex] = useState(imageIndex);
++
++useEffect(() => {
++  setImageIndex(imageIndex);
++}, [imageIndex]);
++
+     const onScroll = (event) => {
+         const { nativeEvent: { contentOffset: { x: scrollX }, }, } = event;
+         if (screen.width) {

@@ -1,6 +1,5 @@
 import React from 'react';
 import { View, Text, StyleSheet, Switch } from 'react-native';
-import { Colors } from '@/constants';
 import { useTheme } from '@/hooks/useTheme';
 import type { AppColors } from '@/constants/themes';
 

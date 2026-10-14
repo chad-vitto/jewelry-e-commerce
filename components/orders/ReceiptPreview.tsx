@@ -1,12 +1,12 @@
 import ImageViewing from 'react-native-image-viewing';
+import { ImageViewerCloseHeader } from './ImageViewerCloseHeader';
 import {
-  ActivityIndicator,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View
+    ActivityIndicator,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View
 } from 'react-native';
-import { Colors } from '@/constants';
 import { useTheme } from '@/hooks/useTheme';
 import type { AppColors } from '@/constants/themes';
 import { formatDateTime } from '@/utils/format';
@@ -71,6 +71,9 @@ export function ReceiptPreview({
             visible={visible}
             animationType="fade"
             onRequestClose={() => setVisible(false)}
+            HeaderComponent={() => (
+              <ImageViewerCloseHeader onClose={() => setVisible(false)} />
+            )}
           />
         </>
       ) : (

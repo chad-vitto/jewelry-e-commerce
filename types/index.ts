@@ -7,11 +7,13 @@ export type ProductCategory = 'rings' | 'earrings' | 'necklaces' | 'pendants' | 
 
 export type PaymentMethodType = 'gcash' | 'maya' | 'bank_transfer';
 
-export type PaymentStatus = 'pending' | 'paid' | 'failed';
+export type PaymentStatus = 'pending' | 'paid' | 'failed' | 'refunded';
 
 export type OrderStatus = 'pending' | 'confirmed' | 'processing' | 'shipped' | 'delivered' | 'cancelled' | 'refunded';
 
 export type InquiryStatus = 'new' | 'read' | 'replied';
+
+export type LanguageCode = 'en' | 'ko' | 'ja' | 'ph';
 
 
 export type ProductImage = {
@@ -79,6 +81,10 @@ export interface OrderItem {
   size?: string;
 }
 
+export interface AdminOrderItem extends OrderItem {
+  products?: CustomerOrderProduct | null;
+}
+
 export interface ContactInfo {
   email: string;
   phone_number: string;
@@ -89,7 +95,7 @@ export interface CustomerOrder extends Order {
 }
 
 export interface AdminOrder extends Order {
-  order_items: OrderItem[];
+  order_items: AdminOrderItem[];
   shipping_address?: ShippingAddress | null;
 }
 
@@ -98,6 +104,9 @@ export interface Order {
   customer_id: string | null;
 
   subtotal_php: number;
+  discount_amount_php: number;
+  promotion_id: string | null;
+  promotion_title: string | null;
   shipping_fee_php: number;
   total_amount_php: number;
 

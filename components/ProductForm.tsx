@@ -1,14 +1,16 @@
 import { useState } from 'react';
 import {
-  View,
-  ScrollView,
-  StyleSheet,
-  TextInput,
-  TouchableOpacity,
-  Text,
-  Alert,
+    View,
+    ScrollView,
+    StyleSheet,
+    TextInput,
+    TouchableOpacity,
+    Text,
+    Alert,
+    Pressable,
 } from 'react-native';
-import { Colors } from '@/constants';
+import { ChevronLeft } from 'lucide-react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '@/hooks/useTheme';
 import type { AppColors } from '@/constants/themes';
 import { ImageUploader } from './ImageUploader';
@@ -56,6 +58,7 @@ interface ProductFormProps {
   onSubmit: (data: ProductSubmitData) => Promise<void>;
   isLoading?: boolean;
   title: string;
+  onCancel: () => void;
 }
 type FormErrors = {
   name?: string;
@@ -71,9 +74,11 @@ export const ProductForm = ({
   onSubmit,
   isLoading = false,
   title,
+  onCancel,
 }: ProductFormProps) => {
   const { colors } = useTheme();
   const styles = createStyles(colors);
+  const insets = useSafeAreaInsets();
   const [formData, setFormData] = useState<ProductFormData>({
     name: initialData?.name ?? '',
     description: initialData?.description ?? '',
@@ -155,9 +160,24 @@ export const ProductForm = ({
   };
 
   return (
-    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+    <ScrollView
+      style={styles.container}
+      contentContainerStyle={{ paddingTop: insets.top + 8, paddingBottom: insets.bottom + 24 }}
+      showsVerticalScrollIndicator={false}
+    >
       <View style={styles.content}>
-        <Text style={styles.title}>{title}</Text>
+        <View style={styles.header}>
+          <Pressable
+            style={styles.backButton}
+            onPress={onCancel}
+            accessibilityRole="button"
+            accessibilityLabel="Go back"
+            hitSlop={4}
+          >
+            <ChevronLeft size={24} color={colors.text.primary} />
+          </Pressable>
+          <Text style={styles.title}>{title}</Text>
+        </View>
         <ImageUploader
           initialImages={formData.product_images}
           onImagesSelected={(images: string[]) =>
@@ -381,11 +401,25 @@ const createStyles = (colors: AppColors) => StyleSheet.create({
   content: {
     padding: 16,
   },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 24,
+    gap: 12,
+  },
+  backButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: colors.surface,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   title: {
+    flex: 1,
     fontSize: 24,
     fontFamily: 'CormorantGaramond_700Bold',
     color: colors.text.primary,
-    marginBottom: 24,
   },
   section: {
     marginBottom: 24,

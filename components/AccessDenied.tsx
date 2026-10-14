@@ -1,7 +1,6 @@
 import { View, Text, StyleSheet, Pressable } from 'react-native';
 import { useRouter } from 'expo-router';
-import { ShieldX, ArrowLeft } from 'lucide-react-native';
-import { Colors } from '@/constants';
+import { ShieldX, ChevronLeft } from 'lucide-react-native';
 import { useTheme } from '@/hooks/useTheme';
 import type { AppColors } from '@/constants/themes';
 
@@ -37,8 +36,11 @@ export default function AccessDenied({
           <Pressable
             style={styles.button}
             onPress={() => router.back()}
+            accessibilityRole="button"
+            accessibilityLabel="Go back"
+            hitSlop={4}
           >
-            <ArrowLeft size={18} color={colors.primary} />
+            <ChevronLeft size={18} color={colors.primary} />
             <Text style={styles.buttonText}>Go Back</Text>
           </Pressable>
         )}

@@ -1,4 +1,5 @@
 import ImageViewing from 'react-native-image-viewing';
+import { ImageViewerCloseHeader } from '@/components/orders/ImageViewerCloseHeader';
 
 interface AdminReceiptViewerProps {
   visible: boolean;
@@ -20,6 +21,7 @@ export function AdminReceiptViewer({
       visible={visible}
       animationType="fade"
       onRequestClose={onClose}
+      HeaderComponent={() => <ImageViewerCloseHeader onClose={onClose} />}
       swipeToCloseEnabled
       doubleTapToZoomEnabled
     />

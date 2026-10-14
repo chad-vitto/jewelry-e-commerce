@@ -16,6 +16,8 @@ interface CartStore {
   ) => void;
   clearCart: () => void;
   getItemCount: () => number;
+  selectedPromotionId: string | null;
+  setSelectedPromotionId: (promotionId: string | null) => void;
   getSubtotal: () => number;
 }
 
@@ -105,11 +107,15 @@ export const useCartStore = create<CartStore>()(
           };
         });
       },
-      clearCart: () => set({ items: [] }),
+      clearCart: () => set({ items: [], selectedPromotionId: null, }),
 
       getItemCount: () => {
         return get().items.reduce((total, item) => total + item.quantity, 0);
       },
+      selectedPromotionId: null,
+
+      setSelectedPromotionId: (promotionId) =>
+        set({ selectedPromotionId: promotionId }),
 
       getSubtotal: () => {
         return get().items.reduce(

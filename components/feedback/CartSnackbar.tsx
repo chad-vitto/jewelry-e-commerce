@@ -1,4 +1,4 @@
-import { Colors, Shadows } from '@/constants';
+import { Shadows } from '@/constants';
 import { useTheme } from '@/hooks/useTheme';
 import type { AppColors } from '@/constants/themes';
 import { useCallback, useEffect, useState } from 'react';

@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 import { EmptyWishlist } from '@/components/EmptyState';
 import { FlatList, StyleSheet, Text, View } from 'react-native';
 import { Product } from '@/types';
@@ -9,11 +9,13 @@ import { useProducts } from '@/hooks';
 import { useRouter } from 'expo-router';
 import { useTheme } from '@/hooks/useTheme';
 import type { AppColors } from '@/constants/themes';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function WishlistScreen() {
   const router = useRouter();
   const { colors } = useTheme();
   const styles = createStyles(colors);
+  const insets = useSafeAreaInsets();
   const {
     productIds,
     toggleItem,
@@ -33,30 +35,30 @@ export default function WishlistScreen() {
     return allProducts.filter((p) => productIds.includes(p.id));
   }, [allProducts, productIds]);
 
-  const handleWishlistToggle = (productId: string) => {
+  const handleWishlistToggle = useCallback((productId: string) => {
     toggleItem(productId);
-  };
+  }, [toggleItem]);
 
-  const handleProductPress = (product: Product) => {
+  const handleProductPress = useCallback((product: Product) => {
     router.push({
       pathname: "/products/[id]" as any,
       params: { id: product.id },
     });
-  };
+  }, [router]);
 
-  const renderProduct = ({ item }: { item: Product }) => (
+  const renderProduct = useCallback(({ item }: { item: Product }) => (
     <ProductCard
       product={item}
-      onPress={() => handleProductPress(item)}
+      onPress={handleProductPress}
       isWishlisted={true}
-      onWishlistToggle={() => handleWishlistToggle(item.id)}
+      onWishlistToggle={handleWishlistToggle}
     />
-  );
+  ), [handleProductPress, handleWishlistToggle]);
 
   if (productsLoading || wishlistLoading) {
     return (
       <View style={styles.container}>
-        <View style={styles.header}>
+        <View style={[styles.header, { paddingTop: insets.top + 8 }]}>
           <Text style={styles.title}>Wishlist</Text>
         </View>
         <SectionSkeleton />
@@ -67,7 +69,7 @@ export default function WishlistScreen() {
   if (wishlistProducts.length === 0) {
     return (
       <View style={styles.container}>
-        <View style={styles.header}>
+        <View style={[styles.header, { paddingTop: insets.top + 8 }]}>
           <Text style={styles.title}>Wishlist</Text>
         </View>
         <EmptyWishlist onBrowse={() => router.push('/shop')} />
@@ -77,7 +79,7 @@ export default function WishlistScreen() {
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
+      <View style={[styles.header, { paddingTop: insets.top + 8 }]}>
         <Text style={styles.title}>Wishlist</Text>
         <Text style={styles.count}>{wishlistProducts.length}</Text>
       </View>

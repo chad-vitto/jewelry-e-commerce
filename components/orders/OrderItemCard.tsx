@@ -1,4 +1,4 @@
-import { Colors, formatCurrency } from '@/constants';
+import { formatCurrency } from '@/constants';
 import { useTheme } from '@/hooks/useTheme';
 import type { AppColors } from '@/constants/themes';
 import { Crown, Scale } from 'lucide-react-native';

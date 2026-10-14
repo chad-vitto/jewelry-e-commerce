@@ -1,15 +1,15 @@
-import { useEffect, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import {
-  ArrowLeft,
-  Edit3,
-  ImageIcon,
-  Plus,
-  Search,
-  ToggleLeft,
-  ToggleRight,
-  Trash2
+    ChevronLeft,
+    Edit3,
+    ImageIcon,
+    Plus,
+    Search,
+    ToggleLeft,
+    ToggleRight,
+    Trash2
 } from 'lucide-react-native';
-import { CATEGORIES, Colors, formatCurrency } from '@/constants';
+import { CATEGORIES, formatCurrency } from '@/constants';
 import { useTheme } from '@/hooks/useTheme';
 import type { AppColors } from '@/constants/themes';
 import { GoldPurityBadge, StockBadge } from '@/components';
@@ -19,52 +19,44 @@ import { Shadows } from '@/constants/shadows';
 import { Stack, useRouter } from 'expo-router';
 import { useAdminProducts } from '@/hooks';
 import {
-  View,
-  Text,
-  StyleSheet,
-  FlatList,
-  Pressable,
-  TextInput,
-  Alert,
+    View,
+    Text,
+    StyleSheet,
+    FlatList,
+    Pressable,
+    TextInput,
+    Alert,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function AdminProductsScreen() {
   const { colors } = useTheme();
   const styles = createStyles(colors);
+  const insets = useSafeAreaInsets();
   const router = useRouter();
-  const { products, isLoading, fetchProducts, toggleActive, deleteProduct } =
-    useAdminProducts();
+  const { products, fetchProducts, toggleActive, deleteProduct } = useAdminProducts();
   const [search, setSearch] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<
     ProductCategory | 'all'
   >('all');
-  const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
 
   useEffect(() => {
     fetchProducts();
   }, [fetchProducts]);
 
-  useEffect(() => {
-    let filtered = products;
-
-    if (search) {
-      filtered = filtered.filter((p) =>
-        p.name.toLowerCase().includes(search.toLowerCase()),
-      );
-    }
-
-    if (selectedCategory !== 'all') {
-      filtered = filtered.filter((p) => p.category === selectedCategory);
-    }
-
-    setFilteredProducts(filtered);
+  const filteredProducts = useMemo(() => {
+    const normalizedSearch = search.toLowerCase();
+    return products.filter((product) =>
+      (!normalizedSearch || product.name.toLowerCase().includes(normalizedSearch)) &&
+      (selectedCategory === 'all' || product.category === selectedCategory),
+    );
   }, [products, search, selectedCategory]);
 
-  const handleToggleActive = async (product: Product) => {
+  const handleToggleActive = useCallback(async (product: Product) => {
     await toggleActive(product.id, !product.is_active);
-  };
+  }, [toggleActive]);
 
-  const handleDelete = (product: Product) => {
+  const handleDelete = useCallback((product: Product) => {
     Alert.alert(
       'Delete Product',
       `Are you sure you want to delete "${product.name}"?`,
@@ -79,79 +71,34 @@ export default function AdminProductsScreen() {
         },
       ],
     );
-  };
+  }, [deleteProduct]);
 
-  const renderProduct = ({ item }: { item: Product }) => (
-    <View style={styles.productCard}>
-      <Image
-        source={{
-          uri:
-            item.product_images?.[0]?.image_url ||
-            'https://images.pexels.com/photos/269228/pexels-photo-269228.jpeg?auto=compress&cs=tinysrgb&w=200',
-        }}
-        style={styles.productImage}
-        contentFit="cover"
-      />
-      <View style={styles.productInfo}>
-        <Text style={styles.productName} numberOfLines={1}>
-          {item.name}
-        </Text>
-        <View style={styles.productMeta}>
-          <GoldPurityBadge purity={item.gold_purity} />
-          <StockBadge quantity={item.stock_quantity} />
-        </View>
-        <Text style={styles.productPrice}>
-          {formatCurrency(item.price_php)}
-        </Text>
-      </View>
-      <View style={styles.productActions}>
-        <Pressable onPress={() => handleToggleActive(item)}>
-          {item.is_active ? (
-            <ToggleRight size={24} color={colors.status.success} />
-          ) : (
-            <ToggleLeft size={24} color={colors.text.muted} />
-          )}
-        </Pressable>
-        <Pressable
-          style={styles.actionButton}
-          onPress={() =>
-            router.push({
-              pathname: '/admin/products/images' as any,
-              params: { id: item.id },
-            })
-          }
-        >
-          <ImageIcon size={18} color={colors.gold.DEFAULT} />
-        </Pressable>
-        <Pressable
-          style={styles.actionButton}
-          onPress={() =>
-            router.push({
-              pathname: "/products/[id]" as any,
-              params: { id: item.id },
-            })
-          }
-        >
-          <Edit3 size={18} color={colors.gold.DEFAULT} />
-        </Pressable>
-        <Pressable
-          style={styles.actionButton}
-          onPress={() => handleDelete(item)}
-        >
-          <Trash2 size={18} color={colors.status.error} />
-        </Pressable>
-      </View>
-    </View>
-  );
+  const handleManageImages = useCallback((productId: string) => {
+    router.push({ pathname: '/admin/products/images' as any, params: { id: productId } });
+  }, [router]);
+
+  const handleEdit = useCallback((productId: string) => {
+    router.push({ pathname: '/products/[id]' as any, params: { id: productId } });
+  }, [router]);
+
+  const renderProduct = useCallback(({ item }: { item: Product }) => (
+    <AdminProductRow
+      product={item}
+      onToggleActive={handleToggleActive}
+      onManageImages={handleManageImages}
+      onEdit={handleEdit}
+      onDelete={handleDelete}
+    />
+  ), [handleDelete, handleEdit, handleManageImages, handleToggleActive]);
 
   return (
     <View style={styles.container}>
       <Stack.Screen options={{ headerShown: false }} />
 
       {/* Header */}
-      <View style={styles.header}>
+      <View style={[styles.header, { paddingTop: insets.top + 8 }]}>
         <Pressable style={styles.backButton} onPress={() => router.back()}>
-          <ArrowLeft size={24} color={colors.text.primary} />
+          <ChevronLeft size={24} color={colors.text.primary} />
         </Pressable>
         <Text style={styles.headerTitle}>Products</Text>
         <Pressable
@@ -181,6 +128,7 @@ export default function AdminProductsScreen() {
         data={[{ id: 'all', name: 'All' }, ...CATEGORIES]}
         keyExtractor={(item) => item.id}
         horizontal
+        style={styles.filterList}
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.filterContainer}
         renderItem={({ item }) => {
@@ -210,7 +158,7 @@ export default function AdminProductsScreen() {
         data={filteredProducts}
         keyExtractor={(item) => item.id}
         renderItem={renderProduct}
-        contentContainerStyle={styles.listContent}
+        contentContainerStyle={[styles.listContent, { paddingBottom: insets.bottom + 16 }]}
         showsVerticalScrollIndicator={false}
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
@@ -221,6 +169,76 @@ export default function AdminProductsScreen() {
     </View>
   );
 }
+
+interface AdminProductRowProps {
+  product: Product;
+  onToggleActive: (product: Product) => void;
+  onManageImages: (productId: string) => void;
+  onEdit: (productId: string) => void;
+  onDelete: (product: Product) => void;
+}
+
+const AdminProductRow = memo(function AdminProductRow({
+  product,
+  onToggleActive,
+  onManageImages,
+  onEdit,
+  onDelete,
+}: AdminProductRowProps) {
+  const { colors } = useTheme();
+  const styles = createStyles(colors);
+  const imageUrl = product.product_images?.[0]?.image_url ||
+    'https://images.pexels.com/photos/269228/pexels-photo-269228.jpeg?auto=compress&cs=tinysrgb&w=200';
+
+  return (
+    <View style={styles.productCard}>
+      <Image source={{ uri: imageUrl }} style={styles.productImage} contentFit="cover" />
+      <View style={styles.productInfo}>
+        <Text style={styles.productName} numberOfLines={1}>{product.name}</Text>
+        <View style={styles.productMeta}>
+          <GoldPurityBadge purity={product.gold_purity} />
+          <StockBadge quantity={product.stock_quantity} />
+        </View>
+        <Text style={styles.productPrice}>{formatCurrency(product.price_php)}</Text>
+      </View>
+      <View style={styles.productActions}>
+        <Pressable
+          style={styles.actionButton}
+          accessibilityRole="button"
+          accessibilityLabel={product.is_active ? 'Deactivate product' : 'Activate product'}
+          onPress={() => onToggleActive(product)}
+        >
+          {product.is_active ? (
+            <ToggleRight size={22} color={colors.status.success} />
+          ) : (
+            <ToggleLeft size={22} color={colors.text.muted} />
+          )}
+        </Pressable>
+        <Pressable style={styles.actionButton} accessibilityRole="button" accessibilityLabel="Manage product images" onPress={() => onManageImages(product.id)}>
+          <ImageIcon size={18} color={colors.gold.DEFAULT} />
+        </Pressable>
+        <Pressable style={styles.actionButton} accessibilityRole="button" accessibilityLabel="Edit product" onPress={() => onEdit(product.id)}>
+          <Edit3 size={18} color={colors.gold.DEFAULT} />
+        </Pressable>
+        <Pressable style={styles.actionButton} accessibilityRole="button" accessibilityLabel="Delete product" onPress={() => onDelete(product)}>
+          <Trash2 size={18} color={colors.status.error} />
+        </Pressable>
+      </View>
+    </View>
+  );
+}, (previous, next) =>
+  previous.onToggleActive === next.onToggleActive &&
+  previous.onManageImages === next.onManageImages &&
+  previous.onEdit === next.onEdit &&
+  previous.onDelete === next.onDelete &&
+  previous.product.id === next.product.id &&
+  previous.product.name === next.product.name &&
+  previous.product.product_images?.[0]?.image_url === next.product.product_images?.[0]?.image_url &&
+  previous.product.gold_purity === next.product.gold_purity &&
+  previous.product.stock_quantity === next.product.stock_quantity &&
+  previous.product.price_php === next.product.price_php &&
+  previous.product.is_active === next.product.is_active,
+);
 
 const createStyles = (colors: AppColors) => StyleSheet.create({
   container: {
@@ -278,10 +296,16 @@ const createStyles = (colors: AppColors) => StyleSheet.create({
   },
   filterContainer: {
     paddingHorizontal: 12,
-    paddingBottom: 12,
+    alignItems: 'center',
     gap: 8,
   },
+  filterList: {
+    height: 52,
+    flexGrow: 0,
+  },
   filterPill: {
+    minHeight: 38,
+    alignItems: 'center',
     paddingVertical: 8,
     paddingHorizontal: 16,
     borderRadius: 20,
@@ -308,19 +332,20 @@ const createStyles = (colors: AppColors) => StyleSheet.create({
     flexDirection: 'row',
     backgroundColor: colors.surface,
     borderRadius: 16,
-    padding: 12,
+    padding: 10,
     marginBottom: 12,
     alignItems: 'center',
     ...Shadows.premium,
   },
   productImage: {
-    width: 70,
-    height: 70,
+    width: 64,
+    height: 64,
     borderRadius: 8,
   },
   productInfo: {
     flex: 1,
-    marginLeft: 12,
+    minWidth: 0,
+    marginLeft: 8,
   },
   productName: {
     fontFamily: 'Inter_600SemiBold',
@@ -330,7 +355,8 @@ const createStyles = (colors: AppColors) => StyleSheet.create({
   },
   productMeta: {
     flexDirection: 'row',
-    gap: 8,
+    flexWrap: 'wrap',
+    gap: 4,
     marginBottom: 4,
   },
   productPrice: {
@@ -341,11 +367,14 @@ const createStyles = (colors: AppColors) => StyleSheet.create({
   productActions: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: 2,
+    marginLeft: 4,
   },
-  
   actionButton: {
-    padding: 8,
+    width: 28,
+    height: 36,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   emptyContainer: {
     alignItems: 'center',

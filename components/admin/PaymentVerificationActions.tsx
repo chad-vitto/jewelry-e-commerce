@@ -1,6 +1,5 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, ActivityIndicator, StyleSheet } from 'react-native';
-import { Colors } from '@/constants';
 import { useTheme } from '@/hooks/useTheme';
 import type { AppColors } from '@/constants/themes';
 import type { PaymentProofStatus } from '@/types';
@@ -8,6 +7,7 @@ import type { PaymentProofStatus } from '@/types';
 interface PaymentVerificationActionsProps {
   paymentStatus: PaymentProofStatus;
   loading?: boolean;
+  canAct?: boolean;
   onVerify: () => void;
   onReject: () => void;
 }
@@ -15,6 +15,7 @@ interface PaymentVerificationActionsProps {
 export const PaymentVerificationActions: React.FC<PaymentVerificationActionsProps> = ({
   paymentStatus,
   loading = false,
+  canAct = true,
   onVerify,
   onReject,
 }) => {
@@ -23,7 +24,8 @@ export const PaymentVerificationActions: React.FC<PaymentVerificationActionsProp
 
   return (
     <View style={styles.card}>
-      {paymentStatus === 'submitted' && (
+
+      {paymentStatus === 'submitted' && canAct && (
         <>
           <Text style={styles.title}>Admin Actions</Text>
           <View style={styles.centerBox}>
@@ -56,6 +58,14 @@ export const PaymentVerificationActions: React.FC<PaymentVerificationActionsProp
             )}
           </TouchableOpacity>
         </>
+      )}
+      {paymentStatus === 'submitted' && !canAct && (
+        <View style={styles.centerBox}>
+          <Text style={styles.errorText}>Payment Review Unavailable</Text>
+          <Text style={styles.hint}>
+            This order was cancelled. Payment verification is no longer available.
+          </Text>
+        </View>
       )}
 
       {paymentStatus === 'verified' && (

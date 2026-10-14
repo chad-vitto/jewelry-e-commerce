@@ -1,43 +1,44 @@
-import React, { useState, useEffect } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  Pressable,
-  ActivityIndicator,
-  Alert,
-  RefreshControl,
-} from 'react-native';
-import { useRouter, Stack } from 'expo-router';
+import AccessDenied from '@/components/AccessDenied';
+import React, { useEffect, useState } from 'react';
+import { Stack, useRouter } from 'expo-router';
 import { useAdminUsers } from '@/hooks';
-import { Colors } from '@/constants';
+import { useAuthStore } from '@/store/authStore';
+import { UserRole } from '@/types';
 import { useTheme } from '@/hooks/useTheme';
+import {
+    View,
+    Text,
+    StyleSheet,
+    ScrollView,
+    Pressable,
+    ActivityIndicator,
+    Alert,
+    RefreshControl,
+} from 'react-native';
 import type { AppColors } from '@/constants/themes';
 import {
-  ArrowLeft,
-  Users,
-  Shield,
-  UserCheck,
-  User as UserIcon,
+    ChevronLeft,
+    Users,
+    Shield,
+    UserCheck,
+    User as UserIcon,
 } from 'lucide-react-native';
-import { UserRole } from '@/types';
-import { useAuthStore } from '@/store/authStore';
-import AccessDenied from '@/components/AccessDenied';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function AdminUsersScreen() {
   const { colors } = useTheme();
   const styles = createStyles(colors);
+  const insets = useSafeAreaInsets();
   const router = useRouter();
   const { users, isLoading, error, fetchUsers, updateUserRole } = useAdminUsers();
-  const [selectedRole, setSelectedRole] = useState<{ userId: string; role: UserRole } | null>(null);
+
   const [isUpdating, setIsUpdating] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const { user } = useAuthStore();
 
   useEffect(() => {
     fetchUsers();
-  }, []);
+  }, [fetchUsers]);
 
   const onRefresh = React.useCallback(() => {
     setRefreshing(true);
@@ -105,9 +106,9 @@ export default function AdminUsersScreen() {
       <Stack.Screen options={{ headerShown: false }} />
 
       {/* Header */}
-      <View style={styles.header}>
+      <View style={[styles.header, { paddingTop: insets.top + 8 }]}>
         <Pressable style={styles.backButton} onPress={() => router.back()}>
-          <ArrowLeft size={24} color={colors.text.primary} />
+          <ChevronLeft size={24} color={colors.text.primary} />
         </Pressable>
         <View style={styles.headerTitle}>
           <Users size={28} color={colors.gold.DEFAULT} />
@@ -129,6 +130,7 @@ export default function AdminUsersScreen() {
       ) : (
         <ScrollView
           style={styles.scrollView}
+          contentContainerStyle={{ paddingBottom: insets.bottom + 16 }}
           refreshControl={
             <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
           }

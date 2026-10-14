@@ -1,9 +1,8 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { View, Alert, StyleSheet } from 'react-native';
 import { useRouter, Stack } from 'expo-router';
 import { ProductForm } from '@/components/ProductForm';
 import { supabase } from '@/lib/supabase';
-import { Colors } from '@/constants';
 import { useTheme } from '@/hooks/useTheme';
 import type { AppColors } from '@/constants/themes';
 
@@ -92,6 +91,7 @@ export default function NewProductScreen() {
       <ProductForm
         title="Create New Product"
         onSubmit={handleSubmit}
+        onCancel={() => router.back()}
         isLoading={isLoading}
       />
     </View>

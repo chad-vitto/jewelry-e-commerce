@@ -1,16 +1,44 @@
 {
-    "cSpell.words": [
-        "gcash",
-        "ilike",
-        "paymaya",
-        "PGRST",
-        "Postgrest",
-        "Pressable",
-        "Reloved",
-        "Subviews",
-        "supabase",
-        "Unibank",
-        "Wishlisted",
-        "worklets"
-    ]
+  "[typescript]": {
+    "editor.defaultFormatter": "vscode.typescript-language-features"
+  },
+  "cSpell.words": [
+    "buong",
+    "datetimepicker",
+    "Gamitin",
+    "gcash",
+    "ilike",
+    "paymaya",
+    "PGRST",
+    "Postgrest",
+    "Pressable",
+    "Reloved",
+    "Subviews",
+    "supabase",
+    "Unibank",
+    "Wishlisted",
+    "worklets"
+  ],
+  "deno.enable": true,
+  "deno.enablePaths": [
+    "supabase/functions"
+  ],
+  "deno.importMap": "./supabase/functions/send-push-notification/deno.json",
+  "deno.lint": true,
+  "deno.unstable": [
+    "bare-node-builtins",
+    "byonm",
+    "sloppy-imports",
+    "unsafe-proto",
+    "webgpu",
+    "broadcast-channel",
+    "worker-options",
+    "cron",
+    "kv",
+    "ffi",
+    "fs",
+    "http",
+    "net"
+  ],
+  "react-native-stylesheet-cleaner.autoCleanOnSave": true
 }

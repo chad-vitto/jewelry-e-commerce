@@ -1,4 +1,5 @@
 import { Shadows } from '@/constants';
+import { BlurTargetView, BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import { OrderCard } from '@/components/profile/OrderCard';
 import { useAuthStore, useWishlistStore } from '@/store';
@@ -6,23 +7,31 @@ import { useAddresses, useOrders } from '@/hooks';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { User, Package, Heart, MapPin, Settings, LogOut, ChevronRight, ShoppingBag, Gift, } from 'lucide-react-native';
-import { Alert, Dimensions, Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, Dimensions, Image, ImageBackground, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { RefreshControl } from 'react-native-gesture-handler';
 import { useTheme } from '@/hooks/useTheme';
 import type { AppColors } from '@/constants/themes';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { authBlurTargetRef } from '@/constants/authBlurTarget';
 
 export default function ProfileScreen() {
 
   const router = useRouter();
   const { colors } = useTheme();
-  const styles = createStyles(colors);
-
-  const { user, isAuthenticated, isAdmin, signOut, isLoading } = useAuthStore();
+  const isDark = colors.primary === '#0A0A0A';
+  const styles = createStyles(colors);  const { user, isAuthenticated, signOut } = useAuthStore();
+  const authBlurMethod = Platform.OS === 'android' ? 'dimezisBlurViewSdk31Plus' : undefined;
+  const insets = useSafeAreaInsets();
   const { orders, refetch } = useOrders(user?.id);
   const { addresses, loadAddresses, } = useAddresses(user?.id);
 
   const wishlistCount = useWishlistStore((state) => state.productIds.length,);
   const [refreshing, setRefreshing] = useState(false);
+
+  const handleOrderPress = useCallback((order: { id: string }) => {
+    router.push(`/profile/orders/${order.id}`);
+  }, [router]);
+
 
   useFocusEffect(
     useCallback(() => {
@@ -47,28 +56,67 @@ export default function ProfileScreen() {
   if (!isAuthenticated) {
     return (
       <View style={styles.container}>
+        <BlurTargetView
+          ref={authBlurTargetRef}
+          style={styles.authBackgroundTarget}
+          pointerEvents="none"
+        >
+          {isDark ? (
+            <>
+              <ImageBackground
+                source={require('../../assets/images/auth-jewelry-macro.png')}
+                resizeMode="cover"
+                style={styles.authBackground}
+                imageStyle={styles.authBackgroundImage}
+              />
+              <BlurView intensity={4} tint="dark" style={styles.authBackgroundOverlay} />
+              <View style={styles.authBackgroundTint} />
+            </>
+          ) : (
+            <LinearGradient
+              colors={['#F8F5ED', '#EEE6D5', '#FAF8F3']}
+              locations={[0, 0.52, 1]}
+              style={styles.authBackground}
+            />
+          )}
+        </BlurTargetView>
         <View style={styles.authPrompt}>
-          <View style={styles.authIconContainer}>
-            <User size={48} color={colors.gold.DEFAULT} />
+          <View style={styles.authGlassBorder}>
+            <View style={styles.authGlassFrame}>
+              <BlurView
+                blurTarget={authBlurTargetRef}
+                blurMethod={authBlurMethod}
+                intensity={isDark ? 30 : 26}
+                tint={isDark ? 'dark' : 'light'}
+                style={styles.authGlass}
+              >
+                <View style={styles.authGlassHighlight} pointerEvents="none" />
+                <View style={styles.authGlassContent}>
+                <View style={styles.authIconContainer}>
+                  <User size={48} color={colors.gold.DEFAULT} />
+                </View>
+                <Text style={styles.authTitle}>Welcome to Reloved Gold</Text>
+                <Text style={styles.authSubtitle}>
+                  Sign in to access your orders, wishlist, and exclusive offers.
+                </Text>
+
+                <Pressable
+                  style={styles.signInButton}
+                  onPress={() => router.push('/auth/sign-in')}
+                >
+                  <Text style={styles.signInButtonText}>Sign In</Text>
+                </Pressable>
+
+                <Pressable
+                  style={styles.registerButton}
+                  onPress={() => router.push('/auth/register')}
+                >
+                  <Text style={styles.registerButtonText}>Create Account</Text>
+                </Pressable>
+                </View>
+              </BlurView>
+            </View>
           </View>
-          <Text style={styles.authTitle}>Welcome to Reloved Gold</Text>
-          <Text style={styles.authSubtitle}>
-            Sign in to access your orders, wishlist, and exclusive offers.
-          </Text>
-
-          <Pressable
-            style={styles.signInButton}
-            onPress={() => router.push('/auth/sign-in')}
-          >
-            <Text style={styles.signInButtonText}>Sign In</Text>
-          </Pressable>
-
-          <Pressable
-            style={styles.registerButton}
-            onPress={() => router.push('/auth/register')}
-          >
-            <Text style={styles.registerButtonText}>Create Account</Text>
-          </Pressable>
         </View>
       </View>
     );
@@ -105,7 +153,7 @@ export default function ProfileScreen() {
         />
       }>
       {/* Profile Header */}
-      <View style={styles.header}>
+      <View style={[styles.header, { paddingTop: insets.top + 24 }]}>
         <LinearGradient
           colors={['#111111', '#1B1814', '#111111']}
           start={{ x: 0, y: 0 }}
@@ -232,7 +280,7 @@ export default function ProfileScreen() {
                 <View key={order.id} style={styles.recentOrderItem}>
                   <OrderCard
                     order={order}
-                    onPress={() => router.push(`/profile/orders/${order.id}`)}
+                    onPress={handleOrderPress}
                   />
                 </View>
               ))}
@@ -458,6 +506,24 @@ const createStyles = (colors: AppColors) =>
     container: {
       flex: 1,
       backgroundColor: colors.primary,
+    },
+    authBackground: {
+      ...StyleSheet.absoluteFill,
+    },
+    authBackgroundTarget: {
+      ...StyleSheet.absoluteFill,
+    },
+    authBackgroundImage: {
+      opacity: 0.78,
+    },
+    authBackgroundOverlay: {
+      ...StyleSheet.absoluteFill,
+    },
+    authBackgroundTint: {
+      ...StyleSheet.absoluteFill,
+      backgroundColor: colors.primary === '#0A0A0A'
+        ? 'rgba(6,5,4,0.28)'
+        : 'rgba(255,252,244,0.12)',
     },
     header: {
       alignItems: 'center',
@@ -976,11 +1042,58 @@ const createStyles = (colors: AppColors) =>
       justifyContent: 'center',
       paddingHorizontal: 32,
     },
+    authGlassBorder: {
+      width: '100%',
+      maxWidth: 440,
+      borderRadius: 30,
+      shadowColor: '#000000',
+      shadowOpacity: colors.primary === '#0A0A0A' ? 0.22 : 0.1,
+      shadowRadius: 28,
+      shadowOffset: { width: 0, height: 12 },
+      elevation: 9,
+    },
+    authGlassFrame: {
+      borderRadius: 30,
+      overflow: 'hidden',
+      borderWidth: 1,
+      borderColor: colors.primary === '#0A0A0A'
+        ? 'rgba(255,244,220,0.3)'
+        : 'rgba(151,119,59,0.34)',
+    },
+    authGlass: {
+      position: 'relative',
+      borderRadius: 29,
+      overflow: 'hidden',
+      backgroundColor: colors.primary === '#0A0A0A'
+        ? 'rgba(14,13,12,0.2)'
+        : 'rgba(255,251,243,0.32)',
+    },
+    authGlassHighlight: {
+      position: 'absolute',
+      top: 1,
+      left: 28,
+      right: 28,
+      height: 1,
+      backgroundColor: colors.primary === '#0A0A0A'
+        ? 'rgba(255,255,255,0.24)'
+        : 'rgba(255,255,255,0.7)',
+    },
+    authGlassContent: {
+      alignItems: 'center',
+      paddingHorizontal: 24,
+      paddingVertical: 32,
+    },
     authIconContainer: {
       width: 100,
       height: 100,
       borderRadius: 50,
-      backgroundColor: colors.surface,
+      backgroundColor: colors.primary === '#0A0A0A'
+        ? 'rgba(255,255,255,0.07)'
+        : 'rgba(255,255,255,0.56)',
+      borderWidth: 1,
+      borderColor: colors.primary === '#0A0A0A'
+        ? 'rgba(225,190,115,0.26)'
+        : 'rgba(184,154,89,0.34)',
       alignItems: 'center',
       justifyContent: 'center',
       marginBottom: 24,
@@ -990,6 +1103,7 @@ const createStyles = (colors: AppColors) =>
       fontSize: 32,
       color: colors.text.primary,
       marginBottom: 8,
+      textAlign: 'center',
     },
     authSubtitle: {
       fontFamily: 'Inter_400Regular',
@@ -1004,6 +1118,7 @@ const createStyles = (colors: AppColors) =>
       paddingHorizontal: 48,
       borderRadius: 12,
       marginBottom: 12,
+      alignItems: 'center',
     },
     signInButtonText: {
       fontFamily: 'Inter_600SemiBold',
@@ -1018,6 +1133,7 @@ const createStyles = (colors: AppColors) =>
       paddingHorizontal: 48,
       borderRadius: 12,
       marginBottom: 12,
+      alignItems: 'center',
     },
     registerButtonText: {
       fontFamily: 'Inter_600SemiBold',

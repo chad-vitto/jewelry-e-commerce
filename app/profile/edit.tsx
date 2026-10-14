@@ -1,6 +1,6 @@
 import * as ImagePicker from 'expo-image-picker';
 import { useState } from 'react';
-import { ArrowLeft, Camera, User } from 'lucide-react-native';
+import { ChevronLeft, Camera, User } from 'lucide-react-native';
 import { GoldButton } from '@/components';
 import { supabase } from '@/lib/supabase';
 import { useAuthStore } from '@/store';
@@ -9,20 +9,22 @@ import { useTheme } from '@/hooks/useTheme';
 import type { AppColors } from '@/constants/themes';
 import { useRouter } from 'expo-router';
 import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  Pressable,
-  Image,
-  TextInput,
-  Alert,
+    View,
+    Text,
+    StyleSheet,
+    ScrollView,
+    Pressable,
+    Image,
+    TextInput,
+    Alert,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function EditProfileScreen() {
   const router = useRouter();
   const { colors } = useTheme();
   const styles = createStyles(colors);
+  const insets = useSafeAreaInsets();
   const { user, fetchProfile } = useAuthStore();
 
   const [fullName, setFullName] = useState(user?.full_name ?? '');
@@ -97,12 +99,12 @@ export default function EditProfileScreen() {
   return (
     <ScrollView
       style={styles.container}
-      contentContainerStyle={styles.content}
+      contentContainerStyle={[styles.content, { paddingTop: insets.top + 20, paddingBottom: insets.bottom + 24 }]}
       showsVerticalScrollIndicator={false}
     >
       <View style={styles.header}>
         <Pressable style={styles.backButton} onPress={() => router.back()}>
-          <ArrowLeft size={22} color={colors.text.primary} />
+          <ChevronLeft size={22} color={colors.text.primary} />
         </Pressable>
 
         <Text style={styles.title}>Edit Profile</Text>

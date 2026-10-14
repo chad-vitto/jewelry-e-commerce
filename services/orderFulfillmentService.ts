@@ -22,7 +22,30 @@ export async function startProcessing(orderId: string): Promise<Order | null> {
     .single();
 
   if (error) throw error;
-  return data as Order;
+
+  const order = data as Order;
+
+  const { error: notificationError } =
+    await supabase.functions.invoke(
+      'send-push-notification',
+      {
+        body: {
+          user_id: order.customer_id,
+          notification_type: 'order_updates',
+          title: 'Order Update ✨',
+          body: 'Your order is now being processed.',
+        },
+      },
+    );
+
+  if (notificationError) {
+    console.warn(
+      'Failed to send order update notification:',
+      notificationError,
+    );
+  }
+
+  return order;
 }
 
 /**

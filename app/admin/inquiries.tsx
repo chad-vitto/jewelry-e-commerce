@@ -1,13 +1,13 @@
-import { useState, useEffect } from 'react';
+import { memo, useCallback, useEffect, useState } from 'react';
 import { View, Text, StyleSheet, FlatList, Pressable } from 'react-native';
 import { useRouter, Stack } from 'expo-router';
 import { useAdminInquiries } from '@/hooks';
 import { InquiryStatusBadge } from '@/components';
-import { Colors } from '@/constants';
 import { useTheme } from '@/hooks/useTheme';
 import type { AppColors } from '@/constants/themes';
-import { ArrowLeft, Inbox, Clock } from 'lucide-react-native';
+import { ChevronLeft, Inbox, Clock } from 'lucide-react-native';
 import { Inquiry, InquiryStatus } from '@/types';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const STATUS_FILTERS: { value: InquiryStatus | 'all'; label: string }[] = [
   { value: 'all', label: 'All' },
@@ -19,8 +19,9 @@ const STATUS_FILTERS: { value: InquiryStatus | 'all'; label: string }[] = [
 export default function AdminInquiriesScreen() {
   const { colors } = useTheme();
   const styles = createStyles(colors);
+  const insets = useSafeAreaInsets();
   const router = useRouter();
-  const { inquiries, isLoading, fetchInquiries } = useAdminInquiries();
+  const { inquiries, fetchInquiries } = useAdminInquiries();
   const [selectedStatus, setSelectedStatus] = useState<InquiryStatus | 'all'>(
     'all',
   );
@@ -34,65 +35,25 @@ export default function AdminInquiriesScreen() {
       ? inquiries
       : inquiries.filter((i) => i.status === selectedStatus);
 
-  const handleInquiryPress = (inquiry: Inquiry) => {
+  const handleInquiryPress = useCallback((inquiry: Inquiry) => {
     router.push({
       pathname: "/admin/inquiries/[id]" as any,
       params: { id: inquiry.id },
     });
-  };
+  }, [router]);
 
-  const renderInquiry = ({ item }: { item: Inquiry }) => (
-    <Pressable
-      style={[
-        styles.inquiryCard,
-        item.status === 'new' && styles.newInquiryCard,
-      ]}
-      onPress={() => handleInquiryPress(item)}
-    >
-      <View style={styles.inquiryHeader}>
-        <View style={styles.avatar}>
-          <Text style={styles.avatarText}>
-            {item.customer_name.charAt(0).toUpperCase()}
-          </Text>
-        </View>
-        <View style={styles.inquiryInfo}>
-          <Text style={styles.customerName}>{item.customer_name}</Text>
-          <Text style={styles.subjectLine} numberOfLines={1}>
-            {item.subject}
-          </Text>
-        </View>
-        <InquiryStatusBadge status={item.status} />
-      </View>
-
-      <Text style={styles.messagePreview} numberOfLines={2}>
-        {item.message}
-      </Text>
-
-      <View style={styles.inquiryFooter}>
-        <View style={styles.dateContainer}>
-          <Clock size={14} color={colors.text.muted} />
-          <Text style={styles.dateText}>
-            {new Date(item.created_at).toLocaleDateString('en-PH', {
-              month: 'short',
-              day: 'numeric',
-            })}
-          </Text>
-        </View>
-        {item.product_id && (
-          <Text style={styles.productRef}>Product inquiry</Text>
-        )}
-      </View>
-    </Pressable>
-  );
+  const renderInquiry = useCallback(({ item }: { item: Inquiry }) => (
+    <AdminInquiryRow inquiry={item} onPress={handleInquiryPress} />
+  ), [handleInquiryPress]);
 
   return (
     <View style={styles.container}>
       <Stack.Screen options={{ headerShown: false }} />
 
       {/* Header */}
-      <View style={styles.header}>
+      <View style={[styles.header, { paddingTop: insets.top + 8 }]}>
         <Pressable style={styles.backButton} onPress={() => router.back()}>
-          <ArrowLeft size={24} color={colors.text.primary} />
+          <ChevronLeft size={24} color={colors.text.primary} />
         </Pressable>
         <Text style={styles.headerTitle}>Inquiries</Text>
         <View style={{ width: 44 }} />
@@ -103,6 +64,7 @@ export default function AdminInquiriesScreen() {
         data={STATUS_FILTERS}
         keyExtractor={(item) => item.value}
         horizontal
+        style={styles.filterList}
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.filterContainer}
         renderItem={({ item }) => {
@@ -150,7 +112,7 @@ export default function AdminInquiriesScreen() {
         data={filteredInquiries}
         keyExtractor={(item) => item.id}
         renderItem={renderInquiry}
-        contentContainerStyle={styles.listContent}
+        contentContainerStyle={[styles.listContent, { paddingBottom: insets.bottom + 16 }]}
         showsVerticalScrollIndicator={false}
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
@@ -162,6 +124,58 @@ export default function AdminInquiriesScreen() {
     </View>
   );
 }
+
+interface AdminInquiryRowProps {
+  inquiry: Inquiry;
+  onPress: (inquiry: Inquiry) => void;
+}
+
+const AdminInquiryRow = memo(function AdminInquiryRow({ inquiry, onPress }: AdminInquiryRowProps) {
+  const { colors } = useTheme();
+  const styles = createStyles(colors);
+
+  return (
+    <Pressable
+      style={[styles.inquiryCard, inquiry.status === 'new' && styles.newInquiryCard]}
+      onPress={() => onPress(inquiry)}
+    >
+      <View style={styles.inquiryHeader}>
+        <View style={styles.avatar}>
+          <Text style={styles.avatarText}>{inquiry.customer_name.charAt(0).toUpperCase()}</Text>
+        </View>
+        <View style={styles.inquiryInfo}>
+          <Text style={styles.customerName}>{inquiry.customer_name}</Text>
+          <Text style={styles.subjectLine} numberOfLines={1}>{inquiry.subject}</Text>
+        </View>
+        <InquiryStatusBadge status={inquiry.status} />
+      </View>
+
+      <Text style={styles.messagePreview} numberOfLines={2}>{inquiry.message}</Text>
+
+      <View style={styles.inquiryFooter}>
+        <View style={styles.dateContainer}>
+          <Clock size={14} color={colors.text.muted} />
+          <Text style={styles.dateText}>
+            {new Date(inquiry.created_at).toLocaleDateString('en-PH', {
+              month: 'short',
+              day: 'numeric',
+            })}
+          </Text>
+        </View>
+        {inquiry.product_id && <Text style={styles.productRef}>Product inquiry</Text>}
+      </View>
+    </Pressable>
+  );
+}, (previous, next) =>
+  previous.onPress === next.onPress &&
+  previous.inquiry.id === next.inquiry.id &&
+  previous.inquiry.customer_name === next.inquiry.customer_name &&
+  previous.inquiry.subject === next.inquiry.subject &&
+  previous.inquiry.status === next.inquiry.status &&
+  previous.inquiry.message === next.inquiry.message &&
+  previous.inquiry.created_at === next.inquiry.created_at &&
+  previous.inquiry.product_id === next.inquiry.product_id,
+);
 
 const createStyles = (colors: AppColors) => StyleSheet.create({
   container: {
@@ -191,14 +205,19 @@ const createStyles = (colors: AppColors) => StyleSheet.create({
   },
   filterContainer: {
     paddingHorizontal: 12,
-    paddingBottom: 12,
+    alignItems: 'center',
     gap: 8,
+  },
+  filterList: {
+    height: 52,
+    flexGrow: 0,
   },
   filterPill: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: 8,
     paddingHorizontal: 14,
+    minHeight: 38,
     borderRadius: 20,
     backgroundColor: colors.surface,
     borderWidth: 1,
@@ -220,8 +239,11 @@ const createStyles = (colors: AppColors) => StyleSheet.create({
   filterBadge: {
     backgroundColor: colors.border.DEFAULT,
     borderRadius: 10,
-    paddingHorizontal: 8,
-    paddingVertical: 2,
+    minWidth: 18,
+    height: 18,
+    paddingHorizontal: 6,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   filterBadgeActive: {
     backgroundColor: colors.primary + '40',

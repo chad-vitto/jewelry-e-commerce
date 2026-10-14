@@ -1,25 +1,19 @@
-import { useCallback, useState } from 'react';
+import TrustBanner from '@/components/TrustBanner';
 import { ArrowRight } from 'lucide-react-native';
 import { CATEGORIES, formatCurrency, Shadows } from '@/constants';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { ProductCarousel, ProductGrid, SectionSkeleton } from '@/components';
 import { ProductCategory } from '@/types';
+import { useCallback, useState } from 'react';
 import { useFeaturedProducts, useProducts } from '@/hooks';
 import { useRouter } from 'expo-router';
-import { useWishlistStore } from '@/store';
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  Pressable,
-  Dimensions,
-  RefreshControl,
-} from 'react-native';
-import TrustBanner from '@/components/TrustBanner';
 import { useTheme } from '@/hooks/useTheme';
+import { useWishlistStore } from '@/store';
+import { View, Text, StyleSheet, ScrollView, Pressable, Dimensions, RefreshControl, } from 'react-native';
 import type { AppColors } from '@/constants/themes';
+import { usePromotions } from '@/hooks/usePromotions';
+import PromotionBanner from '@/components/PromotionBanner';
 
 const { height } = Dimensions.get('window');
 const HERO_HEIGHT = height * 0.5;
@@ -41,6 +35,12 @@ export default function HomeScreen() {
     refetch: refetchProducts,
   } = useProducts();
 
+  const {
+    promotions,
+    isLoading: promotionsLoading,
+    fetchPromotions: refetchPromotions,
+  } = usePromotions();
+
   const { productIds: wishlistIds, toggleItem: toggleWishlist } =
     useWishlistStore();
 
@@ -59,11 +59,12 @@ export default function HomeScreen() {
     try {
       setRefreshing(true);
 
-      await Promise.all([refetchProducts(), refetchFeatured()]);
+      await Promise.all([refetchProducts(), refetchFeatured(), refetchPromotions(),]);
+
     } finally {
       setRefreshing(false);
     }
-  }, [refetchProducts, refetchFeatured]);
+  }, [refetchProducts, refetchFeatured, refetchPromotions]);
 
   const handleWishlistToggle = (productId: string) => {
     toggleWishlist(productId);
@@ -118,13 +119,35 @@ export default function HomeScreen() {
               style={styles.heroCta}
               onPress={() => router.push('/shop')}
             >
-              <Text style={styles.heroCtaText}>Explore Collection</Text>
+              <Text style={styles.heroCtaText}>Shop Now</Text>
               <ArrowRight size={22} color={colors.primary} />
             </Pressable>
           </View>
         </View>
+
         {/* Trust Banner */}
         <TrustBanner />
+
+        {/* Special Offers */}
+        {!promotionsLoading && promotions.length > 0 && (
+          <View style={styles.promotionsSection}>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.promotionsCarousel}
+              decelerationRate="fast"
+            >
+              {promotions.map((promotion) => (
+                <PromotionBanner
+                  key={promotion.id}
+                  promotion={promotion}
+                  style={styles.promotionCard}
+                  onPress={() => router.push('/shop')}
+                />
+              ))}
+            </ScrollView>
+          </View>
+        )}
 
         {/* Categories Strip */}
         <View style={styles.categoriesSection}>
@@ -168,7 +191,10 @@ export default function HomeScreen() {
               title="Featured Pieces"
               products={featuredProducts}
               showSeeAll
-              onSeeAll={() => router.push('/shop')}
+              onSeeAll={() => router.push({
+                pathname: '/shop',
+                params: { category: 'all', resetCategory: Date.now().toString() },
+              })}
               wishlistIds={wishlistIds}
               onWishlistToggle={handleWishlistToggle}
             />
@@ -184,7 +210,10 @@ export default function HomeScreen() {
               title="New Arrivals"
               products={newArrivals}
               showSeeAll
-              onSeeAll={() => router.push('/shop')}
+              onSeeAll={() => router.push({
+                pathname: '/shop',
+                params: { category: 'all', resetCategory: Date.now().toString() },
+              })}
               wishlistIds={wishlistIds}
               onWishlistToggle={handleWishlistToggle}
             />
@@ -338,6 +367,17 @@ const createStyles = (colors: AppColors) => StyleSheet.create({
     color: '#fff',
     fontSize: 14,
     fontWeight: '700',
+  },
+  promotionsSection: {
+    marginTop: 8,
+  },
+  promotionsCarousel: {
+    paddingHorizontal: 16,
+    paddingRight: 16,
+  },
+  promotionCard: {
+    width: Dimensions.get('window').width - 32,
+    marginRight: 12,
   },
   promoBanner: {
     marginHorizontal: 16,

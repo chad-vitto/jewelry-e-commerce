@@ -1,8 +1,9 @@
 import { StyleSheet, Text, View } from 'react-native';
 
-import { Colors } from '@/constants';
 import { formatDate } from '@/utils/format';
 import { Order, OrderStatus } from '@/types';
+import { useTheme } from '@/hooks/useTheme';
+import type { AppColors } from '@/constants/themes';
 
 interface ShippingInfoCardProps {
   order: Order;
@@ -90,6 +91,9 @@ function InfoRow({
   label,
   value,
 }: InfoRowProps) {
+  const { colors } = useTheme();
+  const styles = createStyles(colors);
+
   return (
     <View style={styles.row}>
       <Text style={styles.label}>
@@ -106,6 +110,8 @@ function InfoRow({
 export function ShippingInfoCard({
   order,
 }: ShippingInfoCardProps) {
+  const { colors } = useTheme();
+  const styles = createStyles(colors);
   const {
     order_status,
     shipping_carrier,
@@ -178,7 +184,7 @@ export function ShippingInfoCard({
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: AppColors) => StyleSheet.create({
   card: {
     width: '100%',
     marginTop: 12,
@@ -186,9 +192,9 @@ const styles = StyleSheet.create({
 
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: Colors.border.DEFAULT,
+    borderColor: colors.border.DEFAULT,
 
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
   },
 
   header: {
@@ -202,7 +208,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 16,
     fontWeight: '600',
-    color: Colors.gold.light,
+    color: colors.gold.light,
   },
 
   badge: {
@@ -227,13 +233,13 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 14,
     fontWeight: '500',
-    color: Colors.text.secondary,
+    color: colors.text.secondary,
   },
 
   value: {
     fontSize: 14,
     fontWeight: '600',
-    color: Colors.text.primary,
+    color: colors.text.primary,
   },
 
   emptyText: {
@@ -242,6 +248,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 20,
 
-    color: Colors.text.muted,
+    color: colors.text.muted,
   },
 });

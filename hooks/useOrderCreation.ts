@@ -1,9 +1,4 @@
-import {
-  ContactInfo,
-  Order,
-  OrderItem,
-  ShippingAddressForm
-  } from '@/types';
+import { ContactInfo, Order, OrderItem, ShippingAddressForm } from '@/types';
 import { supabase } from '@/lib/supabase';
 import { useAuthStore } from '@/store';
 import { useState } from 'react';
@@ -11,6 +6,9 @@ import { useState } from 'react';
 interface CreateOrderInput {
   items: OrderItem[];
   subtotal_php: number;
+  discount_amount_php: number;
+  promotion_id: string | null;
+  promotion_title: string | null;
   shipping_fee_php: number;
   payment_method: 'gcash' | 'paymaya' | 'bank_transfer';
   shipping_address: ShippingAddressForm;
@@ -38,8 +36,14 @@ export function useOrderCreation(): UseOrderCreationReturn {
         customer_id: user?.id || null,
         items: input.items,
         subtotal_php: input.subtotal_php,
+        discount_amount_php: input.discount_amount_php,
+        promotion_id: input.promotion_id,
+        promotion_title: input.promotion_title,
         shipping_fee_php: input.shipping_fee_php,
-        total_amount_php: input.subtotal_php + input.shipping_fee_php,
+        total_amount_php:
+          input.subtotal_php -
+          input.discount_amount_php +
+          input.shipping_fee_php,
         payment_method: input.payment_method,
         payment_status: 'pending' as const,
         order_status: 'pending' as const,

@@ -1,26 +1,30 @@
 import { View, Text, StyleSheet, Pressable, ScrollView, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Colors } from '@/constants';
 import { useTheme } from '@/hooks/useTheme';
 import type { AppColors } from '@/constants/themes';
 import { NotificationToggle } from '@/components/settings/NotificationToggle';
 import { GoldButton } from '@/components';
-import { ArrowLeft, Bell, Gift, Heart, Star } from 'lucide-react-native';
+import { ChevronLeft, Bell, Gift, Heart, Star } from 'lucide-react-native';
 import { useAuthStore } from '@/store';
 import { useNotifications } from '@/hooks/useNotifications';
+import { useTranslation } from '@/hooks/useTranslation';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function NotificationsScreen() {
     const { colors } = useTheme();
     const styles = createStyles(colors);
+    const insets = useSafeAreaInsets();
     const router = useRouter();
     const { user } = useAuthStore();
     const { settings, isLoading, isSaving, updateSetting, saveSettings, } = useNotifications(user?.id);
+
+    const { t } = useTranslation();
 
     if (isLoading || !settings) {
         return (
             <View style={styles.loadingContainer}>
                 <Text style={styles.loadingText}>
-                    Loading...
+                    {t.notifications.loading}
                 </Text>
             </View>
         );
@@ -31,37 +35,37 @@ export default function NotificationsScreen() {
 
         if (!success) {
             Alert.alert(
-                'Error',
-                'Unable to save notification preferences.',
+                t.notifications.error,
+                t.notifications.unableToSave,
             );
             return;
         }
 
         Alert.alert(
-            'Success',
-            'Notification preferences updated.',
+            t.notifications.success,
+            t.notifications.preferencesUpdated,
         );
     };
 
     return (
 
-        <ScrollView style={styles.container} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+        <ScrollView style={styles.container} contentContainerStyle={[styles.content, { paddingTop: insets.top + 20, paddingBottom: insets.bottom + 24 }]} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
 
             {/* Header */}
             <View style={styles.header}>
                 <Pressable style={styles.iconButton} onPress={() => router.back()}>
-                    <ArrowLeft size={20} color={colors.gold.DEFAULT} />
+                    <ChevronLeft size={20} color={colors.gold.DEFAULT} />
                 </Pressable>
-                <Text style={styles.title}>Notifications</Text>
-                <Text style={styles.subtitle}>Stay informed about your account.</Text>
+                <Text style={styles.title}>{t.notifications.title}</Text>
+                <Text style={styles.subtitle}>{t.notifications.description}</Text>
             </View>
 
             {/* Notification Toggles */}
             <View style={styles.card}>
                 <NotificationToggle
                     icon={<Bell size={20} color={colors.gold.DEFAULT} />}
-                    title="Order Updates"
-                    description="Get notified about your order status"
+                    title={t.notifications.orderUpdates}
+                    description={t.notifications.orderUpdatesDescription}
                     value={settings.order_updates}
                     onValueChange={(value) =>
                         updateSetting('order_updates', value)
@@ -69,8 +73,8 @@ export default function NotificationsScreen() {
                 />
                 <NotificationToggle
                     icon={<Gift size={20} color={colors.gold.DEFAULT} />}
-                    title="Promotions & Offers"
-                    description="Receive special offers and discounts"
+                    title={t.notifications.promotionsOffers}
+                    description={t.notifications.promotionsOffersDescription}
                     value={settings.promotions}
                     onValueChange={(value) =>
                         updateSetting('promotions', value)
@@ -78,8 +82,8 @@ export default function NotificationsScreen() {
                 />
                 <NotificationToggle
                     icon={<Heart size={20} color={colors.gold.DEFAULT} />}
-                    title="Wishlist Alerts"
-                    description="Be reminded when items in your wishlist change"
+                    title={t.notifications.wishlistAlerts}
+                    description={t.notifications.wishlistAlertsDescription}
                     value={settings.wishlist_alerts}
                     onValueChange={(value) =>
                         updateSetting('wishlist_alerts', value)
@@ -87,8 +91,8 @@ export default function NotificationsScreen() {
                 />
                 <NotificationToggle
                     icon={<Star size={20} color={colors.gold.DEFAULT} />}
-                    title="New Arrivals"
-                    description="Discover the latest products as they arrive"
+                    title={t.notifications.newArrivals}
+                    description={t.notifications.newArrivalsDescription}
                     value={settings.new_arrivals}
                     onValueChange={(value) =>
                         updateSetting('new_arrivals', value)
@@ -100,7 +104,7 @@ export default function NotificationsScreen() {
             {/* Save Button */}
             <View style={styles.buttonContainer}>
                 <GoldButton
-                    title={isSaving ? 'Saving...' : 'Save Changes'}
+                    title={isSaving ? t.notifications.saving : t.notifications.saveChanges}
                     variant="gradient"
                     size="lg"
                     onPress={handleSave}

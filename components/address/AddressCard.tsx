@@ -1,16 +1,17 @@
+import React from 'react';
 import { View, Text, StyleSheet, Pressable } from 'react-native';
+import { Shadows } from '@/constants';
 import { ShippingAddress } from '@/types';
-import { Colors, Shadows } from '@/constants';
 import { useTheme } from '@/hooks/useTheme';
 import type { AppColors } from '@/constants/themes';
 import { User, Phone, MapPin, Crown, Home, Building2, Star } from 'lucide-react-native';
 
 interface AddressCardProps {
     address: ShippingAddress;
-    onPress?: () => void;
+    onPress?: (address: ShippingAddress) => void;
 }
 
-export const AddressCard = ({ address, onPress, }: AddressCardProps) => {
+export const AddressCard = React.memo(function AddressCard({ address, onPress, }: AddressCardProps) {
     const { colors } = useTheme();
     const styles = createStyles(colors);
 
@@ -30,7 +31,7 @@ export const AddressCard = ({ address, onPress, }: AddressCardProps) => {
 
     return (
         <Pressable
-            onPress={onPress}
+            onPress={onPress ? () => onPress(address) : undefined}
             style={({ pressed }) => [styles.card, pressed && styles.pressed,]}
         >
             {/* Header */}
@@ -79,7 +80,7 @@ export const AddressCard = ({ address, onPress, }: AddressCardProps) => {
             </View>
         </Pressable>
     );
-};
+});
 
 const createStyles = (colors: AppColors) => StyleSheet.create({
     card: {

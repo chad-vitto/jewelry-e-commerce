@@ -8,13 +8,15 @@ import type { AppColors } from '@/constants/themes';
 import { GoldButton } from '@/components';
 import { AddressForm } from '@/components/address/AddressForm';
 import { ShippingAddressForm } from '@/types';
-import { ArrowLeft } from 'lucide-react-native';
+import { ChevronLeft } from 'lucide-react-native';
 import { AddressLabelPicker } from '@/components/address/AddressLabelPicker';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 
 export default function NewAddressScreen() {
   const { colors } = useTheme();
   const styles = createStyles(colors);
+  const insets = useSafeAreaInsets();
   const router = useRouter();
   const { user } = useAuth();
 
@@ -83,10 +85,13 @@ export default function NewAddressScreen() {
   };
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+    <ScrollView
+      style={styles.container}
+      contentContainerStyle={[styles.content, { paddingTop: insets.top + 20, paddingBottom: insets.bottom + 24 }]}
+    >
       <View style={styles.header}>
         <Pressable style={styles.iconButton} onPress={() => router.back()}>
-          <ArrowLeft size={20} color={colors.gold.DEFAULT} />
+          <ChevronLeft size={20} color={colors.gold.DEFAULT} />
         </Pressable>
         <Text style={styles.title}>New Address</Text>
         <Text style={styles.subtitle}>Where should we deliver your jewelry?</Text>
